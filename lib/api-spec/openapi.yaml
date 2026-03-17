@@ -1,22 +1,31 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Digital Shagun & Social Gifting Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User management
+  - name: events
+    description: Event management
+  - name: shagun
+    description: Shagun (money gifting)
+  - name: gifts
+    description: Gift registry
+  - name: ledger
+    description: Relationship ledger
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +33,284 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users:
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create or get user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "200":
+          description: User created or retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{userId}:
+    get:
+      operationId: getUser
+      tags: [users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      parameters:
+        - name: hostId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+    post:
+      operationId: createEvent
+      tags: [events]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+      responses:
+        "201":
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{eventId}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Event found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventDetail"
+
+  /events/{eventId}/join:
+    post:
+      operationId: joinEvent
+      tags: [events]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+              required: [userId]
+      responses:
+        "200":
+          description: Joined event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /shagun:
+    post:
+      operationId: sendShagun
+      tags: [shagun]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendShagunRequest"
+      responses:
+        "201":
+          description: Shagun sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /shagun/{eventId}:
+    get:
+      operationId: getShagunByEvent
+      tags: [shagun]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of shagun for event
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+  /shagun/reveal/{transactionId}:
+    get:
+      operationId: revealShagun
+      tags: [shagun]
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reveal status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevealStatus"
+
+  /gifts/{eventId}:
+    get:
+      operationId: getEventGifts
+      tags: [gifts]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Gift registry for event
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventGift"
+    post:
+      operationId: addGiftToRegistry
+      tags: [gifts]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddGiftRequest"
+      responses:
+        "201":
+          description: Gift added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventGift"
+
+  /gifts/contribute:
+    post:
+      operationId: contributeToGift
+      tags: [gifts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContributeGiftRequest"
+      responses:
+        "201":
+          description: Contribution recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftContribution"
+
+  /ledger/{userId}:
+    get:
+      operationId: getLedger
+      tags: [ledger]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Relationship ledger
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LedgerEntry"
+
+  /ledger/{userId}/{contactId}:
+    get:
+      operationId: getLedgerDetail
+      tags: [ledger]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Detailed ledger for relationship
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LedgerDetail"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +318,280 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        avatarColor:
+          type: string
+        createdAt:
+          type: string
+      required: [id, name, phone, avatarColor, createdAt]
+
+    CreateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+      required: [name, phone]
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum: [wedding, baby_ceremony, housewarming, birthday, festival]
+        hostId:
+          type: string
+        hostName:
+          type: string
+        date:
+          type: string
+        venue:
+          type: string
+        description:
+          type: string
+        shareCode:
+          type: string
+        totalReceived:
+          type: number
+        guestCount:
+          type: number
+        createdAt:
+          type: string
+      required: [id, title, type, hostId, hostName, date, shareCode, totalReceived, guestCount, createdAt]
+
+    EventDetail:
+      type: object
+      properties:
+        event:
+          $ref: "#/components/schemas/Event"
+        shagunList:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        gifts:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventGift"
+      required: [event, shagunList, gifts]
+
+    CreateEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+          enum: [wedding, baby_ceremony, housewarming, birthday, festival]
+        hostId:
+          type: string
+        hostName:
+          type: string
+        date:
+          type: string
+        venue:
+          type: string
+        description:
+          type: string
+      required: [title, type, hostId, hostName, date]
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        eventId:
+          type: string
+        senderId:
+          type: string
+        senderName:
+          type: string
+        receiverId:
+          type: string
+        amount:
+          type: number
+        message:
+          type: string
+        isRevealed:
+          type: boolean
+        revealAt:
+          type: string
+        createdAt:
+          type: string
+      required: [id, eventId, senderId, senderName, receiverId, amount, isRevealed, revealAt, createdAt]
+
+    SendShagunRequest:
+      type: object
+      properties:
+        eventId:
+          type: string
+        senderId:
+          type: string
+        senderName:
+          type: string
+        receiverId:
+          type: string
+        amount:
+          type: number
+        message:
+          type: string
+      required: [eventId, senderId, senderName, receiverId, amount]
+
+    RevealStatus:
+      type: object
+      properties:
+        id:
+          type: string
+        isRevealed:
+          type: boolean
+        amount:
+          type: number
+        senderName:
+          type: string
+        message:
+          type: string
+        secondsRemaining:
+          type: number
+      required: [id, isRevealed, amount, senderName, secondsRemaining]
+
+    EventGift:
+      type: object
+      properties:
+        id:
+          type: string
+        eventId:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        targetAmount:
+          type: number
+        currentAmount:
+          type: number
+        imageEmoji:
+          type: string
+        isFullyFunded:
+          type: boolean
+      required: [id, eventId, name, category, targetAmount, currentAmount, imageEmoji, isFullyFunded]
+
+    AddGiftRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        targetAmount:
+          type: number
+        imageEmoji:
+          type: string
+      required: [name, category, targetAmount, imageEmoji]
+
+    GiftContribution:
+      type: object
+      properties:
+        id:
+          type: string
+        giftId:
+          type: string
+        contributorId:
+          type: string
+        contributorName:
+          type: string
+        amount:
+          type: number
+        createdAt:
+          type: string
+      required: [id, giftId, contributorId, contributorName, amount, createdAt]
+
+    ContributeGiftRequest:
+      type: object
+      properties:
+        giftId:
+          type: string
+        contributorId:
+          type: string
+        contributorName:
+          type: string
+        amount:
+          type: number
+      required: [giftId, contributorId, contributorName, amount]
+
+    LedgerEntry:
+      type: object
+      properties:
+        contactId:
+          type: string
+        contactName:
+          type: string
+        totalGiven:
+          type: number
+        totalReceived:
+          type: number
+        balance:
+          type: number
+        lastEventName:
+          type: string
+        lastEventDate:
+          type: string
+        suggestedAmount:
+          type: number
+        transactionCount:
+          type: number
+      required: [contactId, contactName, totalGiven, totalReceived, balance, suggestedAmount, transactionCount]
+
+    LedgerDetail:
+      type: object
+      properties:
+        contactId:
+          type: string
+        contactName:
+          type: string
+        totalGiven:
+          type: number
+        totalReceived:
+          type: number
+        balance:
+          type: number
+        suggestedAmount:
+          type: number
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/LedgerTransaction"
+      required: [contactId, contactName, totalGiven, totalReceived, balance, suggestedAmount, transactions]
+
+    LedgerTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+        direction:
+          type: string
+          enum: [given, received]
+        amount:
+          type: number
+        eventName:
+          type: string
+        eventType:
+          type: string
+        date:
+          type: string
+        message:
+          type: string
+      required: [id, direction, amount, eventName, eventType, date]
