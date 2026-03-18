@@ -1,22 +1,32 @@
 {
   "expo": {
-    "name": "Digital Shagun - Social Gifting Platform",
+    "name": "Digital Shagun",
     "slug": "shagun-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "shagun-app",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#8B1A1A"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.bansalbhunesh.shagun",
+      "buildNumber": "1"
     },
-    "android": {},
+    "android": {
+      "package": "com.bansalbhunesh.shagun",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#8B1A1A"
+      },
+      "permissions": []
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
@@ -33,6 +43,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "shagun-app"
+      }
     }
   }
 }
