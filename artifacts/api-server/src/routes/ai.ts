@@ -10,11 +10,44 @@ const router = Router();
 // ─── Versioning ───────────────────────────────────────────────────────────────
 // Bump this whenever rule logic changes. Logged in every suggestion so we can
 // A/B test and audit historical decisions without guessing which logic ran.
-const AI_VERSION = "v2";
+const AI_VERSION = "v3";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const SHAGUN_AMOUNTS = [101, 151, 201, 251, 301, 401, 501, 701, 1001, 1100, 1501, 2100, 3001, 5001, 7001, 11000, 21000, 51000];
+
+// Regional multipliers reflecting real norms across India.
+// North is the baseline (1.0). West is highest (Gujarat/Maharashtra gift culture).
+// South tends to gift less cash, East is moderate.
+const REGIONAL_MULTIPLIER: Record<string, number> = {
+  north: 1.00,  // Delhi, UP, Punjab, Haryana, Rajasthan
+  west:  1.15,  // Gujarat, Maharashtra — higher shagun culture
+  east:  0.90,  // Bengal, Odisha, Bihar, Jharkhand
+  south: 0.85,  // Tamil Nadu, Kerala, Karnataka, Andhra — generally lower cash shagun
+};
+
+const REGIONAL_LABEL: Record<string, string> = {
+  north: "North India",
+  west:  "West India",
+  east:  "East India",
+  south: "South India",
+};
+
+// Closeness multipliers: how well does the sender know the recipient?
+// This is user-declared, so it overrides the frequency-inferred closeness signal.
+const CLOSENESS_MULTIPLIER: Record<string, number> = {
+  family:       1.30,
+  close:        1.10,
+  friend:       1.00,
+  acquaintance: 0.80,
+};
+
+const CLOSENESS_LABEL: Record<string, string> = {
+  family:       "Family",
+  close:        "Close Friend",
+  friend:       "Friend",
+  acquaintance: "Acquaintance",
+};
 
 const EVENT_BASE: Record<string, number> = {
   wedding: 501,
@@ -145,17 +178,19 @@ interface RelationshipContext {
 
 interface AmountDecision {
   primary: number;
-  secondary: number;              // one tier above primary (explored for diversity)
-  conservative: number;           // NEW: one tier below primary
+  secondary: number;
+  conservative: number;
   reasoning: string;
   confidenceLevel: "high" | "medium" | "low";
   signals: string[];
+  closeness: string;   // resolved label used in reasoning
+  region: string;      // resolved label used in reasoning
 }
 
 interface AISuggestionResult {
   suggestedAmount: number;
   alternativeAmount: number;
-  conservativeAmount: number;     // NEW
+  conservativeAmount: number;
   reasoning: string;
   suggestedMessages: string[];
   hasHistory: boolean;
@@ -165,7 +200,9 @@ interface AISuggestionResult {
   auspiciousNote: string;
   confidenceLevel: "high" | "medium" | "low";
   signals: string[];
-  aiVersion: string;              // NEW
+  aiVersion: string;
+  closeness: string;    // label shown in UI ("Family", "Friend", etc.)
+  region: string;       // label shown in UI ("North India", etc.)
 }
 
 // ─── Auspicious amount helpers ────────────────────────────────────────────────
@@ -197,33 +234,54 @@ function previousAuspicious(below: number): number {
 
 // ─── Rule engine ──────────────────────────────────────────────────────────────
 
-function runRuleEngine(eventType: string, ctx: RelationshipContext | null): AmountDecision {
+function runRuleEngine(
+  eventType: string,
+  ctx: RelationshipContext | null,
+  closeness: string,   // "family" | "close" | "friend" | "acquaintance"
+  region: string,      // "north" | "south" | "east" | "west"
+): AmountDecision {
   const base = EVENT_BASE[eventType] ?? 251;
   const signals: string[] = [];
+  const closenessLabel = CLOSENESS_LABEL[closeness] ?? closeness;
+  const regionLabel = REGIONAL_LABEL[region] ?? region;
+  const closenessMultiplier = CLOSENESS_MULTIPLIER[closeness] ?? 1.0;
+  const regionMultiplier = REGIONAL_MULTIPLIER[region] ?? 1.0;
+
+  // Always surface these two context signals
+  signals.push(`Relationship: ${closenessLabel}`);
+  if (region !== "north") {  // north is baseline, only mention non-default
+    const pct = Math.round((regionMultiplier - 1) * 100);
+    const direction = pct > 0 ? `+${pct}%` : `${pct}%`;
+    signals.push(`${regionLabel} regional norm applied (${direction})`);
+  }
 
   if (!ctx || ctx.transactionCount === 0) {
-    const primary = nearestAuspicious(base);
+    const rawBase = Math.round(base * closenessMultiplier * regionMultiplier);
+    const primary = nearestAuspicious(rawBase);
     return {
       primary,
       secondary: exploredSecondary(primary),
       conservative: previousAuspicious(primary),
-      reasoning: `Standard starting amount for a ${eventType.replace("_", " ")}`,
+      reasoning: `Standard ${closenessLabel.toLowerCase()} amount for a ${eventType.replace("_", " ")}`,
       confidenceLevel: "low",
-      signals: ["No prior history — using event-type default"],
+      signals: [...signals, "No prior history — using event-type default"],
+      closeness: closenessLabel,
+      region: regionLabel,
     };
   }
 
   signals.push(`${ctx.transactionCount} past transaction${ctx.transactionCount > 1 ? "s" : ""} found`);
 
-  // Time-decay signal — tell the user if old data is being discounted
+  // Time-decay signal
   if (ctx.historySpanMonths > 6) {
     signals.push(`Recent gifts weighted more (history spans ~${Math.round(ctx.historySpanMonths)}m)`);
   }
 
-  // Signal: reciprocity-first (they gave us, match it)
+  // Reciprocity-first: if they gave us but we've never given, match what they gave
   if (ctx.totalReceived > 0 && ctx.totalGiven === 0) {
-    const matchAmount = nearestAuspicious(Math.round(ctx.totalReceived * 0.9));
-    signals.push(`Matched to ₹${ctx.totalReceived.toLocaleString("en-IN")} previously received from them`);
+    const rawMatch = Math.round(ctx.totalReceived * 0.9 * closenessMultiplier * regionMultiplier);
+    const matchAmount = nearestAuspicious(rawMatch);
+    signals.push(`Matched to ₹${ctx.totalReceived.toLocaleString("en-IN")} previously received`);
     return {
       primary: matchAmount,
       secondary: exploredSecondary(matchAmount),
@@ -231,62 +289,51 @@ function runRuleEngine(eventType: string, ctx: RelationshipContext | null): Amou
       reasoning: `Matched to what ${ctx.contactName || "they"} previously gave you`,
       confidenceLevel: "high",
       signals,
+      closeness: closenessLabel,
+      region: regionLabel,
     };
   }
 
-  // Signal: trend (using plain last amounts — trend is directional, not magnitude)
+  // Trend signal
   if (ctx.lastAmounts.length >= 2) {
     const oldest = ctx.lastAmounts[ctx.lastAmounts.length - 1];
     const latest = ctx.lastAmounts[0];
-    if (latest > oldest) {
-      signals.push(`Giving trend is upward (₹${oldest} → ₹${latest})`);
-    } else if (latest < oldest) {
-      signals.push(`Giving trend has slowed (₹${oldest} → ₹${latest})`);
-    }
+    if (latest > oldest) signals.push(`Giving trend is upward (₹${oldest} → ₹${latest})`);
+    else if (latest < oldest) signals.push(`Giving trend has slowed (₹${oldest} → ₹${latest})`);
   }
 
-  // Signal: reciprocity ratio
+  // Reciprocity ratio
   if (ctx.totalGiven > 0 && ctx.totalReceived > 0) {
     const ratio = ctx.totalReceived / ctx.totalGiven;
-    if (ratio >= 1.2) {
-      signals.push(`Strong reciprocity — they return more than you give (ratio ${ratio.toFixed(1)}x)`);
-    } else if (ratio >= 0.8) {
-      signals.push("Balanced reciprocity with this family");
-    } else {
-      signals.push("You tend to give more than you receive from them");
-    }
+    if (ratio >= 1.2) signals.push(`Strong reciprocity — they return more (ratio ${ratio.toFixed(1)}x)`);
+    else if (ratio >= 0.8) signals.push("Balanced reciprocity with this family");
+    else signals.push("You tend to give more than you receive from them");
   }
 
-  // Signal: relationship frequency
-  if (ctx.transactionCount >= 5) {
-    signals.push("Close/frequent gifting relationship");
-  } else if (ctx.transactionCount >= 2) {
-    signals.push("Regular gifting relationship");
-  }
-
-  // ── Core amount: use decay-weighted average as anchor instead of flat average
-  // This automatically discounts stale 2019-era data and emphasises recent years.
+  // Core anchor: decay-weighted average of past amounts
   const anchor = ctx.decayWeightedAvg > 0
     ? ctx.decayWeightedAvg
     : (ctx.lastAmounts.length > 0 ? ctx.lastAmounts[0] : ctx.averageGiven);
 
-  // Scale factor — frequency, reciprocity, wedding uplift
+  // Scale factor: relationship frequency + reciprocity + event type + closeness + region
   let scaleFactor = 1.0;
-  if (ctx.transactionCount >= 5) scaleFactor = 1.1;
+  if (ctx.transactionCount >= 5) scaleFactor += 0.10;
   if (ctx.reciprocityRatio >= 1.2) scaleFactor += 0.05;
-  if (eventType === "wedding" && ctx.transactionCount >= 3) scaleFactor += 0.1;
+  if (eventType === "wedding" && ctx.transactionCount >= 3) scaleFactor += 0.10;
+  scaleFactor *= closenessMultiplier;
+  scaleFactor *= regionMultiplier;
 
   const rawPrimary = Math.round(anchor * scaleFactor);
   const primary = nearestAuspicious(Math.max(rawPrimary, base));
-  const secondary = exploredSecondary(primary);      // explored for bias correction
-  const conservative = previousAuspicious(primary);  // conservative option always present
+  const secondary = exploredSecondary(primary);
+  const conservative = previousAuspicious(primary);
 
   let reasoning = "";
   if (ctx.lastAmounts.length > 0) {
     reasoning = `Based on your recent gift of ₹${ctx.lastAmounts[0].toLocaleString("en-IN")} to ${ctx.contactName || "them"}`;
-    if (scaleFactor > 1.05) reasoning += " (scaled up for close relationship)";
+    if (closenessMultiplier > 1.0) reasoning += `, adjusted for ${closenessLabel.toLowerCase()} relationship`;
   } else {
-    reasoning = `Based on ₹${Math.round(ctx.decayWeightedAvg).toLocaleString("en-IN")} weighted average given to ${ctx.contactName || "them"}`;
+    reasoning = `Based on ₹${Math.round(ctx.decayWeightedAvg).toLocaleString("en-IN")} weighted average given`;
   }
 
   return {
@@ -296,6 +343,8 @@ function runRuleEngine(eventType: string, ctx: RelationshipContext | null): Amou
     reasoning,
     confidenceLevel: ctx.transactionCount >= 3 ? "high" : "medium",
     signals,
+    closeness: closenessLabel,
+    region: regionLabel,
   };
 }
 
@@ -367,19 +416,30 @@ Return ONLY a JSON array of 4 strings, no explanation, no markdown:
 
 router.get("/suggest", requireAuth, async (req: AuthRequest, res) => {
   const senderId = req.userId!;
-  const { eventType, receiverId, receiverName, senderName, eventId } = req.query as {
+  const { eventType, receiverId, receiverName, senderName, eventId, closeness } = req.query as {
     eventType: string;
     receiverId?: string;
     receiverName?: string;
     senderName?: string;
     eventId?: string;
+    closeness?: string;   // "family" | "close" | "friend" | "acquaintance"
   };
 
   if (!eventType) {
     return res.status(400).json({ error: "eventType is required" });
   }
 
-  const cacheKey = `${senderId}:${receiverId ?? "none"}:${eventType}`;
+  // Validate + normalise closeness (default: friend)
+  const VALID_CLOSENESS = ["family", "close", "friend", "acquaintance"];
+  const resolvedCloseness = VALID_CLOSENESS.includes(closeness ?? "") ? closeness! : "friend";
+
+  // Fetch user's region from DB — drives the regional multiplier
+  const [senderRow] = await db.select({ region: usersTable.region })
+    .from(usersTable).where(eq(usersTable.id, senderId)).limit(1);
+  const resolvedRegion = senderRow?.region ?? "north";
+
+  // Cache key includes closeness — different closeness = different suggestion
+  const cacheKey = `${senderId}:${receiverId ?? "none"}:${eventType}:${resolvedCloseness}`;
   const cached = getCached(cacheKey);
   if (cached) {
     logger.info("AI suggest cache hit", { cacheKey, aiVersion: AI_VERSION });
@@ -444,7 +504,7 @@ router.get("/suggest", requireAuth, async (req: AuthRequest, res) => {
 
   // ── Run rule engine ───────────────────────────────────────────────────────
 
-  const decision = runRuleEngine(eventType, ctx);
+  const decision = runRuleEngine(eventType, ctx, resolvedCloseness, resolvedRegion);
 
   // ── Generate personalised messages via Claude ─────────────────────────────
 
@@ -476,6 +536,8 @@ router.get("/suggest", requireAuth, async (req: AuthRequest, res) => {
     confidenceLevel: decision.confidenceLevel,
     signals: decision.signals,
     aiVersion: AI_VERSION,
+    closeness: decision.closeness,
+    region: decision.region,
   };
 
   setCache(cacheKey, result);

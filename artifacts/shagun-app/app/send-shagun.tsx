@@ -36,6 +36,7 @@ export default function SendShagunScreen() {
   const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
   const [showAiPanel, setShowAiPanel] = useState(true);
+  const [closeness, setCloseness] = useState<"family" | "close" | "friend" | "acquaintance">("friend");
   const [paymentModal, setPaymentModal] = useState(false);
   const [paymentOrder, setPaymentOrder] = useState<{ id: string; keyId: string; isDemoMode: boolean } | null>(null);
 
@@ -43,6 +44,8 @@ export default function SendShagunScreen() {
   const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : null);
 
   useEffect(() => {
+    setAiLoading(true);
+    setAiSuggestion(null);
     (async () => {
       try {
         const suggestion = await getAISuggestion({
@@ -50,21 +53,24 @@ export default function SendShagunScreen() {
           receiverId: receiverId ?? undefined,
           receiverName: receiverName ?? undefined,
           eventId: eventId ?? undefined,
+          closeness,
         });
         setAiSuggestion(suggestion);
         if (suggestion) {
           trackEvent("ai_suggestion_fetched", {
             eventType: eventType ?? "wedding",
+            closeness,
             hasHistory: suggestion.hasHistory,
             confidence: suggestion.confidenceLevel,
             suggestedAmount: suggestion.suggestedAmount,
+            aiVersion: suggestion.aiVersion,
           });
         }
       } finally {
         setAiLoading(false);
       }
     })();
-  }, []);
+  }, [closeness]);
 
   const recordTransaction = async () => {
     const tx = await sendShagun({
@@ -193,6 +199,25 @@ export default function SendShagunScreen() {
               <Pressable onPress={() => setShowAiPanel(false)} style={styles.aiCloseBtn}>
                 <Feather name="x" size={14} color={Colors.textLight} />
               </Pressable>
+            </View>
+
+            {/* Closeness selector — drives AI multiplier */}
+            <View style={styles.closenessRow}>
+              {(["family", "close", "friend", "acquaintance"] as const).map((level) => {
+                const labels = { family: "Family", close: "Close Friend", friend: "Friend", acquaintance: "Acquaintance" };
+                const icons = { family: "users", close: "heart", friend: "user", acquaintance: "briefcase" };
+                const active = closeness === level;
+                return (
+                  <Pressable
+                    key={level}
+                    style={[styles.closenessChip, active && styles.closenessChipActive]}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setCloseness(level); }}
+                  >
+                    <Feather name={icons[level] as any} size={11} color={active ? Colors.goldDark : Colors.textLight} />
+                    <Text style={[styles.closenessLabel, active && styles.closenessLabelActive]}>{labels[level]}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
 
             {aiLoading ? (
@@ -497,6 +522,29 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_400Regular",
     color: Colors.textLight,
     fontStyle: "italic",
+  },
+  closenessRow: {
+    flexDirection: "row",
+    gap: 6,
+    marginBottom: 12,
+  },
+  closenessChip: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 4, paddingVertical: 6, paddingHorizontal: 4,
+    borderRadius: 20, backgroundColor: Colors.cream,
+    borderWidth: 1.5, borderColor: Colors.border,
+  },
+  closenessChipActive: {
+    borderColor: Colors.gold,
+    backgroundColor: Colors.gold + "18",
+  },
+  closenessLabel: {
+    fontSize: 9,
+    fontFamily: "Poppins_600SemiBold",
+    color: Colors.textLight,
+  },
+  closenessLabelActive: {
+    color: Colors.goldDark,
   },
   aiAmountRow: {
     flexDirection: "row",

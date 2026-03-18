@@ -47,6 +47,7 @@ export default function SendDirectScreen() {
   const [sent, setSent] = useState<string | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [closeness, setCloseness] = useState<"family" | "close" | "friend" | "acquaintance">("friend");
   const [paymentModal, setPaymentModal] = useState(false);
   const [paymentOrder, setPaymentOrder] = useState<{ id: string; keyId: string; isDemoMode: boolean } | null>(null);
 
@@ -57,12 +58,14 @@ export default function SendDirectScreen() {
   useEffect(() => {
     if (!user) return;
     setAiLoading(true);
+    setAiSuggestion(null);
     getAISuggestion({
       eventType: occasion,
       receiverId: params.receiverId,
       receiverName: receiverName.trim() || undefined,
+      closeness,
     }).then(s => { if (s) setAiSuggestion(s); }).finally(() => setAiLoading(false));
-  }, [occasion]);
+  }, [occasion, closeness]);
 
   const recordTransaction = async (paymentId?: string) => {
     const amt = finalAmount!;
@@ -253,6 +256,26 @@ export default function SendDirectScreen() {
               </View>
               <Text style={styles.aiTitle}>Smart Suggestion</Text>
             </View>
+
+            {/* Closeness selector */}
+            <View style={styles.closenessRow}>
+              {(["family", "close", "friend", "acquaintance"] as const).map((level) => {
+                const labels = { family: "Family", close: "Close Friend", friend: "Friend", acquaintance: "Acquaintance" };
+                const icons = { family: "users", close: "heart", friend: "user", acquaintance: "briefcase" };
+                const active = closeness === level;
+                return (
+                  <Pressable
+                    key={level}
+                    style={[styles.closenessChip, active && styles.closenessChipActive]}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setCloseness(level); }}
+                  >
+                    <Feather name={icons[level] as any} size={10} color={active ? Colors.goldDark : Colors.textLight} />
+                    <Text style={[styles.closenessLabel, active && styles.closenessLabelActive]}>{labels[level]}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
             {aiLoading ? (
               <View style={styles.aiLoadingRow}>
                 <ActivityIndicator size="small" color={Colors.gold} />
@@ -518,6 +541,15 @@ const styles = StyleSheet.create({
   aiTitle: { fontSize: 13, fontFamily: "Poppins_700Bold", color: Colors.goldDark },
   aiLoadingRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   aiLoadingText: { fontSize: 13, fontFamily: "Poppins_400Regular", color: Colors.textLight, fontStyle: "italic" },
+  closenessRow: { flexDirection: "row", gap: 5, marginBottom: 10 },
+  closenessChip: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 3, paddingVertical: 5, borderRadius: 20,
+    borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.cream,
+  },
+  closenessChipActive: { borderColor: Colors.gold, backgroundColor: Colors.gold + "18" },
+  closenessLabel: { fontSize: 8, fontFamily: "Poppins_600SemiBold", color: Colors.textLight },
+  closenessLabelActive: { color: Colors.goldDark },
   aiAmountRow: { flexDirection: "row", gap: 10 },
   aiChip: {
     flex: 1, borderRadius: 12, padding: 11,

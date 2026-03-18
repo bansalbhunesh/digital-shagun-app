@@ -6,11 +6,14 @@ const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
   : "/api";
 
+export type IndiaRegion = "north" | "south" | "east" | "west";
+
 export interface AppUser {
   id: string;
   name: string;
   phone: string;
   avatarColor: string;
+  region?: IndiaRegion | null;
 }
 
 export interface Event {
@@ -94,6 +97,8 @@ export interface AISuggestion {
   confidenceLevel: "high" | "medium" | "low";
   signals: string[];
   aiVersion?: string;
+  closeness?: string;
+  region?: string;
   fromCache?: boolean;
 }
 
@@ -282,6 +287,7 @@ const [AppProvider, useApp] = createContextHook(() => {
     receiverId?: string;
     receiverName?: string;
     eventId?: string;
+    closeness?: "family" | "close" | "friend" | "acquaintance";
   }) => {
     if (!user) return null;
     const query = new URLSearchParams({
@@ -290,8 +296,18 @@ const [AppProvider, useApp] = createContextHook(() => {
       ...(params.receiverId ? { receiverId: params.receiverId } : {}),
       ...(params.receiverName ? { receiverName: params.receiverName } : {}),
       ...(params.eventId ? { eventId: params.eventId } : {}),
+      ...(params.closeness ? { closeness: params.closeness } : {}),
     });
     return apiFetch(`/ai/suggest?${query}`) as Promise<AISuggestion>;
+  }, [user]);
+
+  const updateRegion = useCallback(async (region: IndiaRegion) => {
+    if (!user) return;
+    await apiFetch(`/users/${user.id}/region`, {
+      method: "PATCH",
+      body: JSON.stringify({ region }),
+    });
+    setUser(prev => prev ? { ...prev, region } : prev);
   }, [user]);
 
   const getLedger = useCallback(async (page = 1, limit = 50) => {
@@ -349,7 +365,7 @@ const [AppProvider, useApp] = createContextHook(() => {
     sendShagun, revealShagun, getEventShagun,
     getEventGifts, addGiftToRegistry, contributeToGift,
     getKits, addKitToEvent,
-    getAISuggestion,
+    getAISuggestion, updateRegion,
     getLedger, getLedgerDetail,
     getUserStats,
     createPaymentOrder, capturePayment,

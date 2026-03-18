@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, usersTable, relationshipLedgerTable, transactionsTable, eventsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { signToken } from "../middleware/auth";
+import { signToken, requireAuth, type AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -21,7 +21,7 @@ router.post("/", async (req, res) => {
   if (existing.length > 0) {
     const u = existing[0];
     const token = signToken(u.id, u.phone);
-    return res.json({ id: u.id, name: u.name, phone: u.phone, avatarColor: u.avatarColor, createdAt: u.createdAt.toISOString(), token });
+    return res.json({ id: u.id, name: u.name, phone: u.phone, avatarColor: u.avatarColor, region: u.region, createdAt: u.createdAt.toISOString(), token });
   }
 
   const id = generateId();
@@ -30,7 +30,27 @@ router.post("/", async (req, res) => {
   const [user] = await db.insert(usersTable).values({ id, name, phone, avatarColor }).returning();
   const token = signToken(user.id, user.phone);
 
-  return res.json({ id: user.id, name: user.name, phone: user.phone, avatarColor: user.avatarColor, createdAt: user.createdAt.toISOString(), token });
+  return res.json({ id: user.id, name: user.name, phone: user.phone, avatarColor: user.avatarColor, region: user.region, createdAt: user.createdAt.toISOString(), token });
+});
+
+// PATCH /api/users/:userId/region — update the user's India region for AI personalisation
+router.patch("/:userId/region", requireAuth, async (req: AuthRequest, res) => {
+  const { userId } = req.params;
+  if (req.userId !== userId) return res.status(403).json({ error: "Forbidden" });
+
+  const { region } = req.body;
+  const VALID = ["north", "south", "east", "west"];
+  if (!region || !VALID.includes(region)) {
+    return res.status(400).json({ error: "region must be one of: north, south, east, west" });
+  }
+
+  const [updated] = await db.update(usersTable)
+    .set({ region })
+    .where(eq(usersTable.id, userId))
+    .returning();
+
+  if (!updated) return res.status(404).json({ error: "User not found" });
+  return res.json({ id: updated.id, region: updated.region });
 });
 
 router.get("/:userId/stats", async (req, res) => {
@@ -89,6 +109,7 @@ router.get("/:userId", async (req, res) => {
     name: user.name,
     phone: user.phone,
     avatarColor: user.avatarColor,
+    region: user.region,
     createdAt: user.createdAt.toISOString(),
   });
 });

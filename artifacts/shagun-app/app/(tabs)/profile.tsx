@@ -1,18 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, Pressable, ScrollView, Alert, Platform,
+  View, Text, StyleSheet, Pressable, ScrollView, Alert, Platform, ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
+import { useApp, type IndiaRegion } from "@/context/AppContext";
+
+const REGIONS: Array<{ key: IndiaRegion; label: string; sub: string; emoji: string }> = [
+  { key: "north", label: "North India", sub: "Delhi, UP, Punjab, Rajasthan", emoji: "🏔️" },
+  { key: "west",  label: "West India",  sub: "Gujarat, Maharashtra",         emoji: "🌊" },
+  { key: "south", label: "South India", sub: "Tamil Nadu, Kerala, Karnataka", emoji: "🌴" },
+  { key: "east",  label: "East India",  sub: "Bengal, Odisha, Bihar",         emoji: "🌾" },
+];
 
 export default function ProfileScreen() {
-  const { user, logout } = useApp();
+  const { user, logout, updateRegion } = useApp();
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
+  const [savingRegion, setSavingRegion] = useState(false);
+
+  const handleSelectRegion = async (region: IndiaRegion) => {
+    if (savingRegion || user?.region === region) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSavingRegion(true);
+    try {
+      await updateRegion(region);
+    } catch {
+      Alert.alert("Error", "Could not save region. Please try again.");
+    } finally {
+      setSavingRegion(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -71,6 +92,50 @@ export default function ProfileScreen() {
               <Feather name="chevron-right" size={18} color={Colors.textLight} />
             </Pressable>
           ))}
+        </View>
+
+        {/* Region selector — personalises AI shagun suggestions */}
+        <View style={styles.menuSection}>
+          <Text style={styles.menuTitle}>Your Region</Text>
+          <Text style={styles.regionHint}>
+            Helps us suggest amounts that match gifting norms in your area
+          </Text>
+          <View style={styles.regionGrid}>
+            {REGIONS.map((r) => {
+              const active = user?.region === r.key;
+              return (
+                <Pressable
+                  key={r.key}
+                  style={({ pressed }) => [
+                    styles.regionCard,
+                    active && styles.regionCardActive,
+                    pressed && styles.regionCardPressed,
+                  ]}
+                  onPress={() => handleSelectRegion(r.key)}
+                >
+                  <Text style={styles.regionEmoji}>{r.emoji}</Text>
+                  <Text style={[styles.regionLabel, active && styles.regionLabelActive]}>{r.label}</Text>
+                  <Text style={styles.regionSub}>{r.sub}</Text>
+                  {active && (
+                    <View style={styles.regionCheck}>
+                      <Feather name="check" size={10} color={Colors.white} />
+                    </View>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+          {savingRegion && (
+            <View style={styles.regionSaving}>
+              <ActivityIndicator size="small" color={Colors.gold} />
+              <Text style={styles.regionSavingText}>Saving...</Text>
+            </View>
+          )}
+          {!user?.region && (
+            <Text style={styles.regionNoneSet}>
+              Not set — suggestions use North India as default
+            </Text>
+          )}
         </View>
 
         <View style={styles.menuSection}>
@@ -273,6 +338,84 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     color: Colors.textSecondary,
     textAlign: "center",
+  },
+  regionHint: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.textSecondary,
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  regionGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  regionCard: {
+    width: "47%",
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 2,
+    borderColor: Colors.borderLight,
+    gap: 3,
+    position: "relative",
+  },
+  regionCardActive: {
+    borderColor: Colors.gold,
+    backgroundColor: Colors.gold + "10",
+  },
+  regionCardPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
+  },
+  regionEmoji: {
+    fontSize: 22,
+    marginBottom: 4,
+  },
+  regionLabel: {
+    fontSize: 13,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.text,
+  },
+  regionLabelActive: {
+    color: Colors.goldDark,
+  },
+  regionSub: {
+    fontSize: 10,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.textLight,
+    lineHeight: 14,
+  },
+  regionCheck: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.gold,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  regionSaving: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingTop: 10,
+  },
+  regionSavingText: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.textLight,
+    fontStyle: "italic",
+  },
+  regionNoneSet: {
+    fontSize: 11,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.textLight,
+    fontStyle: "italic",
+    paddingTop: 8,
   },
   logoutBtn: {
     flexDirection: "row",
