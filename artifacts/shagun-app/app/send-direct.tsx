@@ -261,6 +261,22 @@ export default function SendDirectScreen() {
             ) : aiSuggestion ? (
               <>
                 <View style={styles.aiAmountRow}>
+                  {aiSuggestion.conservativeAmount > 0 && aiSuggestion.conservativeAmount !== aiSuggestion.suggestedAmount && (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.aiChip,
+                        styles.aiChipCons,
+                        selectedAmount === aiSuggestion.conservativeAmount && styles.aiChipActive,
+                        pressed && styles.chipPressed,
+                      ]}
+                      onPress={() => { setSelectedAmount(aiSuggestion.conservativeAmount); setCustomAmount(""); }}
+                    >
+                      <Text style={styles.aiChipLabel}>Conservative</Text>
+                      <Text style={[styles.aiChipAmt, selectedAmount === aiSuggestion.conservativeAmount && styles.aiChipAmtActive]}>
+                        ₹{aiSuggestion.conservativeAmount.toLocaleString("en-IN")}
+                      </Text>
+                    </Pressable>
+                  )}
                   <Pressable
                     style={({ pressed }) => [
                       styles.aiChip,
@@ -508,9 +524,10 @@ const styles = StyleSheet.create({
     alignItems: "center", backgroundColor: Colors.cream,
     borderWidth: 2, borderColor: Colors.gold + "30", gap: 3,
   },
+  aiChipCons: { borderColor: "#22c55e40" },
   aiChipActive: { borderColor: Colors.gold, backgroundColor: Colors.gold + "15" },
   aiChipLabel: { fontSize: 9, fontFamily: "Poppins_600SemiBold", color: Colors.textLight, textTransform: "uppercase", letterSpacing: 0.5 },
-  aiChipAmt: { fontSize: 17, fontFamily: "Poppins_700Bold", color: Colors.text },
+  aiChipAmt: { fontSize: 15, fontFamily: "Poppins_700Bold", color: Colors.text },
   aiChipAmtActive: { color: Colors.goldDark },
   aiReasonRow: { flexDirection: "row", alignItems: "flex-start", gap: 6, flexWrap: "wrap" },
   aiReason: { flex: 1, fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.textSecondary, lineHeight: 17 },

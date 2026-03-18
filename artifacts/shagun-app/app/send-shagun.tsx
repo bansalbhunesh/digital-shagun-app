@@ -203,6 +203,29 @@ export default function SendShagunScreen() {
             ) : aiSuggestion ? (
               <>
                 <View style={styles.aiAmountRow}>
+                  {aiSuggestion.conservativeAmount > 0 && aiSuggestion.conservativeAmount !== aiSuggestion.suggestedAmount && (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.aiAmountChip,
+                        styles.aiAmountChipCons,
+                        selectedAmount === aiSuggestion.conservativeAmount && styles.aiAmountChipSelected,
+                        pressed && styles.chipPressed,
+                      ]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setSelectedAmount(aiSuggestion.conservativeAmount);
+                        setCustomAmount("");
+                      }}
+                    >
+                      <Text style={styles.aiAmountChipLabel}>Conservative</Text>
+                      <Text style={[
+                        styles.aiAmountChipValue,
+                        selectedAmount === aiSuggestion.conservativeAmount && styles.aiAmountChipValueSelected,
+                      ]}>
+                        ₹{aiSuggestion.conservativeAmount.toLocaleString("en-IN")}
+                      </Text>
+                    </Pressable>
+                  )}
                   <Pressable
                     style={({ pressed }) => [
                       styles.aiAmountChip,
@@ -493,6 +516,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cream,
     borderColor: Colors.border,
   },
+  aiAmountChipCons: {
+    backgroundColor: Colors.cream,
+    borderColor: "#22c55e40",
+  },
   aiAmountChipSelected: {
     borderColor: Colors.gold,
     backgroundColor: Colors.gold + "18",
@@ -506,7 +533,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   aiAmountChipValue: {
-    fontSize: 18,
+    fontSize: 15,
     fontFamily: "Poppins_700Bold",
     color: Colors.text,
   },

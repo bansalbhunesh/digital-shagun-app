@@ -83,6 +83,7 @@ export interface Kit {
 export interface AISuggestion {
   suggestedAmount: number;
   alternativeAmount: number;
+  conservativeAmount: number;
   reasoning: string;
   suggestedMessages: string[];
   hasHistory: boolean;
@@ -92,6 +93,7 @@ export interface AISuggestion {
   auspiciousNote: string;
   confidenceLevel: "high" | "medium" | "low";
   signals: string[];
+  aiVersion?: string;
   fromCache?: boolean;
 }
 
