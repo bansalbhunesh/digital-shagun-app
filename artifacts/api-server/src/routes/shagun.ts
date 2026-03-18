@@ -11,14 +11,15 @@ function generateId(): string {
 const REVEAL_DELAY_MINUTES = 10;
 
 router.post("/", async (req, res) => {
-  const { eventId, senderId, senderName, receiverId, amount, message } = req.body;
+  const { eventId, senderId, senderName, receiverId, receiverName, amount, message } = req.body;
+  const resolvedEventId = eventId || "direct";
 
   const id = generateId();
   const revealAt = new Date(Date.now() + REVEAL_DELAY_MINUTES * 60 * 1000);
 
   const [tx] = await db.insert(transactionsTable).values({
     id,
-    eventId,
+    eventId: resolvedEventId,
     senderId,
     senderName,
     receiverId,
@@ -28,16 +29,25 @@ router.post("/", async (req, res) => {
     revealAt,
   }).returning();
 
-  // Update relationship ledger
-  await updateLedger(senderId, senderName, receiverId, "sent", amount, eventId);
-  await updateLedger(receiverId, "", senderId, "received", amount, eventId);
+  // Update relationship ledger — pass receiverName so it shows in ledger
+  await updateLedger(senderId, senderName, receiverId, "sent", amount, resolvedEventId, receiverName);
+  await updateLedger(receiverId, "", senderId, "received", amount, resolvedEventId, senderName);
 
-  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId)).limit(1);
-
-  // Update the giver's ledger entry with event name
-  if (event) {
+  // For non-direct sends, update ledger with event name
+  if (resolvedEventId !== "direct") {
+    const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, resolvedEventId)).limit(1);
+    if (event) {
+      await db.update(relationshipLedgerTable)
+        .set({ lastEventName: event.title, lastEventDate: event.date })
+        .where(and(
+          eq(relationshipLedgerTable.userId, senderId),
+          eq(relationshipLedgerTable.contactId, receiverId)
+        ));
+    }
+  } else {
+    // For direct sends, mark the occasion in ledger
     await db.update(relationshipLedgerTable)
-      .set({ lastEventName: event.title, lastEventDate: event.date })
+      .set({ lastEventName: "Direct Shagun" })
       .where(and(
         eq(relationshipLedgerTable.userId, senderId),
         eq(relationshipLedgerTable.contactId, receiverId)
@@ -58,7 +68,7 @@ router.post("/", async (req, res) => {
   });
 });
 
-async function updateLedger(userId: string, userName: string, contactId: string, direction: "sent" | "received", amount: number, eventId: string) {
+async function updateLedger(userId: string, userName: string, contactId: string, direction: "sent" | "received", amount: number, eventId: string, contactName?: string) {
   const existing = await db.select().from(relationshipLedgerTable)
     .where(and(
       eq(relationshipLedgerTable.userId, userId),
@@ -67,22 +77,25 @@ async function updateLedger(userId: string, userName: string, contactId: string,
 
   if (existing.length > 0) {
     const curr = existing[0];
+    const updates: Record<string, string> = {};
     if (direction === "sent") {
-      await db.update(relationshipLedgerTable)
-        .set({ totalGiven: (parseFloat(curr.totalGiven ?? "0") + amount).toString() })
-        .where(eq(relationshipLedgerTable.id, curr.id));
+      updates.totalGiven = (parseFloat(curr.totalGiven ?? "0") + amount).toString();
     } else {
-      await db.update(relationshipLedgerTable)
-        .set({ totalReceived: (parseFloat(curr.totalReceived ?? "0") + amount).toString() })
-        .where(eq(relationshipLedgerTable.id, curr.id));
+      updates.totalReceived = (parseFloat(curr.totalReceived ?? "0") + amount).toString();
     }
+    // Update contactName if we now have it and it was blank
+    if (contactName && (!curr.contactName || curr.contactName === "")) {
+      updates.contactName = contactName;
+    }
+    await db.update(relationshipLedgerTable).set(updates).where(eq(relationshipLedgerTable.id, curr.id));
   } else {
     const id = generateId();
+    const resolvedName = contactName || (direction === "received" ? userName : "");
     await db.insert(relationshipLedgerTable).values({
       id,
       userId,
       contactId,
-      contactName: direction === "sent" ? "" : userName,
+      contactName: resolvedName,
       totalGiven: direction === "sent" ? amount.toString() : "0",
       totalReceived: direction === "received" ? amount.toString() : "0",
     });

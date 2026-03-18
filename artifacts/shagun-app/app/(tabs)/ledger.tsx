@@ -10,7 +10,7 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp, LedgerEntry } from "@/context/AppContext";
 
-function LedgerCard({ entry, onPress }: { entry: LedgerEntry; onPress: () => void }) {
+function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: () => void; onSend: () => void }) {
   const balance = entry.totalGiven - entry.totalReceived;
   const isPositive = balance >= 0;
   const initials = entry.contactName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
@@ -48,6 +48,13 @@ function LedgerCard({ entry, onPress }: { entry: LedgerEntry; onPress: () => voi
             </Text>
           </View>
         </View>
+        <Pressable
+          style={({ pressed }) => [styles.sendBtn, pressed && styles.sendBtnPressed]}
+          onPress={e => { e.stopPropagation(); onSend(); }}
+        >
+          <Feather name="send" size={12} color={Colors.primary} />
+          <Text style={styles.sendBtnText}>Send Shagun</Text>
+        </Pressable>
       </View>
 
       <View style={styles.cardRight}>
@@ -135,6 +142,10 @@ export default function LedgerScreen() {
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push({ pathname: "/ledger-detail/[contactId]", params: { contactId: item.contactId, name: item.contactName } });
+              }}
+              onSend={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push({ pathname: "/send-direct", params: { receiverName: item.contactName, receiverId: item.contactId } });
               }}
             />
           )}
@@ -260,6 +271,25 @@ const styles = StyleSheet.create({
   cardBody: {
     flex: 1,
     gap: 4,
+  },
+  sendBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 6,
+    backgroundColor: Colors.primary + "10",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: Colors.primary + "25",
+  },
+  sendBtnPressed: { opacity: 0.7 },
+  sendBtnText: {
+    fontSize: 11,
+    fontFamily: "Poppins_600SemiBold",
+    color: Colors.primary,
   },
   contactName: {
     fontSize: 15,

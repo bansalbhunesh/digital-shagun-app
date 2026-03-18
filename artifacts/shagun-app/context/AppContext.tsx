@@ -163,7 +163,7 @@ const [AppProvider, useApp] = createContextHook(() => {
   }, [user]);
 
   const sendShagun = useCallback(async (data: {
-    eventId: string; receiverId: string; amount: number; message?: string;
+    eventId: string; receiverId: string; receiverName?: string; amount: number; message?: string;
   }) => {
     if (!user) throw new Error("Not logged in");
     return apiFetch("/shagun", {
