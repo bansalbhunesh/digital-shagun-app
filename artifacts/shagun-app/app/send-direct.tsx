@@ -34,7 +34,7 @@ export default function SendDirectScreen() {
   const params = useLocalSearchParams<{
     receiverName?: string; receiverId?: string; occasion?: string;
   }>();
-  const { sendShagun, getAISuggestion, user, createPaymentOrder, verifyPayment } = useApp();
+  const { sendShagun, getAISuggestion, user, createPaymentOrder, capturePayment } = useApp();
   const insets = useSafeAreaInsets();
 
   const [receiverName, setReceiverName] = useState(params.receiverName ?? "");
@@ -99,20 +99,19 @@ export default function SendDirectScreen() {
       }
       if (data.type === "success") {
         try {
-          const result = await verifyPayment({
+          const result = await capturePayment({
             razorpay_order_id: data.razorpay_order_id,
             razorpay_payment_id: data.razorpay_payment_id,
             razorpay_signature: data.razorpay_signature,
+            receiverName: receiverName.trim(),
+            message: message.trim() || undefined,
           });
           setPaymentModal(false);
-          if (result.verified) {
-            await recordTransaction(result.paymentId);
-          } else {
-            setError("Payment verification failed. Contact support.");
-          }
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setSent(result.transactionId);
         } catch {
           setPaymentModal(false);
-          setError("Could not verify payment. Please contact support.");
+          setError("Could not verify payment. Please contact support with your payment ID.");
         }
         setLoading(false);
       }
@@ -132,9 +131,11 @@ export default function SendDirectScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
+      const receiverId = params.receiverId ?? ("direct_" + receiverName.trim().toLowerCase().replace(/\s+/g, "_"));
       const order = await createPaymentOrder(finalAmount, {
+        receiverId,
+        eventId: "direct",
         receiverName: receiverName.trim(),
-        occasion,
       });
       setPaymentOrder({ id: order.id, keyId: order.keyId, isDemoMode: order.isDemoMode });
       setPaymentModal(true);

@@ -10,6 +10,7 @@ function generateId(): string {
 
 const REVEAL_DELAY_MINUTES = 10;
 
+// POST /api/shagun — record a shagun transaction (direct DB write, auth'd)
 router.post("/", async (req, res) => {
   const { eventId, senderId, senderName, receiverId, receiverName, amount, message } = req.body;
 
@@ -20,45 +21,44 @@ router.post("/", async (req, res) => {
   if (message && typeof message === "string" && message.length > 500) return res.status(400).json({ error: "Message must be under 500 characters" });
 
   const resolvedEventId = eventId || "direct";
-
   const id = generateId();
   const revealAt = new Date(Date.now() + REVEAL_DELAY_MINUTES * 60 * 1000);
 
-  const [tx] = await db.insert(transactionsTable).values({
-    id,
-    eventId: resolvedEventId,
-    senderId,
-    senderName,
-    receiverId,
-    amount: amount.toString(),
-    message: message ?? null,
-    isRevealed: "false",
-    revealAt,
-  }).returning();
+  let tx: any;
+  try {
+    await db.transaction(async (dbTx) => {
+      const [inserted] = await dbTx.insert(transactionsTable).values({
+        id,
+        eventId: resolvedEventId,
+        senderId,
+        senderName,
+        receiverId,
+        amount: amount.toString(),
+        message: message ?? null,
+        isRevealed: "false",
+        revealAt,
+      }).returning();
+      tx = inserted;
 
-  // Update relationship ledger — pass receiverName so it shows in ledger
-  await updateLedger(senderId, senderName, receiverId, "sent", amount, resolvedEventId, receiverName);
-  await updateLedger(receiverId, "", senderId, "received", amount, resolvedEventId, senderName);
+      await upsertLedger(dbTx, senderId, senderName, receiverId, "sent", amount, resolvedEventId, receiverName);
+      await upsertLedger(dbTx, receiverId, "", senderId, "received", amount, resolvedEventId, senderName);
 
-  // For non-direct sends, update ledger with event name
-  if (resolvedEventId !== "direct") {
-    const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, resolvedEventId)).limit(1);
-    if (event) {
-      await db.update(relationshipLedgerTable)
-        .set({ lastEventName: event.title, lastEventDate: event.date })
-        .where(and(
-          eq(relationshipLedgerTable.userId, senderId),
-          eq(relationshipLedgerTable.contactId, receiverId)
-        ));
-    }
-  } else {
-    // For direct sends, mark the occasion in ledger
-    await db.update(relationshipLedgerTable)
-      .set({ lastEventName: "Direct Shagun" })
-      .where(and(
-        eq(relationshipLedgerTable.userId, senderId),
-        eq(relationshipLedgerTable.contactId, receiverId)
-      ));
+      if (resolvedEventId !== "direct") {
+        const [event] = await dbTx.select().from(eventsTable).where(eq(eventsTable.id, resolvedEventId)).limit(1);
+        if (event) {
+          await dbTx.update(relationshipLedgerTable)
+            .set({ lastEventName: event.title, lastEventDate: event.date })
+            .where(and(eq(relationshipLedgerTable.userId, senderId), eq(relationshipLedgerTable.contactId, receiverId)));
+        }
+      } else {
+        await dbTx.update(relationshipLedgerTable)
+          .set({ lastEventName: "Direct Shagun" })
+          .where(and(eq(relationshipLedgerTable.userId, senderId), eq(relationshipLedgerTable.contactId, receiverId)));
+      }
+    });
+  } catch (err: any) {
+    console.error("[shagun POST] transaction failed:", err.message);
+    return res.status(500).json({ error: "Failed to record shagun. Please try again." });
   }
 
   return res.status(201).json({
@@ -75,12 +75,19 @@ router.post("/", async (req, res) => {
   });
 });
 
-async function updateLedger(userId: string, userName: string, contactId: string, direction: "sent" | "received", amount: number, eventId: string, contactName?: string) {
-  const existing = await db.select().from(relationshipLedgerTable)
-    .where(and(
-      eq(relationshipLedgerTable.userId, userId),
-      eq(relationshipLedgerTable.contactId, contactId)
-    )).limit(1);
+async function upsertLedger(
+  dbTx: any,
+  userId: string,
+  userName: string,
+  contactId: string,
+  direction: "sent" | "received",
+  amount: number,
+  _eventId: string,
+  contactName?: string,
+) {
+  const existing = await dbTx.select().from(relationshipLedgerTable)
+    .where(and(eq(relationshipLedgerTable.userId, userId), eq(relationshipLedgerTable.contactId, contactId)))
+    .limit(1);
 
   if (existing.length > 0) {
     const curr = existing[0];
@@ -90,16 +97,15 @@ async function updateLedger(userId: string, userName: string, contactId: string,
     } else {
       updates.totalReceived = (parseFloat(curr.totalReceived ?? "0") + amount).toString();
     }
-    // Update contactName if we now have it and it was blank
     if (contactName && (!curr.contactName || curr.contactName === "")) {
       updates.contactName = contactName;
     }
-    await db.update(relationshipLedgerTable).set(updates).where(eq(relationshipLedgerTable.id, curr.id));
+    await dbTx.update(relationshipLedgerTable).set(updates).where(eq(relationshipLedgerTable.id, curr.id));
   } else {
-    const id = generateId();
+    const ledgerId = generateId();
     const resolvedName = contactName || (direction === "received" ? userName : "");
-    await db.insert(relationshipLedgerTable).values({
-      id,
+    await dbTx.insert(relationshipLedgerTable).values({
+      id: ledgerId,
       userId,
       contactId,
       contactName: resolvedName,

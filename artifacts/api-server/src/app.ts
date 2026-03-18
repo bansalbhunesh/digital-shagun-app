@@ -11,7 +11,15 @@ app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 }));
-app.use(express.json({ limit: "1mb" }));
+
+// Webhook route needs raw body for Razorpay signature verification
+app.use("/api/payments/webhook", express.raw({ type: "*/*" }));
+
+// All other routes get JSON parsing
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  if (req.path === "/api/payments/webhook") return next();
+  express.json({ limit: "1mb" })(req, _res, next);
+});
 app.use(express.urlencoded({ extended: true }));
 
 const limiter = rateLimit({

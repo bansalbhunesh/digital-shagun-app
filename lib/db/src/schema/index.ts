@@ -4,3 +4,4 @@ export * from "./transactions";
 export * from "./gifts";
 export * from "./ledger";
 export * from "./otp";
+export * from "./payments";

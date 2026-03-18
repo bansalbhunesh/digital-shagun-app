@@ -25,7 +25,7 @@ export default function SendShagunScreen() {
   const { eventId, receiverId, receiverName, eventType } = useLocalSearchParams<{
     eventId: string; receiverId: string; receiverName: string; eventType?: string;
   }>();
-  const { sendShagun, getAISuggestion, createPaymentOrder, verifyPayment } = useApp();
+  const { sendShagun, getAISuggestion, createPaymentOrder, capturePayment } = useApp();
   const insets = useSafeAreaInsets();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
@@ -72,15 +72,21 @@ export default function SendShagunScreen() {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === "dismissed") { setPaymentModal(false); setLoading(false); return; }
-      if (data.type === "failed") { setPaymentModal(false); setError(data.error ?? "Payment failed."); setLoading(false); return; }
+      if (data.type === "failed") { setPaymentModal(false); setError(data.error ?? "Payment failed. Please try again."); setLoading(false); return; }
       if (data.type === "demo_success") { setPaymentModal(false); await recordTransaction(); setLoading(false); return; }
       if (data.type === "success") {
         try {
-          const result = await verifyPayment({ razorpay_order_id: data.razorpay_order_id, razorpay_payment_id: data.razorpay_payment_id, razorpay_signature: data.razorpay_signature });
+          const result = await capturePayment({
+            razorpay_order_id: data.razorpay_order_id,
+            razorpay_payment_id: data.razorpay_payment_id,
+            razorpay_signature: data.razorpay_signature,
+            receiverName: receiverName ?? undefined,
+            message: message.trim() || undefined,
+          });
           setPaymentModal(false);
-          if (result.verified) await recordTransaction();
-          else setError("Payment verification failed.");
-        } catch { setPaymentModal(false); setError("Could not verify payment."); }
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setSent(result.transactionId);
+        } catch { setPaymentModal(false); setError("Could not verify payment. Please contact support with your payment ID."); }
         setLoading(false);
       }
     } catch {}
@@ -95,7 +101,7 @@ export default function SendShagunScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
-      const order = await createPaymentOrder(finalAmount, { receiverName: receiverName ?? "", eventId: eventId ?? "" });
+      const order = await createPaymentOrder(finalAmount, { receiverId: receiverId!, eventId: eventId ?? "direct", receiverName: receiverName ?? "" });
       setPaymentOrder({ id: order.id, keyId: order.keyId, isDemoMode: order.isDemoMode });
       setPaymentModal(true);
     } catch {

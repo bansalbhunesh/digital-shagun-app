@@ -92,10 +92,17 @@ export interface AISuggestion {
   auspiciousNote: string;
 }
 
+let _userId = "";
+function setApiFetchUserId(id: string) { _userId = id; }
+
 async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(_userId ? { "x-user-id": _userId } : {}),
+      ...(options?.headers ?? {}),
+    },
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
@@ -110,7 +117,11 @@ const [AppProvider, useApp] = createContextHook(() => {
     (async () => {
       try {
         const stored = await AsyncStorage.getItem("shagun_user");
-        if (stored) setUser(JSON.parse(stored));
+        if (stored) {
+          const u = JSON.parse(stored) as AppUser;
+          setUser(u);
+          setApiFetchUserId(u.id);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -130,6 +141,7 @@ const [AppProvider, useApp] = createContextHook(() => {
       body: JSON.stringify({ phone, code, name }),
     });
     setUser(u);
+    setApiFetchUserId(u.id);
     await AsyncStorage.setItem("shagun_user", JSON.stringify(u));
     return u as AppUser;
   }, []);
@@ -140,25 +152,34 @@ const [AppProvider, useApp] = createContextHook(() => {
       body: JSON.stringify({ name, phone }),
     });
     setUser(u);
+    setApiFetchUserId(u.id);
     await AsyncStorage.setItem("shagun_user", JSON.stringify(u));
     return u as AppUser;
   }, []);
 
-  const createPaymentOrder = useCallback(async (amount: number, notes?: Record<string, string>) => {
+  const createPaymentOrder = useCallback(async (amount: number, opts: {
+    receiverId: string; eventId?: string; receiverName?: string;
+  }) => {
     return apiFetch("/payments/create-order", {
       method: "POST",
-      body: JSON.stringify({ amount, notes }),
+      body: JSON.stringify({ amount, receiverId: opts.receiverId, eventId: opts.eventId ?? "direct", receiverName: opts.receiverName ?? "" }),
     }) as Promise<{ id: string; amount: number; currency: string; keyId: string; isDemoMode: boolean }>;
   }, []);
 
-  const verifyPayment = useCallback(async (params: {
-    razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string;
+  const capturePayment = useCallback(async (params: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature?: string;
+    senderName?: string;
+    receiverName?: string;
+    message?: string;
   }) => {
-    return apiFetch("/payments/verify", {
+    if (!user) throw new Error("Not logged in");
+    return apiFetch("/payments/capture", {
       method: "POST",
-      body: JSON.stringify(params),
-    }) as Promise<{ verified: boolean; paymentId?: string }>;
-  }, []);
+      body: JSON.stringify({ ...params, senderName: params.senderName ?? user.name }),
+    }) as Promise<{ transactionId: string; amount: number; eventId: string; receiverId: string }>;
+  }, [user]);
 
   const logout = useCallback(async () => {
     setUser(null);
@@ -285,7 +306,7 @@ const [AppProvider, useApp] = createContextHook(() => {
     getAISuggestion,
     getLedger, getLedgerDetail,
     getUserStats,
-    createPaymentOrder, verifyPayment,
+    createPaymentOrder, capturePayment,
   };
 });
 
