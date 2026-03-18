@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, Pressable, TextInput,
   ActivityIndicator, ScrollView, Platform,
@@ -8,23 +8,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
+import { useApp, AISuggestion } from "@/context/AppContext";
 
 const PRESET_AMOUNTS = [101, 251, 501, 1100];
 
-const BLESSINGS = [
-  "Shubh Vivah! May your life be full of joy and love",
-  "Bahut Mubarak Ho! Wishing you happiness always",
-  "Sat Sri Akal! God bless you with prosperity",
-  "May this new beginning bring you great happiness",
-  "Dil se badhai! May your blessings multiply",
-];
-
 export default function SendShagunScreen() {
-  const { eventId, receiverId, receiverName } = useLocalSearchParams<{
-    eventId: string; receiverId: string; receiverName: string;
+  const { eventId, receiverId, receiverName, eventType } = useLocalSearchParams<{
+    eventId: string; receiverId: string; receiverName: string; eventType?: string;
   }>();
-  const { sendShagun } = useApp();
+  const { sendShagun, getAISuggestion } = useApp();
   const insets = useSafeAreaInsets();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
@@ -32,9 +24,26 @@ export default function SendShagunScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState<string | null>(null);
-  const topPadding = Platform.OS === "web" ? 67 : insets.top;
+  const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null);
+  const [aiLoading, setAiLoading] = useState(true);
+  const [showAiPanel, setShowAiPanel] = useState(true);
 
+  const topPadding = Platform.OS === "web" ? 67 : insets.top;
   const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const suggestion = await getAISuggestion({
+          eventType: eventType ?? "wedding",
+          receiverId: receiverId ?? undefined,
+        });
+        setAiSuggestion(suggestion);
+      } finally {
+        setAiLoading(false);
+      }
+    })();
+  }, []);
 
   const handleSend = async () => {
     if (!finalAmount || finalAmount < 1) {
@@ -76,7 +85,7 @@ export default function SendShagunScreen() {
           <View style={styles.revealInfo}>
             <Feather name="clock" size={16} color={Colors.goldLight} />
             <Text style={styles.revealText}>
-              Amount will be revealed after 10 minutes — a moment of anticipation
+              Amount will be revealed after 10 minutes — a moment of anticipation 🙏
             </Text>
           </View>
           <Pressable
@@ -117,6 +126,86 @@ export default function SendShagunScreen() {
             <Text style={styles.recipientName}>{receiverName}</Text>
           </View>
         </View>
+
+        {/* AI Suggestion Panel */}
+        {showAiPanel && (
+          <View style={styles.aiPanel}>
+            <View style={styles.aiPanelHeader}>
+              <View style={styles.aiIconBadge}>
+                <Feather name="zap" size={14} color={Colors.gold} />
+              </View>
+              <Text style={styles.aiPanelTitle}>Smart Suggestion</Text>
+              <Pressable onPress={() => setShowAiPanel(false)} style={styles.aiCloseBtn}>
+                <Feather name="x" size={14} color={Colors.textLight} />
+              </Pressable>
+            </View>
+
+            {aiLoading ? (
+              <View style={styles.aiLoadingRow}>
+                <ActivityIndicator size="small" color={Colors.gold} />
+                <Text style={styles.aiLoadingText}>Personalizing for you...</Text>
+              </View>
+            ) : aiSuggestion ? (
+              <>
+                <View style={styles.aiAmountRow}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.aiAmountChip,
+                      selectedAmount === aiSuggestion.suggestedAmount && styles.aiAmountChipSelected,
+                      pressed && styles.chipPressed,
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      setSelectedAmount(aiSuggestion.suggestedAmount);
+                      setCustomAmount("");
+                    }}
+                  >
+                    <Text style={styles.aiAmountChipLabel}>Recommended</Text>
+                    <Text style={[
+                      styles.aiAmountChipValue,
+                      selectedAmount === aiSuggestion.suggestedAmount && styles.aiAmountChipValueSelected,
+                    ]}>
+                      ₹{aiSuggestion.suggestedAmount.toLocaleString("en-IN")}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.aiAmountChip,
+                      styles.aiAmountChipAlt,
+                      selectedAmount === aiSuggestion.alternativeAmount && styles.aiAmountChipSelected,
+                      pressed && styles.chipPressed,
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedAmount(aiSuggestion.alternativeAmount);
+                      setCustomAmount("");
+                    }}
+                  >
+                    <Text style={styles.aiAmountChipLabel}>Alternative</Text>
+                    <Text style={[
+                      styles.aiAmountChipValue,
+                      selectedAmount === aiSuggestion.alternativeAmount && styles.aiAmountChipValueSelected,
+                    ]}>
+                      ₹{aiSuggestion.alternativeAmount.toLocaleString("en-IN")}
+                    </Text>
+                  </Pressable>
+                </View>
+                <View style={styles.aiReasonRow}>
+                  <Feather name="info" size={12} color={Colors.gold} />
+                  <Text style={styles.aiReason}>{aiSuggestion.reasoning}</Text>
+                </View>
+                {aiSuggestion.hasHistory && (
+                  <View style={styles.aiHistoryRow}>
+                    <Feather name="clock" size={12} color={Colors.textLight} />
+                    <Text style={styles.aiHistoryText}>
+                      Past: given ₹{aiSuggestion.previouslyGiven.toLocaleString("en-IN")}, received ₹{aiSuggestion.previouslyReceived.toLocaleString("en-IN")}
+                    </Text>
+                  </View>
+                )}
+              </>
+            ) : null}
+          </View>
+        )}
 
         <Text style={styles.sectionLabel}>Choose Amount</Text>
         <View style={styles.presetGrid}>
@@ -168,17 +257,19 @@ export default function SendShagunScreen() {
           />
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.blessingsScroll}>
-          {BLESSINGS.map((b, i) => (
-            <Pressable
-              key={i}
-              style={({ pressed }) => [styles.blessingChip, pressed && styles.chipPressed]}
-              onPress={() => setMessage(b)}
-            >
-              <Text style={styles.blessingChipText}>{b}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+        {aiSuggestion && aiSuggestion.suggestedMessages.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.blessingsScroll}>
+            {aiSuggestion.suggestedMessages.map((b, i) => (
+              <Pressable
+                key={i}
+                style={({ pressed }) => [styles.blessingChip, pressed && styles.chipPressed]}
+                onPress={() => setMessage(b)}
+              >
+                <Text style={styles.blessingChipText}>{b}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -217,13 +308,8 @@ export default function SendShagunScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.cream,
-  },
-  successBg: {
-    backgroundColor: Colors.primary,
-  },
+  container: { flex: 1, backgroundColor: Colors.cream },
+  successBg: { backgroundColor: Colors.primary },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -233,21 +319,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontFamily: "Poppins_700Bold",
-    color: Colors.text,
-  },
-  scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
+  backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
+  headerTitle: { fontSize: 17, fontFamily: "Poppins_700Bold", color: Colors.text },
+  scroll: { paddingHorizontal: 20, paddingTop: 16 },
   recipientCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -255,7 +329,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: 18,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: Colors.borderLight,
   },
@@ -267,20 +341,118 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  recipientAvatarText: {
-    color: Colors.cream,
-    fontSize: 20,
-    fontFamily: "Poppins_700Bold",
+  recipientAvatarText: { color: Colors.cream, fontSize: 20, fontFamily: "Poppins_700Bold" },
+  recipientTo: { fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.textLight },
+  recipientName: { fontSize: 18, fontFamily: "Poppins_700Bold", color: Colors.text },
+  aiPanel: {
+    backgroundColor: Colors.white,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.gold + "60",
+    gap: 10,
   },
-  recipientTo: {
-    fontSize: 12,
+  aiPanelHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  aiIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: Colors.gold + "25",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiPanelTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.goldDark,
+  },
+  aiCloseBtn: {
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiLoadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 4,
+  },
+  aiLoadingText: {
+    fontSize: 13,
     fontFamily: "Poppins_400Regular",
     color: Colors.textLight,
+    fontStyle: "italic",
   },
-  recipientName: {
+  aiAmountRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  aiAmountChip: {
+    flex: 1,
+    borderRadius: 14,
+    padding: 12,
+    alignItems: "center",
+    backgroundColor: Colors.cream,
+    borderWidth: 2,
+    borderColor: Colors.gold + "40",
+    gap: 4,
+  },
+  aiAmountChipAlt: {
+    backgroundColor: Colors.cream,
+    borderColor: Colors.border,
+  },
+  aiAmountChipSelected: {
+    borderColor: Colors.gold,
+    backgroundColor: Colors.gold + "18",
+  },
+  chipPressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },
+  aiAmountChipLabel: {
+    fontSize: 10,
+    fontFamily: "Poppins_600SemiBold",
+    color: Colors.textLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  aiAmountChipValue: {
     fontSize: 18,
     fontFamily: "Poppins_700Bold",
     color: Colors.text,
+  },
+  aiAmountChipValueSelected: {
+    color: Colors.goldDark,
+  },
+  aiReasonRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+  },
+  aiReason: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  aiHistoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: Colors.cream,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  aiHistoryText: {
+    fontSize: 11,
+    fontFamily: "Poppins_500Medium",
+    color: Colors.textLight,
   },
   sectionLabel: {
     fontSize: 13,
@@ -312,18 +484,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     backgroundColor: Colors.primary + "0A",
   },
-  cardPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.96 }],
-  },
-  presetAmt: {
-    fontSize: 15,
-    fontFamily: "Poppins_700Bold",
-    color: Colors.text,
-  },
-  presetAmtSelected: {
-    color: Colors.primary,
-  },
+  cardPressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },
+  presetAmt: { fontSize: 15, fontFamily: "Poppins_700Bold", color: Colors.text },
+  presetAmtSelected: { color: Colors.primary },
   presetPopular: {
     fontSize: 9,
     fontFamily: "Poppins_600SemiBold",
@@ -341,12 +504,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 20,
   },
-  rupeeSymbol: {
-    fontSize: 20,
-    fontFamily: "Poppins_700Bold",
-    color: Colors.primary,
-    marginRight: 6,
-  },
+  rupeeSymbol: { fontSize: 20, fontFamily: "Poppins_700Bold", color: Colors.primary, marginRight: 6 },
   customInput: {
     flex: 1,
     paddingVertical: 14,
@@ -382,10 +540,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderWidth: 1,
     borderColor: Colors.border,
-    maxWidth: 220,
-  },
-  chipPressed: {
-    opacity: 0.8,
+    maxWidth: 240,
   },
   blessingChipText: {
     fontSize: 12,
@@ -428,21 +583,10 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  sendBtnDisabled: {
-    opacity: 0.5,
-  },
-  btnPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  sendBtnEmoji: {
-    fontSize: 20,
-  },
-  sendBtnText: {
-    color: Colors.cream,
-    fontSize: 17,
-    fontFamily: "Poppins_700Bold",
-  },
+  sendBtnDisabled: { opacity: 0.5 },
+  btnPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
+  sendBtnEmoji: { fontSize: 20 },
+  sendBtnText: { color: Colors.cream, fontSize: 17, fontFamily: "Poppins_700Bold" },
   successInner: {
     flex: 1,
     alignItems: "center",
@@ -464,14 +608,8 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 12,
   },
-  envelopeEmoji: {
-    fontSize: 56,
-  },
-  successTitle: {
-    fontSize: 32,
-    fontFamily: "Poppins_700Bold",
-    color: Colors.goldLight,
-  },
+  envelopeEmoji: { fontSize: 56 },
+  successTitle: { fontSize: 32, fontFamily: "Poppins_700Bold", color: Colors.goldLight },
   successSub: {
     fontSize: 15,
     fontFamily: "Poppins_400Regular",
@@ -479,10 +617,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 24,
   },
-  successAmountText: {
-    fontFamily: "Poppins_700Bold",
-    color: Colors.goldLight,
-  },
+  successAmountText: { fontFamily: "Poppins_700Bold", color: Colors.goldLight },
   revealInfo: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -510,11 +645,7 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
   },
-  revealBtnText: {
-    fontSize: 16,
-    fontFamily: "Poppins_700Bold",
-    color: Colors.primary,
-  },
+  revealBtnText: { fontSize: 16, fontFamily: "Poppins_700Bold", color: Colors.primary },
   doneBtn: {
     width: "100%",
     paddingVertical: 14,
@@ -522,9 +653,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.1)",
   },
-  doneBtnText: {
-    fontSize: 16,
-    fontFamily: "Poppins_600SemiBold",
-    color: "rgba(255,255,255,0.7)",
-  },
+  doneBtnText: { fontSize: 16, fontFamily: "Poppins_600SemiBold", color: "rgba(255,255,255,0.7)" },
 });

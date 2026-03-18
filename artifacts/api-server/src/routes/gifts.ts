@@ -8,6 +8,39 @@ function generateId(): string {
   return Date.now().toString() + Math.random().toString(36).substr(2, 9);
 }
 
+router.post("/contribute", async (req, res) => {
+  const { giftId, contributorId, contributorName, amount } = req.body;
+
+  const [gift] = await db.select().from(eventGiftsTable).where(eq(eventGiftsTable.id, giftId)).limit(1);
+  if (!gift) return res.status(404).json({ error: "Gift not found" });
+
+  const newAmount = Math.min(
+    parseFloat(gift.currentAmount ?? "0") + amount,
+    parseFloat(gift.targetAmount)
+  );
+
+  await db.update(eventGiftsTable)
+    .set({ currentAmount: newAmount.toString() })
+    .where(eq(eventGiftsTable.id, giftId));
+
+  const id = generateId();
+  const [contribution] = await db.insert(giftContributionsTable).values({
+    id, giftId,
+    eventId: gift.eventId,
+    contributorId, contributorName,
+    amount: amount.toString(),
+  }).returning();
+
+  return res.status(201).json({
+    id: contribution.id,
+    giftId: contribution.giftId,
+    contributorId: contribution.contributorId,
+    contributorName: contribution.contributorName,
+    amount: parseFloat(contribution.amount),
+    createdAt: contribution.createdAt.toISOString(),
+  });
+});
+
 router.get("/:eventId", async (req, res) => {
   const { eventId } = req.params;
   const gifts = await db.select().from(eventGiftsTable).where(eq(eventGiftsTable.eventId, eventId));
@@ -44,39 +77,6 @@ router.post("/:eventId", async (req, res) => {
     currentAmount: 0,
     imageEmoji: gift.imageEmoji,
     isFullyFunded: false,
-  });
-});
-
-router.post("/contribute", async (req, res) => {
-  const { giftId, contributorId, contributorName, amount } = req.body;
-
-  const [gift] = await db.select().from(eventGiftsTable).where(eq(eventGiftsTable.id, giftId)).limit(1);
-  if (!gift) return res.status(404).json({ error: "Gift not found" });
-
-  const newAmount = Math.min(
-    parseFloat(gift.currentAmount ?? "0") + amount,
-    parseFloat(gift.targetAmount)
-  );
-
-  await db.update(eventGiftsTable)
-    .set({ currentAmount: newAmount.toString() })
-    .where(eq(eventGiftsTable.id, giftId));
-
-  const id = generateId();
-  const [contribution] = await db.insert(giftContributionsTable).values({
-    id, giftId,
-    eventId: gift.eventId,
-    contributorId, contributorName,
-    amount: amount.toString(),
-  }).returning();
-
-  return res.status(201).json({
-    id: contribution.id,
-    giftId: contribution.giftId,
-    contributorId: contribution.contributorId,
-    contributorName: contribution.contributorName,
-    amount: parseFloat(contribution.amount),
-    createdAt: contribution.createdAt.toISOString(),
   });
 });
 

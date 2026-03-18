@@ -119,6 +119,21 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
+        <View style={styles.kitsPromo}>
+          <View style={styles.kitsPromoLeft}>
+            <View style={styles.kitsPromoIcon}>
+              <Text style={styles.kitsPromoEmoji}>🎁</Text>
+            </View>
+            <View style={styles.kitsPromoBody}>
+              <Text style={styles.kitsPromoTitle}>Gift Kits — New!</Text>
+              <Text style={styles.kitsPromoText}>Curated bundles for life's big moments. Home Setup, Baby, Wedding & more.</Text>
+            </View>
+          </View>
+          <View style={styles.kitsPromoBadge}>
+            <Text style={styles.kitsPromoBadgeText}>5 Kits</Text>
+          </View>
+        </View>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>How it works</Text>
           {[
@@ -309,6 +324,58 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     color: Colors.textSecondary,
     textAlign: "center",
+  },
+  kitsPromo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: Colors.primary,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 24,
+  },
+  kitsPromoLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  kitsPromoIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: Colors.gold,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  kitsPromoEmoji: {
+    fontSize: 22,
+  },
+  kitsPromoBody: {
+    flex: 1,
+  },
+  kitsPromoTitle: {
+    fontSize: 14,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.goldLight,
+  },
+  kitsPromoText: {
+    fontSize: 11,
+    fontFamily: "Poppins_400Regular",
+    color: "rgba(255,255,255,0.7)",
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  kitsPromoBadge: {
+    backgroundColor: Colors.gold,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  kitsPromoBadgeText: {
+    fontSize: 12,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.primary,
   },
   howRow: {
     flexDirection: "row",

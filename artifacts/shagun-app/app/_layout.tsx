@@ -33,6 +33,7 @@ function RootLayoutNav() {
       <Stack.Screen name="gift-registry/[eventId]" options={{ presentation: "card" }} />
       <Stack.Screen name="contribute-gift" options={{ presentation: "modal" }} />
       <Stack.Screen name="ledger-detail/[contactId]" options={{ presentation: "card" }} />
+      <Stack.Screen name="kits/[eventId]" options={{ presentation: "modal" }} />
     </Stack>
   );
 }

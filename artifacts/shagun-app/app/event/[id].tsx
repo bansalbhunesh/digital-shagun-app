@@ -132,7 +132,7 @@ export default function EventDetailScreen() {
 
   const handleSendShagun = () => {
     if (!event) return;
-    router.push({ pathname: "/send-shagun", params: { eventId: event.id, receiverId: event.hostId, receiverName: event.hostName } });
+    router.push({ pathname: "/send-shagun", params: { eventId: event.id, receiverId: event.hostId, receiverName: event.hostName, eventType: event.type } });
   };
 
   const isHost = event?.hostId === user?.id;
@@ -216,21 +216,33 @@ export default function EventDetailScreen() {
         )}
 
         {isHost && (
-          <View style={styles.hostActions}>
-            <Pressable
-              style={({ pressed }) => [styles.hostActionBtn, pressed && styles.btnPressed]}
-              onPress={() => router.push({ pathname: "/gift-registry/[eventId]", params: { eventId: event.id } })}
-            >
-              <Feather name="gift" size={18} color={Colors.primary} />
-              <Text style={styles.hostActionText}>Manage Gift Registry</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [styles.hostActionBtnGold, pressed && styles.btnPressed]}
-              onPress={handleShare}
-            >
-              <Feather name="share-2" size={18} color={Colors.cream} />
-              <Text style={styles.hostActionTextLight}>Share Event</Text>
-            </Pressable>
+          <View style={styles.hostActionsWrap}>
+            <View style={styles.hostActions}>
+              <Pressable
+                style={({ pressed }) => [styles.hostActionBtn, pressed && styles.btnPressed]}
+                onPress={() => router.push({ pathname: "/gift-registry/[eventId]", params: { eventId: event.id } })}
+              >
+                <Feather name="gift" size={16} color={Colors.primary} />
+                <Text style={styles.hostActionText}>Gift Registry</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.hostActionBtn, pressed && styles.btnPressed]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push({ pathname: "/kits/[eventId]", params: { eventId: event.id, eventType: event.type } });
+                }}
+              >
+                <Feather name="box" size={16} color={Colors.primary} />
+                <Text style={styles.hostActionText}>Gift Kits</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.hostActionBtnGold, pressed && styles.btnPressed]}
+                onPress={handleShare}
+              >
+                <Feather name="share-2" size={16} color={Colors.cream} />
+                <Text style={styles.hostActionTextLight}>Share</Text>
+              </Pressable>
+            </View>
           </View>
         )}
 
@@ -409,11 +421,13 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
     letterSpacing: 0.5,
   },
+  hostActionsWrap: {
+    paddingHorizontal: 20,
+    marginTop: 16,
+  },
   hostActions: {
     flexDirection: "row",
     gap: 10,
-    marginHorizontal: 20,
-    marginTop: 16,
   },
   hostActionBtn: {
     flex: 1,

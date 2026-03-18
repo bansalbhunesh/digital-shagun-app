@@ -64,6 +64,34 @@ export interface LedgerEntry {
   transactionCount: number;
 }
 
+export interface Kit {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  eventTypes: string[];
+  color: string;
+  totalAmount: number;
+  items: Array<{
+    name: string;
+    category: string;
+    imageEmoji: string;
+    targetAmount: number;
+  }>;
+}
+
+export interface AISuggestion {
+  suggestedAmount: number;
+  alternativeAmount: number;
+  reasoning: string;
+  suggestedMessages: string[];
+  hasHistory: boolean;
+  previouslyGiven: number;
+  previouslyReceived: number;
+  isAuspicious: boolean;
+  auspiciousNote: string;
+}
+
 async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -175,6 +203,30 @@ const [AppProvider, useApp] = createContextHook(() => {
     });
   }, [user]);
 
+  const getKits = useCallback(async (eventType?: string) => {
+    const query = eventType ? `?eventType=${eventType}` : "";
+    return apiFetch(`/kits${query}`) as Promise<Kit[]>;
+  }, []);
+
+  const addKitToEvent = useCallback(async (eventId: string, kitId: string) => {
+    return apiFetch(`/kits/${eventId}`, {
+      method: "POST",
+      body: JSON.stringify({ kitId }),
+    });
+  }, []);
+
+  const getAISuggestion = useCallback(async (params: {
+    eventType: string; receiverId?: string;
+  }) => {
+    if (!user) return null;
+    const query = new URLSearchParams({
+      eventType: params.eventType,
+      senderId: user.id,
+      ...(params.receiverId ? { receiverId: params.receiverId } : {}),
+    });
+    return apiFetch(`/ai/suggest?${query}`) as Promise<AISuggestion>;
+  }, [user]);
+
   const getLedger = useCallback(async () => {
     if (!user) return [];
     return apiFetch(`/ledger/${user.id}`) as Promise<LedgerEntry[]>;
@@ -191,6 +243,8 @@ const [AppProvider, useApp] = createContextHook(() => {
     fetchMyEvents, createEvent, getEvent, joinEvent,
     sendShagun, revealShagun, getEventShagun,
     getEventGifts, addGiftToRegistry, contributeToGift,
+    getKits, addKitToEvent,
+    getAISuggestion,
     getLedger, getLedgerDetail,
   };
 });
