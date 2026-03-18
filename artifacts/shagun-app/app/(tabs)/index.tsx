@@ -45,9 +45,9 @@ export default function HomeScreen() {
     {
       icon: "send" as const,
       label: "Give Shagun",
-      sub: "Send a blessing",
+      sub: "Send to anyone",
       color: Colors.primary,
-      onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/join-event"); },
+      onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/send-direct"); },
     },
     {
       icon: "calendar" as const,
