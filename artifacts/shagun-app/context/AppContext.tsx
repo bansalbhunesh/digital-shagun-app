@@ -92,18 +92,22 @@ export interface AISuggestion {
   auspiciousNote: string;
 }
 
-let _userId = "";
-function setApiFetchUserId(id: string) { _userId = id; }
+let _token = "";
+function setApiToken(token: string) { _token = token; }
 
-async function apiFetch(path: string, options?: RequestInit) {
+async function apiFetch(path: string, options?: RequestInit, onUnauth?: () => void) {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(_userId ? { "x-user-id": _userId } : {}),
+      ...(_token ? { "Authorization": `Bearer ${_token}` } : {}),
       ...(options?.headers ?? {}),
     },
   });
+  if (res.status === 401 && onUnauth) {
+    onUnauth();
+    throw new Error("Session expired");
+  }
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
@@ -117,10 +121,11 @@ const [AppProvider, useApp] = createContextHook(() => {
     (async () => {
       try {
         const stored = await AsyncStorage.getItem("shagun_user");
+        const storedToken = await AsyncStorage.getItem("shagun_token");
         if (stored) {
           const u = JSON.parse(stored) as AppUser;
           setUser(u);
-          setApiFetchUserId(u.id);
+          if (storedToken) setApiToken(storedToken);
         }
       } finally {
         setIsLoading(false);
@@ -136,25 +141,21 @@ const [AppProvider, useApp] = createContextHook(() => {
   }, []);
 
   const verifyOTP = useCallback(async (phone: string, code: string, name: string): Promise<AppUser> => {
-    const u = await apiFetch("/otp/verify", {
-      method: "POST",
-      body: JSON.stringify({ phone, code, name }),
-    });
-    setUser(u);
-    setApiFetchUserId(u.id);
-    await AsyncStorage.setItem("shagun_user", JSON.stringify(u));
-    return u as AppUser;
+    const u = await apiFetch("/otp/verify", { method: "POST", body: JSON.stringify({ phone, code, name }) });
+    const { token, ...userFields } = u;
+    setUser(userFields);
+    if (token) { setApiToken(token); await AsyncStorage.setItem("shagun_token", token); }
+    await AsyncStorage.setItem("shagun_user", JSON.stringify(userFields));
+    return userFields as AppUser;
   }, []);
 
   const login = useCallback(async (name: string, phone: string) => {
-    const u = await apiFetch("/users", {
-      method: "POST",
-      body: JSON.stringify({ name, phone }),
-    });
-    setUser(u);
-    setApiFetchUserId(u.id);
-    await AsyncStorage.setItem("shagun_user", JSON.stringify(u));
-    return u as AppUser;
+    const u = await apiFetch("/users", { method: "POST", body: JSON.stringify({ name, phone }) });
+    const { token, ...userFields } = u;
+    setUser(userFields);
+    if (token) { setApiToken(token); await AsyncStorage.setItem("shagun_token", token); }
+    await AsyncStorage.setItem("shagun_user", JSON.stringify(userFields));
+    return userFields as AppUser;
   }, []);
 
   const createPaymentOrder = useCallback(async (amount: number, opts: {
@@ -183,7 +184,8 @@ const [AppProvider, useApp] = createContextHook(() => {
 
   const logout = useCallback(async () => {
     setUser(null);
-    await AsyncStorage.removeItem("shagun_user");
+    setApiToken("");
+    await AsyncStorage.multiRemove(["shagun_user", "shagun_token"]);
   }, []);
 
   const fetchMyEvents = useCallback(async (userId: string) => {

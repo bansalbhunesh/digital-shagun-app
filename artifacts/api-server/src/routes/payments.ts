@@ -1,7 +1,8 @@
-import { Router, type Request, type Response, type NextFunction } from "express";
+import { Router } from "express";
 import crypto from "crypto";
 import { db, paymentsTable, transactionsTable, eventsTable, relationshipLedgerTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
+import { requireAuth, type AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -19,19 +20,10 @@ function getRazorpay() {
   return new Razorpay({ key_id: keyId, key_secret: keySecret });
 }
 
-// Auth guard — requires x-user-id header
-function requireUser(req: Request, res: Response, next: NextFunction) {
-  const userId = req.headers["x-user-id"];
-  if (!userId || typeof userId !== "string" || userId.trim() === "") {
-    return res.status(401).json({ error: "Authentication required. Please log in." });
-  }
-  next();
-}
-
 // POST /api/payments/create-order
 // Creates a Razorpay order and saves it as pending in DB
-router.post("/create-order", requireUser, async (req, res) => {
-  const userId = req.headers["x-user-id"] as string;
+router.post("/create-order", requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.userId!;
   const { amount, receiverId, eventId = "direct", receiverName = "" } = req.body;
 
   if (!amount || typeof amount !== "number" || amount < 1) {
@@ -81,9 +73,9 @@ router.post("/create-order", requireUser, async (req, res) => {
 });
 
 // POST /api/payments/capture
-// Atomic: verify signature + mark captured + record shagun + update ledger — all in one DB transaction
-router.post("/capture", requireUser, async (req, res) => {
-  const userId = req.headers["x-user-id"] as string;
+// Atomic: verify signature + verify amount with Razorpay + record shagun + update ledger — all in one DB transaction
+router.post("/capture", requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.userId!;
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, senderName, receiverName, message } = req.body;
 
   if (!razorpay_order_id || !razorpay_payment_id) {
@@ -129,6 +121,32 @@ router.post("/capture", requireUser, async (req, res) => {
     if (expected !== razorpay_signature) {
       await db.update(paymentsTable).set({ status: "failed" }).where(eq(paymentsTable.orderId, razorpay_order_id));
       return res.status(400).json({ error: "Payment signature mismatch. Transaction rejected." });
+    }
+
+    // Verify payment amount with Razorpay (prevents frontend amount tampering)
+    try {
+      const razorpay = getRazorpay();
+      if (razorpay) {
+        const rpPayment = await razorpay.payments.fetch(razorpay_payment_id);
+        const paidPaise = parseInt(rpPayment.amount, 10);
+        const expectedPaise = Math.round(parseFloat(paymentRecord.amount) * 100);
+        if (paidPaise !== expectedPaise) {
+          console.error(`[capture] Amount mismatch: expected ${expectedPaise} paise, Razorpay reports ${paidPaise} paise`);
+          await db.update(paymentsTable).set({ status: "failed" }).where(eq(paymentsTable.orderId, razorpay_order_id));
+          return res.status(400).json({ error: "Payment amount mismatch. Transaction rejected for security." });
+        }
+        if (rpPayment.order_id !== razorpay_order_id) {
+          await db.update(paymentsTable).set({ status: "failed" }).where(eq(paymentsTable.orderId, razorpay_order_id));
+          return res.status(400).json({ error: "Payment order ID mismatch. Transaction rejected." });
+        }
+        if (rpPayment.status !== "captured" && rpPayment.status !== "authorized") {
+          await db.update(paymentsTable).set({ status: "failed" }).where(eq(paymentsTable.orderId, razorpay_order_id));
+          return res.status(400).json({ error: `Payment not completed (status: ${rpPayment.status}).` });
+        }
+      }
+    } catch (verifyErr: any) {
+      console.error("[capture] Razorpay amount verification failed:", verifyErr.message);
+      return res.status(500).json({ error: "Could not verify payment with Razorpay. Please contact support." });
     }
   }
 

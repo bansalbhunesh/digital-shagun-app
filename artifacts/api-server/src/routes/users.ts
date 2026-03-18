@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, usersTable, relationshipLedgerTable, transactionsTable, eventsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
+import { signToken } from "../middleware/auth";
 
 const router = Router();
 
@@ -19,27 +20,17 @@ router.post("/", async (req, res) => {
   const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
   if (existing.length > 0) {
     const u = existing[0];
-    return res.json({
-      id: u.id,
-      name: u.name,
-      phone: u.phone,
-      avatarColor: u.avatarColor,
-      createdAt: u.createdAt.toISOString(),
-    });
+    const token = signToken(u.id, u.phone);
+    return res.json({ id: u.id, name: u.name, phone: u.phone, avatarColor: u.avatarColor, createdAt: u.createdAt.toISOString(), token });
   }
 
   const id = generateId();
   const avatarColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 
   const [user] = await db.insert(usersTable).values({ id, name, phone, avatarColor }).returning();
+  const token = signToken(user.id, user.phone);
 
-  return res.json({
-    id: user.id,
-    name: user.name,
-    phone: user.phone,
-    avatarColor: user.avatarColor,
-    createdAt: user.createdAt.toISOString(),
-  });
+  return res.json({ id: user.id, name: user.name, phone: user.phone, avatarColor: user.avatarColor, createdAt: user.createdAt.toISOString(), token });
 });
 
 router.get("/:userId/stats", async (req, res) => {

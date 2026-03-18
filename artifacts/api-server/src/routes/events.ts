@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, eventsTable, eventGuestsTable, transactionsTable, eventGiftsTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
+import { requireAuth, type AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -53,8 +54,11 @@ router.get("/", async (req, res) => {
   return res.json(result);
 });
 
-router.post("/", async (req, res) => {
-  const { title, type, hostId, hostName, date, venue, description } = req.body;
+router.post("/", requireAuth, async (req: AuthRequest, res) => {
+  const { title, type, date, venue, description } = req.body;
+  // Ownership: always use the authenticated user as host — prevents spoofing
+  const hostId = req.userId!;
+  const hostName = req.body.hostName ?? "Unknown";
   const id = generateId();
   let shareCode = generateShareCode();
 
@@ -119,9 +123,10 @@ async function processEventDetail(event: any, res: any) {
   });
 }
 
-router.post("/:eventId/join", async (req, res) => {
+router.post("/:eventId/join", requireAuth, async (req: AuthRequest, res) => {
   const { eventId } = req.params;
-  const { userId } = req.body;
+  // Ownership: only the authenticated user can join as themselves
+  const userId = req.userId!;
 
   const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId)).limit(1);
   if (!event) return res.status(404).json({ error: "Event not found" });
