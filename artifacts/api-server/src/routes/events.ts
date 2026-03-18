@@ -129,11 +129,30 @@ router.post("/:eventId/join", requireAuth, async (req: AuthRequest, res) => {
   const userId = req.userId!;
 
   const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId)).limit(1);
-  if (!event) return res.status(404).json({ error: "Event not found" });
+  if (!event) return res.status(404).json({ error: "Event not found. The link may be expired or incorrect.", code: "EVENT_NOT_FOUND" });
+
+  // Events older than 60 days are considered concluded
+  const eventDate = new Date(event.date);
+  const daysSinceEvent = (Date.now() - eventDate.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSinceEvent > 60) {
+    return res.status(410).json({
+      error: "This celebration has already concluded.",
+      code: "EVENT_ENDED",
+      eventTitle: event.title,
+    });
+  }
 
   const existingGuest = await db.select().from(eventGuestsTable)
     .where(and(eq(eventGuestsTable.eventId, eventId), eq(eventGuestsTable.userId, userId)))
     .limit(1);
+
+  if (existingGuest.length > 0) {
+    const [current] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId)).limit(1);
+    const txResult = await db.select({ total: sql<string>`COALESCE(SUM(CAST(${transactionsTable.amount} AS NUMERIC)), 0)` })
+      .from(transactionsTable).where(eq(transactionsTable.eventId, eventId));
+    const totalReceived = parseFloat(txResult[0]?.total ?? "0");
+    return res.status(200).json({ ...formatEvent({ ...current, totalReceived }), alreadyJoined: true });
+  }
 
   if (existingGuest.length === 0) {
     await db.insert(eventGuestsTable).values({ id: generateId(), eventId, userId });

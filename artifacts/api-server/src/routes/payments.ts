@@ -125,10 +125,39 @@ router.post("/capture", requireAuth, async (req: AuthRequest, res) => {
     }
 
     // Verify payment amount with Razorpay (prevents frontend amount tampering)
+    // Uses a 9-second timeout so a slow Razorpay API doesn't silently lose a
+    // captured payment — client receives 202 "processing" and retries via ledger.
     try {
       const razorpay = getRazorpay();
       if (razorpay) {
-        const rpPayment = await razorpay.payments.fetch(razorpay_payment_id);
+        const VERIFY_TIMEOUT_MS = 9000;
+        let rpPayment: any;
+        try {
+          rpPayment = await Promise.race([
+            razorpay.payments.fetch(razorpay_payment_id),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("razorpay_timeout")), VERIFY_TIMEOUT_MS),
+            ),
+          ]);
+        } catch (timeoutErr: any) {
+          if (timeoutErr.message === "razorpay_timeout") {
+            // Money likely left the user's account; record as pending-verify so
+            // the reconciliation job can fix it, and tell the client to wait.
+            logger.warn("Razorpay verification timed out — returning processing status", {
+              orderId: razorpay_order_id, paymentId: razorpay_payment_id,
+            });
+            await db.update(paymentsTable)
+              .set({ status: "pending_verify" })
+              .where(eq(paymentsTable.orderId, razorpay_order_id));
+            return res.status(202).json({
+              status: "processing",
+              message: "Your payment is being verified. It will appear in your ledger within 2 minutes.",
+              orderId: razorpay_order_id,
+            });
+          }
+          throw timeoutErr;
+        }
+
         const paidPaise = parseInt(rpPayment.amount, 10);
         const expectedPaise = Math.round(parseFloat(paymentRecord.amount) * 100);
         if (paidPaise !== expectedPaise) {

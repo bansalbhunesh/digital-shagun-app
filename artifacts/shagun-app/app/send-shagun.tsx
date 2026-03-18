@@ -25,7 +25,7 @@ export default function SendShagunScreen() {
   const { eventId, receiverId, receiverName, eventType } = useLocalSearchParams<{
     eventId: string; receiverId: string; receiverName: string; eventType?: string;
   }>();
-  const { sendShagun, getAISuggestion, createPaymentOrder, capturePayment, trackEvent } = useApp();
+  const { sendShagun, getAISuggestion, createPaymentOrder, capturePayment, trackEvent, refreshAfterPayment } = useApp();
   const insets = useSafeAreaInsets();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
@@ -100,9 +100,17 @@ export default function SendShagunScreen() {
             message: message.trim() || undefined,
           });
           setPaymentModal(false);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          trackEvent("payment_success", { screen: "send_shagun", amount: finalAmount, eventId });
-          setSent(result.transactionId);
+          // 202 = Razorpay verification timed out; money is likely safe but
+          // not yet recorded. Show a processing state instead of success.
+          if ((result as any)._status === 202) {
+            setError("Your payment is being verified — it will appear in your ledger within 2 minutes. You can close this screen.");
+            trackEvent("payment_processing", { screen: "send_shagun", orderId: data.razorpay_order_id });
+          } else {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            trackEvent("payment_success", { screen: "send_shagun", amount: finalAmount, eventId });
+            setSent(result.transactionId);
+            refreshAfterPayment();
+          }
         } catch { setPaymentModal(false); setError("Could not verify payment. Please contact support with your payment ID."); trackEvent("payment_failed", { screen: "send_shagun", stage: "capture" }); }
         setLoading(false);
       }

@@ -102,10 +102,16 @@ export interface AISuggestion {
   fromCache?: boolean;
 }
 
+const APP_VERSION = "1";
+
 let _token = "";
 function setApiToken(token: string) { _token = token; }
 
-async function apiFetch(path: string, options?: RequestInit, onUnauth?: () => void) {
+// Module-level hooks so apiFetch can notify the context of cross-cutting concerns
+// without needing to thread callbacks through every call site.
+let _onVersionMismatch: (() => void) | null = null;
+
+async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
@@ -114,11 +120,27 @@ async function apiFetch(path: string, options?: RequestInit, onUnauth?: () => vo
       ...(options?.headers ?? {}),
     },
   });
-  if (res.status === 401 && onUnauth) {
-    onUnauth();
-    throw new Error("Session expired");
+
+  // Check if the server requires a newer client build
+  const minVersion = res.headers.get("X-App-Min-Version");
+  if (minVersion && parseInt(minVersion, 10) > parseInt(APP_VERSION, 10)) {
+    _onVersionMismatch?.();
   }
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+
+  if (res.status === 401) throw new Error("Session expired");
+
+  // 202 Accepted = payment is processing; return the body so callers can handle it
+  if (res.status === 202) return { ...(await res.json()), _status: 202 };
+
+  if (!res.ok) {
+    let errBody: any = {};
+    try { errBody = await res.json(); } catch {}
+    const err: any = new Error(errBody?.error ?? `API error: ${res.status}`);
+    err.status = res.status;
+    err.code = errBody?.code;
+    err.body = errBody;
+    throw err;
+  }
   return res.json();
 }
 
@@ -126,6 +148,13 @@ const [AppProvider, useApp] = createContextHook(() => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [myEvents, setMyEvents] = useState<Event[]>([]);
+  const [updateRequired, setUpdateRequired] = useState(false);
+
+  // Register the version-mismatch callback so apiFetch can flip our state
+  useEffect(() => {
+    _onVersionMismatch = () => setUpdateRequired(true);
+    return () => { _onVersionMismatch = null; };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -358,8 +387,14 @@ const [AppProvider, useApp] = createContextHook(() => {
     } catch {}
   }, [user]);
 
+  // Re-fetch events after a successful payment so UI reflects the new balance
+  const refreshAfterPayment = useCallback(async () => {
+    if (!user) return;
+    try { await fetchMyEvents(user.id); } catch {}
+  }, [user, fetchMyEvents]);
+
   return {
-    user, isLoading, myEvents,
+    user, isLoading, myEvents, updateRequired,
     requestOTP, verifyOTP, login, logout,
     fetchMyEvents, createEvent, getEvent, joinEvent,
     sendShagun, revealShagun, getEventShagun,
@@ -370,6 +405,7 @@ const [AppProvider, useApp] = createContextHook(() => {
     getUserStats,
     createPaymentOrder, capturePayment,
     trackEvent, registerPushToken, removePushToken,
+    refreshAfterPayment,
   };
 });
 

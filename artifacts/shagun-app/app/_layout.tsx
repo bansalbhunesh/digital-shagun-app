@@ -10,10 +10,11 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import React, { useEffect } from "react";
-import { Platform } from "react-native";
+import { Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import Colors from "@/constants/colors";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider, useApp } from "@/context/AppContext";
@@ -54,6 +55,51 @@ async function requestPushPermission(): Promise<string | null> {
   }
 }
 
+function UpdateBanner() {
+  const { updateRequired } = useApp();
+  if (!updateRequired) return null;
+  return (
+    <View style={bannerStyles.banner}>
+      <Text style={bannerStyles.text}>A new version of Shagun is available.</Text>
+      <Pressable
+        onPress={() => Linking.openURL("https://expo.dev")}
+        style={bannerStyles.btn}
+      >
+        <Text style={bannerStyles.btnText}>Update</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const bannerStyles = StyleSheet.create({
+  banner: {
+    backgroundColor: Colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 12,
+  },
+  text: {
+    flex: 1,
+    color: Colors.cream,
+    fontSize: 13,
+    fontFamily: "Poppins_400Regular",
+  },
+  btn: {
+    backgroundColor: Colors.gold,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  btnText: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontFamily: "Poppins_700Bold",
+  },
+});
+
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading, registerPushToken } = useApp();
   const segments = useSegments();
@@ -83,6 +129,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 function RootLayoutNav() {
   return (
     <AuthGuard>
+      <UpdateBanner />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

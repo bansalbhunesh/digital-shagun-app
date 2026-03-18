@@ -5,13 +5,24 @@ import rateLimit from "express-rate-limit";
 import router from "./routes";
 import logger from "./lib/logger";
 
+const API_VERSION = "1";
+const APP_MIN_VERSION = "1";
+
 const app: Express = express();
 
 app.use(helmet());
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  exposedHeaders: ["X-API-Version", "X-App-Min-Version"],
 }));
+
+// Stamp every response with version headers so clients can detect API updates
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader("X-API-Version", API_VERSION);
+  res.setHeader("X-App-Min-Version", APP_MIN_VERSION);
+  next();
+});
 
 // Structured request logging
 app.use((req: Request, res: Response, next: NextFunction) => {

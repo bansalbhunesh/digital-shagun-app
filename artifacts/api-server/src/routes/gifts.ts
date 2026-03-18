@@ -13,6 +13,37 @@ function generateId(): string {
 // In-memory SSE subscriber registry: eventId → Set of response objects
 const sseSubscribers = new Map<string, Set<any>>();
 
+// Notification batcher: avoids storming the event host with one push per contribution.
+// Each event accumulates contributions for BATCH_WINDOW_MS then sends one summary.
+const BATCH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+interface PendingBatch { count: number; totalAmount: number; timer: ReturnType<typeof setTimeout>; }
+const notificationBatches = new Map<string, PendingBatch>();
+
+function scheduleContributionNotification(
+  eventId: string, guestIds: string[], contributorName: string, amount: number, giftName: string,
+) {
+  const existing = notificationBatches.get(eventId);
+  if (existing) {
+    clearTimeout(existing.timer);
+    existing.count += 1;
+    existing.totalAmount += amount;
+  }
+  const batch: PendingBatch = existing ?? { count: 1, totalAmount: amount, timer: undefined as any };
+  batch.timer = setTimeout(() => {
+    notificationBatches.delete(eventId);
+    const body = batch.count === 1
+      ? `${contributorName} contributed ₹${batch.totalAmount.toLocaleString("en-IN")} towards ${giftName}`
+      : `${batch.count} people contributed ₹${batch.totalAmount.toLocaleString("en-IN")} towards ${giftName}`;
+    sendPushToMany(guestIds, {
+      title: "🎁 Gift Update",
+      body,
+      data: { type: "gift_contribution", eventId, giftId: "" },
+    }).catch(() => {});
+    logger.info("Batched gift notification sent", { eventId, count: batch.count, totalAmount: batch.totalAmount });
+  }, BATCH_WINDOW_MS);
+  notificationBatches.set(eventId, batch);
+}
+
 function broadcastGiftUpdate(eventId: string, gifts: any[]) {
   const subs = sseSubscribers.get(eventId);
   if (!subs || subs.size === 0) return;
@@ -56,20 +87,23 @@ router.post("/contribute", async (req, res) => {
     isFullyFunded: parseFloat(g.currentAmount ?? "0") >= parseFloat(g.targetAmount),
   })));
 
-  // Notify event guests when a gift becomes fully funded
-  if (nowFullyFunded) {
-    const guestRows = await db.select({ userId: eventGuestsTable.userId })
-      .from(eventGuestsTable)
-      .where(eq(eventGuestsTable.eventId, gift.eventId));
-    const guestIds = guestRows.map(g => g.userId).filter(id => id !== contributorId);
+  // Fetch guest list once — used for both notification paths below
+  const guestRows = await db.select({ userId: eventGuestsTable.userId })
+    .from(eventGuestsTable)
+    .where(eq(eventGuestsTable.eventId, gift.eventId));
+  const guestIds = guestRows.map(g => g.userId).filter(id => id !== contributorId);
 
+  if (nowFullyFunded) {
+    // Fully-funded milestone — fire immediately, never batch this one
     sendPushToMany(guestIds, {
       title: "🎁 Gift Fully Funded!",
       body: `${gift.name} has been fully funded! ₹${target.toLocaleString("en-IN")} collected 🎉`,
       data: { type: "gift_funded", eventId: gift.eventId, giftId },
     }).catch(() => {});
-
     logger.info("Gift fully funded", { giftId, eventId: gift.eventId, name: gift.name });
+  } else {
+    // Regular contribution — batch within a 2-minute window to avoid notification spam
+    scheduleContributionNotification(gift.eventId, guestIds, contributorName, amount, gift.name);
   }
 
   return res.status(201).json({

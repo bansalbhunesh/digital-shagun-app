@@ -28,12 +28,24 @@ export default function JoinEventScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const detail = await getEvent(code.trim().toUpperCase());
-      await joinEvent(detail.event.id);
+      const joined = await joinEvent(detail.event.id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace({ pathname: "/event/[id]", params: { id: detail.event.id } });
-    } catch {
-      setError("Event not found. Please check the code.");
+      // alreadyJoined comes back as 200 with the event — still navigate in
+      const eventId = (joined as any)?.id ?? detail.event.id;
+      router.replace({ pathname: "/event/[id]", params: { id: eventId } });
+    } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // Use structured error codes from the API when available
+      const code_err: string | undefined = err?.code;
+      const status: number | undefined = err?.status;
+      if (status === 404 || code_err === "EVENT_NOT_FOUND") {
+        setError("Event not found — double-check the code or ask the host to resend the link.");
+      } else if (status === 410 || code_err === "EVENT_ENDED") {
+        const title = err?.body?.eventTitle ? `"${err.body.eventTitle}"` : "This event";
+        setError(`${title} has already concluded. You can still view it if the host shares the link.`);
+      } else {
+        setError("Could not join the event. Please check the code and try again.");
+      }
     } finally {
       setLoading(false);
     }

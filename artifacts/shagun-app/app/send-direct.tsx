@@ -34,7 +34,7 @@ export default function SendDirectScreen() {
   const params = useLocalSearchParams<{
     receiverName?: string; receiverId?: string; occasion?: string;
   }>();
-  const { sendShagun, getAISuggestion, user, createPaymentOrder, capturePayment, trackEvent } = useApp();
+  const { sendShagun, getAISuggestion, user, createPaymentOrder, capturePayment, trackEvent, refreshAfterPayment } = useApp();
   const insets = useSafeAreaInsets();
 
   const [receiverName, setReceiverName] = useState(params.receiverName ?? "");
@@ -113,9 +113,15 @@ export default function SendDirectScreen() {
             message: message.trim() || undefined,
           });
           setPaymentModal(false);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          trackEvent("payment_success", { screen: "send_direct", amount: finalAmount, occasion });
-          setSent(result.transactionId);
+          if ((result as any)._status === 202) {
+            setError("Your payment is being verified — it will appear in your ledger within 2 minutes. You can close this screen.");
+            trackEvent("payment_processing", { screen: "send_direct", orderId: data.razorpay_order_id });
+          } else {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            trackEvent("payment_success", { screen: "send_direct", amount: finalAmount, occasion });
+            setSent(result.transactionId);
+            refreshAfterPayment();
+          }
         } catch {
           setPaymentModal(false);
           setError("Could not verify payment. Please contact support with your payment ID.");
