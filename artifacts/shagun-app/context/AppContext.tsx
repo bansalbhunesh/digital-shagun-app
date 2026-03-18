@@ -90,6 +90,9 @@ export interface AISuggestion {
   previouslyReceived: number;
   isAuspicious: boolean;
   auspiciousNote: string;
+  confidenceLevel: "high" | "medium" | "low";
+  signals: string[];
+  fromCache?: boolean;
 }
 
 let _token = "";
@@ -273,13 +276,18 @@ const [AppProvider, useApp] = createContextHook(() => {
   }, []);
 
   const getAISuggestion = useCallback(async (params: {
-    eventType: string; receiverId?: string;
+    eventType: string;
+    receiverId?: string;
+    receiverName?: string;
+    eventId?: string;
   }) => {
     if (!user) return null;
     const query = new URLSearchParams({
       eventType: params.eventType,
-      senderId: user.id,
+      senderName: user.name,
       ...(params.receiverId ? { receiverId: params.receiverId } : {}),
+      ...(params.receiverName ? { receiverName: params.receiverName } : {}),
+      ...(params.eventId ? { eventId: params.eventId } : {}),
     });
     return apiFetch(`/ai/suggest?${query}`) as Promise<AISuggestion>;
   }, [user]);

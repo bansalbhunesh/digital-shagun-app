@@ -48,6 +48,8 @@ export default function SendShagunScreen() {
         const suggestion = await getAISuggestion({
           eventType: eventType ?? "wedding",
           receiverId: receiverId ?? undefined,
+          receiverName: receiverName ?? undefined,
+          eventId: eventId ?? undefined,
         });
         setAiSuggestion(suggestion);
       } finally {
@@ -236,7 +238,22 @@ export default function SendShagunScreen() {
                 <View style={styles.aiReasonRow}>
                   <Feather name="info" size={12} color={Colors.gold} />
                   <Text style={styles.aiReason}>{aiSuggestion.reasoning}</Text>
+                  {aiSuggestion.confidenceLevel && (
+                    <View style={[styles.confidenceBadge, aiSuggestion.confidenceLevel === "high" ? styles.badgeHigh : aiSuggestion.confidenceLevel === "medium" ? styles.badgeMedium : styles.badgeLow]}>
+                      <Text style={styles.confidenceBadgeText}>{aiSuggestion.confidenceLevel === "high" ? "✓ High confidence" : aiSuggestion.confidenceLevel === "medium" ? "~ Medium" : "New"}</Text>
+                    </View>
+                  )}
                 </View>
+                {aiSuggestion.signals && aiSuggestion.signals.length > 0 && (
+                  <View style={styles.signalsBox}>
+                    {aiSuggestion.signals.map((s, i) => (
+                      <View key={i} style={styles.signalRow}>
+                        <Text style={styles.signalDot}>•</Text>
+                        <Text style={styles.signalText}>{s}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
                 {aiSuggestion.hasHistory && (
                   <View style={styles.aiHistoryRow}>
                     <Feather name="clock" size={12} color={Colors.textLight} />
@@ -490,6 +507,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 6,
+    flexWrap: "wrap",
   },
   aiReason: {
     flex: 1,
@@ -512,6 +530,15 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     color: Colors.textLight,
   },
+  confidenceBadge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  badgeHigh: { backgroundColor: "#22c55e22" },
+  badgeMedium: { backgroundColor: Colors.gold + "22" },
+  badgeLow: { backgroundColor: Colors.border },
+  confidenceBadgeText: { fontSize: 9, fontFamily: "Poppins_700Bold", color: Colors.textSecondary, letterSpacing: 0.3 },
+  signalsBox: { gap: 4, paddingTop: 2 },
+  signalRow: { flexDirection: "row", alignItems: "flex-start", gap: 5 },
+  signalDot: { fontSize: 10, color: Colors.gold, lineHeight: 18, fontFamily: "Poppins_700Bold" },
+  signalText: { flex: 1, fontSize: 11, fontFamily: "Poppins_400Regular", color: Colors.textLight, lineHeight: 17 },
   sectionLabel: {
     fontSize: 13,
     fontFamily: "Poppins_700Bold",

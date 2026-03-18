@@ -60,6 +60,7 @@ export default function SendDirectScreen() {
     getAISuggestion({
       eventType: occasion,
       receiverId: params.receiverId,
+      receiverName: receiverName.trim() || undefined,
     }).then(s => { if (s) setAiSuggestion(s); }).finally(() => setAiLoading(false));
   }, [occasion]);
 
@@ -282,7 +283,24 @@ export default function SendDirectScreen() {
                     </Text>
                   </Pressable>
                 </View>
-                <Text style={styles.aiReason}>{aiSuggestion.reasoning}</Text>
+                <View style={styles.aiReasonRow}>
+                  <Text style={styles.aiReason}>{aiSuggestion.reasoning}</Text>
+                  {aiSuggestion.confidenceLevel && (
+                    <View style={[styles.confidenceBadge, aiSuggestion.confidenceLevel === "high" ? styles.badgeHigh : aiSuggestion.confidenceLevel === "medium" ? styles.badgeMedium : styles.badgeLow]}>
+                      <Text style={styles.confidenceBadgeText}>{aiSuggestion.confidenceLevel === "high" ? "✓ High" : aiSuggestion.confidenceLevel === "medium" ? "~ Med" : "New"}</Text>
+                    </View>
+                  )}
+                </View>
+                {aiSuggestion.signals && aiSuggestion.signals.length > 0 && (
+                  <View style={styles.signalsBox}>
+                    {aiSuggestion.signals.map((s, i) => (
+                      <View key={i} style={styles.signalRow}>
+                        <Text style={styles.signalDot}>•</Text>
+                        <Text style={styles.signalText}>{s}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </>
             ) : null}
           </View>
@@ -489,7 +507,17 @@ const styles = StyleSheet.create({
   aiChipLabel: { fontSize: 9, fontFamily: "Poppins_600SemiBold", color: Colors.textLight, textTransform: "uppercase", letterSpacing: 0.5 },
   aiChipAmt: { fontSize: 17, fontFamily: "Poppins_700Bold", color: Colors.text },
   aiChipAmtActive: { color: Colors.goldDark },
-  aiReason: { fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.textSecondary, lineHeight: 17 },
+  aiReasonRow: { flexDirection: "row", alignItems: "flex-start", gap: 6, flexWrap: "wrap" },
+  aiReason: { flex: 1, fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.textSecondary, lineHeight: 17 },
+  confidenceBadge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  badgeHigh: { backgroundColor: "#22c55e22" },
+  badgeMedium: { backgroundColor: Colors.gold + "22" },
+  badgeLow: { backgroundColor: Colors.border },
+  confidenceBadgeText: { fontSize: 9, fontFamily: "Poppins_700Bold", color: Colors.textSecondary, letterSpacing: 0.3 },
+  signalsBox: { gap: 3, paddingTop: 2 },
+  signalRow: { flexDirection: "row", alignItems: "flex-start", gap: 5 },
+  signalDot: { fontSize: 10, color: Colors.gold, lineHeight: 17, fontFamily: "Poppins_700Bold" },
+  signalText: { flex: 1, fontSize: 11, fontFamily: "Poppins_400Regular", color: Colors.textLight, lineHeight: 17 },
   presetGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 },
   presetCard: {
     width: "30%", flexGrow: 1,
