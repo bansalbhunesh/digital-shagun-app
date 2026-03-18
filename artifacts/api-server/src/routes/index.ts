@@ -9,6 +9,8 @@ import ledgerRouter from "./ledger";
 import aiRouter from "./ai";
 import otpRouter from "./otp";
 import paymentsRouter from "./payments";
+import analyticsRouter from "./analytics";
+import pushTokensRouter from "./pushTokens";
 
 const router: IRouter = Router();
 
@@ -22,5 +24,7 @@ router.use("/ledger", ledgerRouter);
 router.use("/ai", aiRouter);
 router.use("/otp", otpRouter);
 router.use("/payments", paymentsRouter);
+router.use("/analytics", analyticsRouter);
+router.use("/push", pushTokensRouter);
 
 export default router;

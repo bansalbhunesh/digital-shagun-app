@@ -98,6 +98,7 @@ export default function GiftRegistryScreen() {
   const [adding, setAdding] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [tab, setTab] = useState<"registry" | "catalog">("catalog");
+  const [isLive, setIsLive] = useState(false);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   const load = useCallback(async () => {
@@ -112,6 +113,19 @@ export default function GiftRegistryScreen() {
   }, [eventId, getEventGifts]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Real-time polling every 10 seconds — shows live updates without manual refresh
+  useEffect(() => {
+    if (!eventId) return;
+    const interval = setInterval(async () => {
+      try {
+        const data = await getEventGifts(eventId);
+        setGifts(data);
+        setIsLive(true);
+      } catch {}
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [eventId, getEventGifts]);
 
   useFocusEffect(
     useCallback(() => {
@@ -185,8 +199,16 @@ export default function GiftRegistryScreen() {
           <Feather name="arrow-left" size={22} color={Colors.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Gift Registry</Text>
-        <View style={styles.headerCount}>
-          <Text style={styles.headerCountText}>{gifts.length}/{MAX_REGISTRY}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {isLive && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#22c55e" }} />
+              <Text style={{ fontSize: 10, color: "#22c55e", fontFamily: "Poppins_600SemiBold" }}>LIVE</Text>
+            </View>
+          )}
+          <View style={styles.headerCount}>
+            <Text style={styles.headerCountText}>{gifts.length}/{MAX_REGISTRY}</Text>
+          </View>
         </View>
       </View>
 

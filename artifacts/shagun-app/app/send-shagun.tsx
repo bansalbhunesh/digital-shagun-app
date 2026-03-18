@@ -25,7 +25,7 @@ export default function SendShagunScreen() {
   const { eventId, receiverId, receiverName, eventType } = useLocalSearchParams<{
     eventId: string; receiverId: string; receiverName: string; eventType?: string;
   }>();
-  const { sendShagun, getAISuggestion, createPaymentOrder, capturePayment } = useApp();
+  const { sendShagun, getAISuggestion, createPaymentOrder, capturePayment, trackEvent } = useApp();
   const insets = useSafeAreaInsets();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
@@ -52,6 +52,14 @@ export default function SendShagunScreen() {
           eventId: eventId ?? undefined,
         });
         setAiSuggestion(suggestion);
+        if (suggestion) {
+          trackEvent("ai_suggestion_fetched", {
+            eventType: eventType ?? "wedding",
+            hasHistory: suggestion.hasHistory,
+            confidence: suggestion.confidenceLevel,
+            suggestedAmount: suggestion.suggestedAmount,
+          });
+        }
       } finally {
         setAiLoading(false);
       }
@@ -73,9 +81,9 @@ export default function SendShagunScreen() {
   const handlePaymentMessage = async (event: WebViewMessageEvent) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === "dismissed") { setPaymentModal(false); setLoading(false); return; }
-      if (data.type === "failed") { setPaymentModal(false); setError(data.error ?? "Payment failed. Please try again."); setLoading(false); return; }
-      if (data.type === "demo_success") { setPaymentModal(false); await recordTransaction(); setLoading(false); return; }
+      if (data.type === "dismissed") { setPaymentModal(false); setLoading(false); trackEvent("payment_dismissed", { screen: "send_shagun" }); return; }
+      if (data.type === "failed") { setPaymentModal(false); setError(data.error ?? "Payment failed. Please try again."); setLoading(false); trackEvent("payment_failed", { screen: "send_shagun", error: data.error }); return; }
+      if (data.type === "demo_success") { setPaymentModal(false); await recordTransaction(); trackEvent("payment_success", { screen: "send_shagun", isDemoMode: true, amount: finalAmount }); setLoading(false); return; }
       if (data.type === "success") {
         try {
           const result = await capturePayment({
@@ -87,8 +95,9 @@ export default function SendShagunScreen() {
           });
           setPaymentModal(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          trackEvent("payment_success", { screen: "send_shagun", amount: finalAmount, eventId });
           setSent(result.transactionId);
-        } catch { setPaymentModal(false); setError("Could not verify payment. Please contact support with your payment ID."); }
+        } catch { setPaymentModal(false); setError("Could not verify payment. Please contact support with your payment ID."); trackEvent("payment_failed", { screen: "send_shagun", stage: "capture" }); }
         setLoading(false);
       }
     } catch {}
@@ -102,6 +111,7 @@ export default function SendShagunScreen() {
     setError("");
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    trackEvent("payment_initiated", { screen: "send_shagun", amount: finalAmount, eventType: eventType ?? "wedding" });
     try {
       const order = await createPaymentOrder(finalAmount, { receiverId: receiverId!, eventId: eventId ?? "direct", receiverName: receiverName ?? "" });
       setPaymentOrder({ id: order.id, keyId: order.keyId, isDemoMode: order.isDemoMode });

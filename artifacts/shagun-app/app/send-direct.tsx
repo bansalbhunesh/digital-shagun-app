@@ -34,7 +34,7 @@ export default function SendDirectScreen() {
   const params = useLocalSearchParams<{
     receiverName?: string; receiverId?: string; occasion?: string;
   }>();
-  const { sendShagun, getAISuggestion, user, createPaymentOrder, capturePayment } = useApp();
+  const { sendShagun, getAISuggestion, user, createPaymentOrder, capturePayment, trackEvent } = useApp();
   const insets = useSafeAreaInsets();
 
   const [receiverName, setReceiverName] = useState(params.receiverName ?? "");
@@ -82,19 +82,21 @@ export default function SendDirectScreen() {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === "dismissed") {
-        setPaymentModal(false);
-        setLoading(false);
+        setPaymentModal(false); setLoading(false);
+        trackEvent("payment_dismissed", { screen: "send_direct" });
         return;
       }
       if (data.type === "failed") {
         setPaymentModal(false);
         setError(data.error ?? "Payment failed. Please try again.");
         setLoading(false);
+        trackEvent("payment_failed", { screen: "send_direct", error: data.error });
         return;
       }
       if (data.type === "demo_success") {
         setPaymentModal(false);
         await recordTransaction("demo_" + Date.now());
+        trackEvent("payment_success", { screen: "send_direct", isDemoMode: true, amount: finalAmount });
         setLoading(false);
         return;
       }
@@ -109,10 +111,12 @@ export default function SendDirectScreen() {
           });
           setPaymentModal(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          trackEvent("payment_success", { screen: "send_direct", amount: finalAmount, occasion });
           setSent(result.transactionId);
         } catch {
           setPaymentModal(false);
           setError("Could not verify payment. Please contact support with your payment ID.");
+          trackEvent("payment_failed", { screen: "send_direct", stage: "capture" });
         }
         setLoading(false);
       }
@@ -131,6 +135,7 @@ export default function SendDirectScreen() {
     setError("");
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    trackEvent("payment_initiated", { screen: "send_direct", amount: finalAmount, occasion });
     try {
       const receiverId = params.receiverId ?? ("direct_" + receiverName.trim().toLowerCase().replace(/\s+/g, "_"));
       const order = await createPaymentOrder(finalAmount, {

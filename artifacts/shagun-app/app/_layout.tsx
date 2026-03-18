@@ -8,7 +8,9 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import * as Notifications from "expo-notifications";
 import React, { useEffect } from "react";
+import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -20,8 +22,40 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
+// Configure notification behavior
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+async function requestPushPermission(): Promise<string | null> {
+  if (Platform.OS === "web") return null;
+
+  const { status: existing } = await Notifications.getPermissionsAsync();
+  let finalStatus = existing;
+
+  if (existing !== "granted") {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+
+  if (finalStatus !== "granted") return null;
+
+  try {
+    const token = await Notifications.getExpoPushTokenAsync();
+    return token.data;
+  } catch {
+    return null;
+  }
+}
+
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useApp();
+  const { user, isLoading, registerPushToken } = useApp();
   const segments = useSegments();
   const router = useRouter();
 
@@ -32,6 +66,16 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       router.replace("/");
     }
   }, [user, isLoading, segments]);
+
+  // Register push token whenever user logs in
+  useEffect(() => {
+    if (!user) return;
+    requestPushPermission().then(token => {
+      if (token) {
+        registerPushToken(token, Platform.OS);
+      }
+    }).catch(() => {});
+  }, [user?.id]);
 
   return <>{children}</>;
 }

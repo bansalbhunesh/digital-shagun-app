@@ -308,6 +308,38 @@ const [AppProvider, useApp] = createContextHook(() => {
     return apiFetch(`/users/${user.id}/stats`);
   }, [user]);
 
+  const trackEvent = useCallback(async (
+    event: string,
+    properties?: Record<string, unknown>,
+  ) => {
+    try {
+      await apiFetch("/analytics/event", {
+        method: "POST",
+        body: JSON.stringify({ event, properties, userId: user?.id }),
+      });
+    } catch {}
+  }, [user]);
+
+  const registerPushToken = useCallback(async (token: string, platform?: string) => {
+    if (!user || !token) return;
+    try {
+      await apiFetch("/push/register", {
+        method: "POST",
+        body: JSON.stringify({ token, platform }),
+      });
+    } catch {}
+  }, [user]);
+
+  const removePushToken = useCallback(async (token: string) => {
+    if (!user || !token) return;
+    try {
+      await apiFetch("/push/register", {
+        method: "DELETE",
+        body: JSON.stringify({ token }),
+      });
+    } catch {}
+  }, [user]);
+
   return {
     user, isLoading, myEvents,
     requestOTP, verifyOTP, login, logout,
@@ -319,6 +351,7 @@ const [AppProvider, useApp] = createContextHook(() => {
     getLedger, getLedgerDetail,
     getUserStats,
     createPaymentOrder, capturePayment,
+    trackEvent, registerPushToken, removePushToken,
   };
 });
 

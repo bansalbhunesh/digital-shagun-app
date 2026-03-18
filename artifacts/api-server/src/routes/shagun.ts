@@ -2,7 +2,9 @@ import { Router } from "express";
 import { db, transactionsTable, eventsTable, relationshipLedgerTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
+import { transactionGuard } from "../middleware/transactionGuard";
 import logger from "../lib/logger";
+import { sendPushNotification } from "../lib/pushNotifications";
 
 const router = Router();
 
@@ -15,7 +17,7 @@ const DEFAULT_PAGE_LIMIT = 20;
 const MAX_PAGE_LIMIT = 100;
 
 // POST /api/shagun — record a shagun transaction (JWT-protected, senderId from token)
-router.post("/", requireAuth, async (req: AuthRequest, res) => {
+router.post("/", requireAuth, transactionGuard, async (req: AuthRequest, res) => {
   const senderId = req.userId!;
   const { eventId, senderName, receiverId, receiverName, amount, message } = req.body;
 
@@ -66,6 +68,13 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
   }
 
   logger.info("shagun sent", { id: tx.id, senderId, receiverId, amount, eventId: resolvedEventId });
+
+  // Notify receiver in background (don't block the response)
+  sendPushNotification(receiverId, {
+    title: "🎁 Shagun Received!",
+    body: `${senderName} sent you ₹${amount.toLocaleString("en-IN")} shagun`,
+    data: { type: "shagun_received", transactionId: tx.id, eventId: resolvedEventId },
+  }).catch(() => {});
 
   return res.status(201).json({
     id: tx.id,
