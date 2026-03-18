@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, ScrollView, Platform,
+  ActivityIndicator, Platform,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -57,6 +58,7 @@ export default function SendShagunScreen() {
       const tx = await sendShagun({
         eventId: eventId!,
         receiverId: receiverId!,
+        receiverName: receiverName ?? undefined,
         amount: finalAmount,
         message: message.trim() || undefined,
       });
@@ -116,7 +118,7 @@ export default function SendShagunScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView bottomOffset={24} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.recipientCard}>
           <View style={styles.recipientAvatar}>
             <Text style={styles.recipientAvatarText}>{(receiverName ?? "H").charAt(0).toUpperCase()}</Text>
@@ -302,7 +304,7 @@ export default function SendShagunScreen() {
         </Pressable>
 
         <View style={{ height: 60 }} />
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }
