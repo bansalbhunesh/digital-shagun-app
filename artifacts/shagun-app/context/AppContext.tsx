@@ -117,6 +117,23 @@ const [AppProvider, useApp] = createContextHook(() => {
     })();
   }, []);
 
+  const requestOTP = useCallback(async (phone: string): Promise<{ devCode?: string }> => {
+    return apiFetch("/otp/send", {
+      method: "POST",
+      body: JSON.stringify({ phone }),
+    });
+  }, []);
+
+  const verifyOTP = useCallback(async (phone: string, code: string, name: string): Promise<AppUser> => {
+    const u = await apiFetch("/otp/verify", {
+      method: "POST",
+      body: JSON.stringify({ phone, code, name }),
+    });
+    setUser(u);
+    await AsyncStorage.setItem("shagun_user", JSON.stringify(u));
+    return u as AppUser;
+  }, []);
+
   const login = useCallback(async (name: string, phone: string) => {
     const u = await apiFetch("/users", {
       method: "POST",
@@ -125,6 +142,22 @@ const [AppProvider, useApp] = createContextHook(() => {
     setUser(u);
     await AsyncStorage.setItem("shagun_user", JSON.stringify(u));
     return u as AppUser;
+  }, []);
+
+  const createPaymentOrder = useCallback(async (amount: number, notes?: Record<string, string>) => {
+    return apiFetch("/payments/create-order", {
+      method: "POST",
+      body: JSON.stringify({ amount, notes }),
+    }) as Promise<{ id: string; amount: number; currency: string; keyId: string; isDemoMode: boolean }>;
+  }, []);
+
+  const verifyPayment = useCallback(async (params: {
+    razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string;
+  }) => {
+    return apiFetch("/payments/verify", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }) as Promise<{ verified: boolean; paymentId?: string }>;
   }, []);
 
   const logout = useCallback(async () => {
@@ -244,7 +277,7 @@ const [AppProvider, useApp] = createContextHook(() => {
 
   return {
     user, isLoading, myEvents,
-    login, logout,
+    requestOTP, verifyOTP, login, logout,
     fetchMyEvents, createEvent, getEvent, joinEvent,
     sendShagun, revealShagun, getEventShagun,
     getEventGifts, addGiftToRegistry, contributeToGift,
@@ -252,6 +285,7 @@ const [AppProvider, useApp] = createContextHook(() => {
     getAISuggestion,
     getLedger, getLedgerDetail,
     getUserStats,
+    createPaymentOrder, verifyPayment,
   };
 });
 

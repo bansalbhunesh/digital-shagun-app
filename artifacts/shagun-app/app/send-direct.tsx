@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Platform,
+  ActivityIndicator, Platform, Modal,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp, AISuggestion } from "@/context/AppContext";
 
 const PRESET_AMOUNTS = [101, 251, 501, 1100, 2100, 5100];
+
+function buildRazorpayHTML(orderId: string, keyId: string, amount: number, receiverName: string, isDemoMode: boolean) {
+  if (isDemoMode) {
+    return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;background:#FFF8F0;margin:0;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90vh;gap:16px}h2{color:#8B1A1A;font-size:22px;margin:0}.amount{font-size:42px;font-weight:bold;color:#8B1A1A}.btn{background:#8B1A1A;color:white;border:none;border-radius:14px;padding:16px 40px;font-size:17px;cursor:pointer;width:100%;max-width:300px}.btn-skip{background:transparent;color:#888;border:1px solid #ccc;border-radius:14px;padding:14px 40px;font-size:15px;cursor:pointer;width:100%;max-width:300px}.badge{background:#C9A84C22;color:#8B6914;border:1px solid #C9A84C;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:bold}</style></head><body><span class="badge">🔧 DEMO — Set RAZORPAY keys for real payments</span><h2>Payment Summary</h2><div class="amount">₹${amount.toLocaleString("en-IN")}</div><p>Shagun for <strong>${receiverName}</strong></p><p style="font-size:13px;color:#aaa;text-align:center">In demo mode, payment is simulated.<br>Set RAZORPAY_KEY_ID + RAZORPAY_KEY_SECRET in environment secrets.</p><button class="btn" onclick="window.ReactNativeWebView.postMessage(JSON.stringify({type:'demo_success'}))">✓ Simulate Payment</button><button class="btn-skip" onclick="window.ReactNativeWebView.postMessage(JSON.stringify({type:'dismissed'}))">Cancel</button></body></html>`;
+  }
+  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><script src="https://checkout.razorpay.com/v1/checkout.js"></script><style>body{font-family:sans-serif;background:#FFF8F0;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px}.spinner{border:3px solid #f3f3f3;border-top:3px solid #8B1A1A;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}.msg{color:#8B1A1A;font-size:16px}</style></head><body><div class="spinner"></div><div class="msg">Opening payment...</div><script>var o={key:"${keyId}",amount:"${Math.round(amount*100)}",currency:"INR",name:"Shagun",description:"Shagun for ${receiverName}",order_id:"${orderId}",theme:{color:"#8B1A1A"},modal:{ondismiss:function(){window.ReactNativeWebView.postMessage(JSON.stringify({type:"dismissed"}))}},handler:function(r){window.ReactNativeWebView.postMessage(JSON.stringify({type:"success",razorpay_payment_id:r.razorpay_payment_id,razorpay_order_id:r.razorpay_order_id,razorpay_signature:r.razorpay_signature}))}};var rzp=new Razorpay(o);rzp.on("payment.failed",function(r){window.ReactNativeWebView.postMessage(JSON.stringify({type:"failed",error:r.error.description}))});setTimeout(function(){rzp.open()},500);</script></body></html>`;
+}
 
 const OCCASIONS = [
   { key: "wedding", label: "Shaadi", emoji: "💍" },
@@ -26,7 +34,7 @@ export default function SendDirectScreen() {
   const params = useLocalSearchParams<{
     receiverName?: string; receiverId?: string; occasion?: string;
   }>();
-  const { sendShagun, getAISuggestion, user } = useApp();
+  const { sendShagun, getAISuggestion, user, createPaymentOrder, verifyPayment } = useApp();
   const insets = useSafeAreaInsets();
 
   const [receiverName, setReceiverName] = useState(params.receiverName ?? "");
@@ -39,6 +47,8 @@ export default function SendDirectScreen() {
   const [sent, setSent] = useState<string | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [paymentModal, setPaymentModal] = useState(false);
+  const [paymentOrder, setPaymentOrder] = useState<{ id: string; keyId: string; isDemoMode: boolean } | null>(null);
 
   const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : null);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
@@ -53,6 +63,62 @@ export default function SendDirectScreen() {
     }).then(s => { if (s) setAiSuggestion(s); }).finally(() => setAiLoading(false));
   }, [occasion]);
 
+  const recordTransaction = async (paymentId?: string) => {
+    const amt = finalAmount!;
+    const receiverId = params.receiverId ?? ("direct_" + receiverName.trim().toLowerCase().replace(/\s+/g, "_"));
+    const tx = await sendShagun({
+      eventId: "direct",
+      receiverId,
+      receiverName: receiverName.trim(),
+      amount: amt,
+      message: message.trim() || undefined,
+    });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setSent(tx.id);
+  };
+
+  const handlePaymentMessage = async (event: WebViewMessageEvent) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === "dismissed") {
+        setPaymentModal(false);
+        setLoading(false);
+        return;
+      }
+      if (data.type === "failed") {
+        setPaymentModal(false);
+        setError(data.error ?? "Payment failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+      if (data.type === "demo_success") {
+        setPaymentModal(false);
+        await recordTransaction("demo_" + Date.now());
+        setLoading(false);
+        return;
+      }
+      if (data.type === "success") {
+        try {
+          const result = await verifyPayment({
+            razorpay_order_id: data.razorpay_order_id,
+            razorpay_payment_id: data.razorpay_payment_id,
+            razorpay_signature: data.razorpay_signature,
+          });
+          setPaymentModal(false);
+          if (result.verified) {
+            await recordTransaction(result.paymentId);
+          } else {
+            setError("Payment verification failed. Contact support.");
+          }
+        } catch {
+          setPaymentModal(false);
+          setError("Could not verify payment. Please contact support.");
+        }
+        setLoading(false);
+      }
+    } catch {}
+  };
+
   const handleSend = async () => {
     if (!receiverName.trim()) {
       setError("Please enter the recipient's name");
@@ -66,22 +132,19 @@ export default function SendDirectScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
-      const receiverId = params.receiverId ?? ("direct_" + receiverName.trim().toLowerCase().replace(/\s+/g, "_"));
-      const tx = await sendShagun({
-        eventId: "direct",
-        receiverId,
+      const order = await createPaymentOrder(finalAmount, {
         receiverName: receiverName.trim(),
-        amount: finalAmount,
-        message: message.trim() || undefined,
+        occasion,
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setSent(tx.id);
+      setPaymentOrder({ id: order.id, keyId: order.keyId, isDemoMode: order.isDemoMode });
+      setPaymentModal(true);
     } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
+      setError("Could not initiate payment. Please try again.");
       setLoading(false);
     }
   };
+
+  const razorpayHTML = paymentOrder ? buildRazorpayHTML(paymentOrder.id, paymentOrder.keyId, finalAmount ?? 0, receiverName, paymentOrder.isDemoMode) : "";
 
   if (sent) {
     return (
@@ -333,6 +396,27 @@ export default function SendDirectScreen() {
           This records your shagun in the Blessings Ledger for future reference.
         </Text>
       </KeyboardAwareScrollView>
+
+      {/* Razorpay Payment Modal */}
+      <Modal visible={paymentModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setPaymentModal(false); setLoading(false); }}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Secure Payment</Text>
+            <Pressable onPress={() => { setPaymentModal(false); setLoading(false); }} style={styles.modalClose}>
+              <Feather name="x" size={22} color={Colors.text} />
+            </Pressable>
+          </View>
+          {paymentOrder && (
+            <WebView
+              source={{ html: razorpayHTML }}
+              onMessage={handlePaymentMessage}
+              javaScriptEnabled
+              domStorageEnabled
+              style={{ flex: 1, backgroundColor: Colors.cream }}
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -468,6 +552,10 @@ const styles = StyleSheet.create({
     fontSize: 11, fontFamily: "Poppins_400Regular",
     color: Colors.textLight, textAlign: "center", lineHeight: 17,
   },
+  modalContainer: { flex: 1, backgroundColor: Colors.cream },
+  modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.borderLight },
+  modalTitle: { fontSize: 17, fontFamily: "Poppins_700Bold", color: Colors.text },
+  modalClose: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   successInner: {
     flex: 1, alignItems: "center", justifyContent: "center",
     paddingHorizontal: 32, gap: 14,

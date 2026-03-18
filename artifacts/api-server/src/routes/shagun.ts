@@ -12,6 +12,13 @@ const REVEAL_DELAY_MINUTES = 10;
 
 router.post("/", async (req, res) => {
   const { eventId, senderId, senderName, receiverId, receiverName, amount, message } = req.body;
+
+  if (!senderId || typeof senderId !== "string") return res.status(400).json({ error: "senderId is required" });
+  if (!senderName || typeof senderName !== "string") return res.status(400).json({ error: "senderName is required" });
+  if (!receiverId || typeof receiverId !== "string") return res.status(400).json({ error: "receiverId is required" });
+  if (!amount || typeof amount !== "number" || amount < 1 || amount > 10000000) return res.status(400).json({ error: "amount must be a number between 1 and 10,000,000" });
+  if (message && typeof message === "string" && message.length > 500) return res.status(400).json({ error: "Message must be under 500 characters" });
+
   const resolvedEventId = eventId || "direct";
 
   const id = generateId();
