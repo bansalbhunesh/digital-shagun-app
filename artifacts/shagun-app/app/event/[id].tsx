@@ -162,9 +162,22 @@ export default function EventDetailScreen() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Feather name="arrow-left" size={22} color={Colors.cream} />
         </Pressable>
-        <Pressable onPress={handleShare} style={styles.shareBtn}>
-          <Feather name="share-2" size={20} color={Colors.cream} />
-        </Pressable>
+        <View style={styles.headerRight}>
+          {isHost && (
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({ pathname: "/event-qr/[id]", params: { id: event?.id ?? id } });
+              }}
+              style={styles.shareBtn}
+            >
+              <Feather name="grid" size={20} color={Colors.cream} />
+            </Pressable>
+          )}
+          <Pressable onPress={handleShare} style={styles.shareBtn}>
+            <Feather name="share-2" size={20} color={Colors.cream} />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.heroSection}>
@@ -319,6 +332,11 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: "center",
     justifyContent: "center",
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   shareBtn: {
     width: 40,
