@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, numeric, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -12,7 +12,11 @@ export const relationshipLedgerTable = pgTable("relationship_ledger", {
   lastEventName: text("last_event_name"),
   lastEventDate: text("last_event_date"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("ledger_user_contact_uidx").on(table.userId, table.contactId),
+  index("ledger_user_id_idx").on(table.userId),
+  index("ledger_contact_id_idx").on(table.contactId),
+]);
 
 export const insertLedgerSchema = createInsertSchema(relationshipLedgerTable);
 export type InsertLedger = z.infer<typeof insertLedgerSchema>;

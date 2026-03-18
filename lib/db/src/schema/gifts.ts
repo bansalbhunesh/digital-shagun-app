@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, numeric, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -11,7 +11,9 @@ export const eventGiftsTable = pgTable("event_gifts", {
   currentAmount: numeric("current_amount", { precision: 12, scale: 2 }).notNull().default("0"),
   imageEmoji: text("image_emoji").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("gifts_event_id_idx").on(table.eventId),
+]);
 
 export const giftContributionsTable = pgTable("gift_contributions", {
   id: text("id").primaryKey(),
@@ -21,7 +23,11 @@ export const giftContributionsTable = pgTable("gift_contributions", {
   contributorName: text("contributor_name").notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("contributions_gift_id_idx").on(table.giftId),
+  index("contributions_event_id_idx").on(table.eventId),
+  index("contributions_contributor_id_idx").on(table.contributorId),
+]);
 
 export const insertEventGiftSchema = createInsertSchema(eventGiftsTable);
 export const insertGiftContributionSchema = createInsertSchema(giftContributionsTable);

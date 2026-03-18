@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, usersTable, relationshipLedgerTable, transactionsTable, eventsTable } from "@workspace/db";
+import { eq, sql } from "drizzle-orm";
 
 const router = Router();
 
@@ -39,6 +39,53 @@ router.post("/", async (req, res) => {
     phone: user.phone,
     avatarColor: user.avatarColor,
     createdAt: user.createdAt.toISOString(),
+  });
+});
+
+router.get("/:userId/stats", async (req, res) => {
+  const { userId } = req.params;
+
+  const ledgerRows = await db.select().from(relationshipLedgerTable)
+    .where(eq(relationshipLedgerTable.userId, userId));
+
+  const totalGiven = ledgerRows.reduce((s, r) => s + parseFloat(r.totalGiven ?? "0"), 0);
+  const totalReceived = ledgerRows.reduce((s, r) => s + parseFloat(r.totalReceived ?? "0"), 0);
+  const relationshipCount = ledgerRows.length;
+
+  const sentTransactions = await db.select().from(transactionsTable)
+    .where(eq(transactionsTable.senderId, userId));
+
+  const receivedTransactions = await db.select().from(transactionsTable)
+    .where(eq(transactionsTable.receiverId, userId));
+
+  const hostedEvents = await db.select().from(eventsTable)
+    .where(eq(eventsTable.hostId, userId));
+
+  const topGiver = ledgerRows
+    .filter(r => r.contactName)
+    .sort((a, b) => parseFloat(b.totalGiven ?? "0") - parseFloat(a.totalGiven ?? "0"))[0];
+
+  const topReceiver = ledgerRows
+    .filter(r => r.contactName)
+    .sort((a, b) => parseFloat(b.totalReceived ?? "0") - parseFloat(a.totalReceived ?? "0"))[0];
+
+  return res.json({
+    userId,
+    totalGiven,
+    totalReceived,
+    balance: totalReceived - totalGiven,
+    relationshipCount,
+    shagunSentCount: sentTransactions.length,
+    shagunReceivedCount: receivedTransactions.length,
+    eventsHosted: hostedEvents.length,
+    topGiver: topGiver ? {
+      name: topGiver.contactName,
+      amount: parseFloat(topGiver.totalGiven ?? "0"),
+    } : null,
+    topReceiver: topReceiver ? {
+      name: topReceiver.contactName,
+      amount: parseFloat(topReceiver.totalReceived ?? "0"),
+    } : null,
   });
 });
 

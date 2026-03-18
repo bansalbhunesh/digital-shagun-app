@@ -1,11 +1,24 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from "react-native";
 import { router } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+
+interface UserStats {
+  totalGiven: number;
+  totalReceived: number;
+  balance: number;
+  relationshipCount: number;
+  shagunSentCount: number;
+  shagunReceivedCount: number;
+  eventsHosted: number;
+  topGiver: { name: string; amount: number } | null;
+  topReceiver: { name: string; amount: number } | null;
+}
 
 const EVENT_TYPE_INFO: Record<string, { icon: string; label: string; color: string }> = {
   wedding: { icon: "heart", label: "Shaadi", color: "#8B1A1A" },
@@ -16,10 +29,17 @@ const EVENT_TYPE_INFO: Record<string, { icon: string; label: string; color: stri
 };
 
 export default function HomeScreen() {
-  const { user } = useApp();
+  const { user, getUserStats } = useApp();
   const insets = useSafeAreaInsets();
+  const [stats, setStats] = useState<UserStats | null>(null);
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
+
+  useFocusEffect(
+    useCallback(() => {
+      getUserStats().then(s => { if (s) setStats(s); }).catch(() => {});
+    }, [getUserStats])
+  );
 
   const mainActions = [
     {
@@ -72,6 +92,47 @@ export default function HomeScreen() {
           </Text>
           <Text style={styles.heroQuoteEn}>Blessings given on auspicious occasions always bear fruit</Text>
         </View>
+
+        {(stats && (stats.totalGiven > 0 || stats.totalReceived > 0 || stats.relationshipCount > 0)) ? (
+          <Pressable
+            style={styles.statsCard}
+            onPress={() => router.push("/(tabs)/ledger")}
+          >
+            <View style={styles.statsCardHeader}>
+              <Text style={styles.statsCardTitle}>Your Shagun Summary</Text>
+              <Feather name="chevron-right" size={16} color={Colors.goldLight} />
+            </View>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>₹{stats.totalGiven.toLocaleString("en-IN")}</Text>
+                <Text style={styles.statLabel}>Given</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, styles.statReceived]}>₹{stats.totalReceived.toLocaleString("en-IN")}</Text>
+                <Text style={styles.statLabel}>Received</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{stats.shagunSentCount}</Text>
+                <Text style={styles.statLabel}>Sent</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{stats.relationshipCount}</Text>
+                <Text style={styles.statLabel}>Families</Text>
+              </View>
+            </View>
+            {stats.topGiver && (
+              <View style={styles.statsHighlight}>
+                <Feather name="award" size={12} color={Colors.gold} />
+                <Text style={styles.statsHighlightText} numberOfLines={1}>
+                  {stats.topGiver.name} gave you most — ₹{stats.topGiver.amount.toLocaleString("en-IN")}
+                </Text>
+              </View>
+            )}
+          </Pressable>
+        ) : null}
 
         <View style={styles.actionsGrid}>
           {mainActions.map((action, i) => (
@@ -231,6 +292,77 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Poppins_400Regular",
     color: "rgba(255,255,255,0.6)",
+    fontStyle: "italic",
+  },
+  statsCard: {
+    backgroundColor: Colors.primary,
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 20,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: Colors.gold + "40",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  statsCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  statsCardTitle: {
+    fontSize: 13,
+    fontFamily: "Poppins_600SemiBold",
+    color: Colors.goldLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+    gap: 3,
+  },
+  statDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
+  statValue: {
+    fontSize: 15,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.goldLight,
+  },
+  statReceived: {
+    color: "#90EE90",
+  },
+  statLabel: {
+    fontSize: 10,
+    fontFamily: "Poppins_400Regular",
+    color: "rgba(255,255,255,0.5)",
+    textAlign: "center",
+  },
+  statsHighlight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  statsHighlightText: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.goldLight,
+    flex: 1,
     fontStyle: "italic",
   },
   actionsGrid: {

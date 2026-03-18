@@ -237,6 +237,11 @@ const [AppProvider, useApp] = createContextHook(() => {
     return apiFetch(`/ledger/${user.id}/${contactId}`);
   }, [user]);
 
+  const getUserStats = useCallback(async () => {
+    if (!user) return null;
+    return apiFetch(`/users/${user.id}/stats`);
+  }, [user]);
+
   return {
     user, isLoading, myEvents,
     login, logout,
@@ -246,6 +251,7 @@ const [AppProvider, useApp] = createContextHook(() => {
     getKits, addKitToEvent,
     getAISuggestion,
     getLedger, getLedgerDetail,
+    getUserStats,
   };
 });
 

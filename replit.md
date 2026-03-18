@@ -15,6 +15,7 @@
 4. **Smart Gift Prioritization** — registry with progress bars and "Almost!" badges
 5. **Blessing Wall** — social messages attached to shagun gifts
 6. **QR code sharing** — hosts can share event QR + code for guests to join
+7. **Personal Stats Card** — home screen shows totalGiven, totalReceived, sent count, family count; taps to ledger
 
 ---
 

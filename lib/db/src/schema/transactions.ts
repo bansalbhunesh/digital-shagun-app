@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, numeric, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -13,7 +13,13 @@ export const transactionsTable = pgTable("transactions", {
   isRevealed: text("is_revealed").notNull().default("false"),
   revealAt: timestamp("reveal_at").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("tx_event_id_idx").on(table.eventId),
+  index("tx_sender_id_idx").on(table.senderId),
+  index("tx_receiver_id_idx").on(table.receiverId),
+  index("tx_reveal_at_idx").on(table.revealAt),
+  index("tx_sender_receiver_idx").on(table.senderId, table.receiverId),
+]);
 
 export const insertTransactionSchema = createInsertSchema(transactionsTable);
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
