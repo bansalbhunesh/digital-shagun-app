@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { db, transactionsTable, eventsTable, relationshipLedgerTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
+import { requireAuth, type AuthRequest } from "../middleware/auth";
+import logger from "../lib/logger";
 
 const router = Router();
 
@@ -9,12 +11,14 @@ function generateId(): string {
 }
 
 const REVEAL_DELAY_MINUTES = 10;
+const DEFAULT_PAGE_LIMIT = 20;
+const MAX_PAGE_LIMIT = 100;
 
-// POST /api/shagun — record a shagun transaction (direct DB write, auth'd)
-router.post("/", async (req, res) => {
-  const { eventId, senderId, senderName, receiverId, receiverName, amount, message } = req.body;
+// POST /api/shagun — record a shagun transaction (JWT-protected, senderId from token)
+router.post("/", requireAuth, async (req: AuthRequest, res) => {
+  const senderId = req.userId!;
+  const { eventId, senderName, receiverId, receiverName, amount, message } = req.body;
 
-  if (!senderId || typeof senderId !== "string") return res.status(400).json({ error: "senderId is required" });
   if (!senderName || typeof senderName !== "string") return res.status(400).json({ error: "senderName is required" });
   if (!receiverId || typeof receiverId !== "string") return res.status(400).json({ error: "receiverId is required" });
   if (!amount || typeof amount !== "number" || amount < 1 || amount > 10000000) return res.status(400).json({ error: "amount must be a number between 1 and 10,000,000" });
@@ -57,9 +61,11 @@ router.post("/", async (req, res) => {
       }
     });
   } catch (err: any) {
-    console.error("[shagun POST] transaction failed:", err.message);
+    logger.error("shagun POST transaction failed", { error: err.message, senderId, receiverId });
     return res.status(500).json({ error: "Failed to record shagun. Please try again." });
   }
+
+  logger.info("shagun sent", { id: tx.id, senderId, receiverId, amount, eventId: resolvedEventId });
 
   return res.status(201).json({
     id: tx.id,
@@ -115,9 +121,18 @@ async function upsertLedger(
   }
 }
 
+// GET /api/shagun/:eventId?page=1&limit=20
 router.get("/:eventId", async (req, res) => {
   const { eventId } = req.params;
-  const txs = await db.select().from(transactionsTable).where(eq(transactionsTable.eventId, eventId));
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(MAX_PAGE_LIMIT, Math.max(1, parseInt(req.query.limit as string) || DEFAULT_PAGE_LIMIT));
+  const offset = (page - 1) * limit;
+
+  const txs = await db.select().from(transactionsTable)
+    .where(eq(transactionsTable.eventId, eventId))
+    .orderBy(desc(transactionsTable.createdAt))
+    .limit(limit)
+    .offset(offset);
 
   const now = new Date();
   const result = [];
@@ -140,7 +155,7 @@ router.get("/:eventId", async (req, res) => {
     });
   }
 
-  return res.json(result);
+  return res.json({ data: result, page, limit, hasMore: result.length === limit });
 });
 
 router.get("/reveal/:transactionId", async (req, res) => {

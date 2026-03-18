@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import router from "./routes";
+import logger from "./lib/logger";
 
 const app: Express = express();
 
@@ -11,6 +12,21 @@ app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 }));
+
+// Structured request logging
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const ms = Date.now() - start;
+    const level = res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
+    logger[level](`${req.method} ${req.path}`, {
+      status: res.statusCode,
+      ms,
+      ip: req.ip,
+    });
+  });
+  next();
+});
 
 // Webhook route needs raw body for Razorpay signature verification
 app.use("/api/payments/webhook", express.raw({ type: "*/*" }));
@@ -41,7 +57,7 @@ app.use("/api/otp", otpLimiter);
 app.use("/api", router);
 
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
-  console.error("[API Error]", err.message, err.stack);
+  logger.error("Unhandled error", { message: err.message, path: req.path, stack: err.stack });
   res.status(500).json({ error: "Internal server error. Please try again." });
 });
 

@@ -232,8 +232,9 @@ const [AppProvider, useApp] = createContextHook(() => {
     return apiFetch(`/shagun/reveal/${transactionId}`);
   }, []);
 
-  const getEventShagun = useCallback(async (eventId: string) => {
-    return apiFetch(`/shagun/${eventId}`) as Promise<Transaction[]>;
+  const getEventShagun = useCallback(async (eventId: string, page = 1, limit = 20) => {
+    const res = await apiFetch(`/shagun/${eventId}?page=${page}&limit=${limit}`);
+    return (res.data ?? res) as Transaction[];
   }, []);
 
   const getEventGifts = useCallback(async (eventId: string) => {
@@ -283,9 +284,10 @@ const [AppProvider, useApp] = createContextHook(() => {
     return apiFetch(`/ai/suggest?${query}`) as Promise<AISuggestion>;
   }, [user]);
 
-  const getLedger = useCallback(async () => {
+  const getLedger = useCallback(async (page = 1, limit = 50) => {
     if (!user) return [];
-    return apiFetch(`/ledger/${user.id}`) as Promise<LedgerEntry[]>;
+    const res = await apiFetch(`/ledger/${user.id}?page=${page}&limit=${limit}`);
+    return (res.data ?? res) as LedgerEntry[];
   }, [user]);
 
   const getLedgerDetail = useCallback(async (contactId: string) => {

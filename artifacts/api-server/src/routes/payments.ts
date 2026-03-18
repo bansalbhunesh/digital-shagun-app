@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { db, paymentsTable, transactionsTable, eventsTable, relationshipLedgerTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
+import logger from "../lib/logger";
 
 const router = Router();
 
@@ -67,7 +68,7 @@ router.post("/create-order", requireAuth, async (req: AuthRequest, res) => {
 
     return res.json({ id: order.id, amount: order.amount, currency: order.currency, keyId: process.env.RAZORPAY_KEY_ID, isDemoMode: false });
   } catch (err: any) {
-    console.error("[Razorpay] order creation failed:", err.message);
+    logger.error("Razorpay order creation failed", { error: err.message });
     return res.status(500).json({ error: "Payment order creation failed. Please try again." });
   }
 });
@@ -131,7 +132,7 @@ router.post("/capture", requireAuth, async (req: AuthRequest, res) => {
         const paidPaise = parseInt(rpPayment.amount, 10);
         const expectedPaise = Math.round(parseFloat(paymentRecord.amount) * 100);
         if (paidPaise !== expectedPaise) {
-          console.error(`[capture] Amount mismatch: expected ${expectedPaise} paise, Razorpay reports ${paidPaise} paise`);
+          logger.error("Amount mismatch", { expected: expectedPaise, received: paidPaise, orderId: razorpay_order_id });
           await db.update(paymentsTable).set({ status: "failed" }).where(eq(paymentsTable.orderId, razorpay_order_id));
           return res.status(400).json({ error: "Payment amount mismatch. Transaction rejected for security." });
         }
@@ -145,7 +146,7 @@ router.post("/capture", requireAuth, async (req: AuthRequest, res) => {
         }
       }
     } catch (verifyErr: any) {
-      console.error("[capture] Razorpay amount verification failed:", verifyErr.message);
+      logger.error("Razorpay amount verification failed", { error: verifyErr.message });
       return res.status(500).json({ error: "Could not verify payment with Razorpay. Please contact support." });
     }
   }
@@ -201,7 +202,7 @@ router.post("/capture", requireAuth, async (req: AuthRequest, res) => {
       }
     });
   } catch (err: any) {
-    console.error("[capture] DB transaction failed:", err.message);
+    logger.error("Capture DB transaction failed", { error: err.message, userId, orderId: razorpay_order_id });
     return res.status(500).json({ error: "Failed to record payment. Please contact support with your payment ID." });
   }
 
@@ -221,7 +222,7 @@ router.post("/webhook", async (req, res) => {
     const rawBody = req.body instanceof Buffer ? req.body : Buffer.from(JSON.stringify(req.body));
     const expected = crypto.createHmac("sha256", webhookSecret).update(rawBody).digest("hex");
     if (expected !== signature) {
-      console.warn("[webhook] Signature mismatch — rejected");
+      logger.warn("Webhook signature mismatch — rejected");
       return res.status(400).json({ error: "Webhook signature invalid" });
     }
   }
@@ -244,18 +245,85 @@ router.post("/webhook", async (req, res) => {
       await db.update(paymentsTable)
         .set({ webhookVerified: true, paymentId, status: "captured", capturedAt: new Date() })
         .where(and(eq(paymentsTable.orderId, orderId), eq(paymentsTable.status, "pending")));
-      console.log(`[webhook] payment.captured: order=${orderId}, payment=${paymentId}`);
+      logger.info("Webhook payment.captured", { orderId, paymentId });
     } else if (event === "payment.failed") {
       await db.update(paymentsTable)
         .set({ status: "failed" })
         .where(and(eq(paymentsTable.orderId, orderId), eq(paymentsTable.status, "pending")));
-      console.log(`[webhook] payment.failed: order=${orderId}`);
+      logger.warn("Webhook payment.failed", { orderId });
     }
   } catch (err: any) {
-    console.error("[webhook] DB update failed:", err.message);
+    logger.error("Webhook DB update failed", { error: err.message });
   }
 
   return res.status(200).json({ received: true });
+});
+
+// POST /api/payments/refund
+// Initiates a refund via Razorpay — only the original payer can request it
+router.post("/refund", requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.userId!;
+  const { razorpay_payment_id, amount } = req.body;
+
+  if (!razorpay_payment_id || typeof razorpay_payment_id !== "string") {
+    return res.status(400).json({ error: "razorpay_payment_id is required" });
+  }
+
+  // Find the payment record and verify ownership
+  const [record] = await db.select().from(paymentsTable)
+    .where(eq(paymentsTable.paymentId, razorpay_payment_id)).limit(1);
+
+  if (!record) {
+    return res.status(404).json({ error: "Payment not found" });
+  }
+  if (record.userId !== userId) {
+    return res.status(403).json({ error: "You can only refund your own payments" });
+  }
+  if (record.status !== "captured") {
+    return res.status(400).json({ error: `Cannot refund a payment with status: ${record.status}` });
+  }
+
+  const isDemoMode = record.orderId.startsWith("demo_order_");
+  if (isDemoMode) {
+    await db.update(paymentsTable).set({ status: "refunded" }).where(eq(paymentsTable.id, record.id));
+    logger.info("Demo refund processed", { paymentId: razorpay_payment_id, userId });
+    return res.json({ success: true, refundId: "demo_refund_" + Date.now(), isDemoMode: true });
+  }
+
+  const razorpay = getRazorpay();
+  if (!razorpay) {
+    return res.status(503).json({ error: "Payment service not configured. Contact support." });
+  }
+
+  const refundAmountPaise = amount
+    ? Math.round(amount * 100)
+    : undefined; // undefined = full refund
+
+  if (refundAmountPaise !== undefined && refundAmountPaise < 100) {
+    return res.status(400).json({ error: "Minimum refund amount is ₹1" });
+  }
+
+  const storedAmountPaise = Math.round(parseFloat(record.amount) * 100);
+  if (refundAmountPaise && refundAmountPaise > storedAmountPaise) {
+    return res.status(400).json({ error: "Refund amount cannot exceed original payment amount" });
+  }
+
+  try {
+    const refund = await razorpay.payments.refund(razorpay_payment_id, {
+      ...(refundAmountPaise ? { amount: refundAmountPaise } : {}),
+    });
+
+    const isFullRefund = !refundAmountPaise || refundAmountPaise === storedAmountPaise;
+    await db.update(paymentsTable)
+      .set({ status: isFullRefund ? "refunded" : "partial_refund" })
+      .where(eq(paymentsTable.id, record.id));
+
+    logger.info("Refund processed", { refundId: refund.id, paymentId: razorpay_payment_id, userId, amount: refundAmountPaise });
+    return res.json({ success: true, refundId: refund.id, amount: refund.amount / 100 });
+  } catch (err: any) {
+    logger.error("Refund failed", { error: err.message, paymentId: razorpay_payment_id });
+    return res.status(500).json({ error: "Refund failed. Please contact support." });
+  }
 });
 
 // Upsert a ledger row inside a transaction
