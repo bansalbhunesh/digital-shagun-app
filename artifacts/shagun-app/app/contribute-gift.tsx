@@ -11,12 +11,16 @@ import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { useContributeToGift } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import PaymentService from "@/services/PaymentService";
+// @ts-expect-error - Subpath not exposed in package.json exports but works in metro
+import { customFetch } from "@workspace/api-client-react/src/custom-fetch";
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000];
 
 export default function ContributeGiftScreen() {
-  const { giftId, giftName, giftEmoji, remaining } = useLocalSearchParams<{
+  const { giftId, giftName, giftEmoji, remaining, hostId, hostName } = useLocalSearchParams<{
     giftId: string; giftName: string; giftEmoji: string; remaining: string;
+    hostId: string; hostName: string;
   }>();
   const { user } = useApp();
   const queryClient = useQueryClient();
@@ -39,6 +43,20 @@ export default function ContributeGiftScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
+      // Fetch receiver's UPI ID (the event host)
+      const receiverData: any = await customFetch(`/api/users/${hostId}`);
+      
+      const paid = await PaymentService.processPayment({
+        amount: finalAmount,
+        receiverUpiId: receiverData?.upiId ?? null,
+        receiverName: hostName ?? "Host",
+      });
+
+      if (!paid) {
+        setLoading(false);
+        return;
+      }
+
       await contributeMutation({
         data: { 
           giftId: giftId!,

@@ -275,7 +275,14 @@ export default function EventDetailScreen() {
                 gift={g}
                 onContribute={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push({ pathname: "/contribute-gift", params: { giftId: g.id, giftName: g.name, giftEmoji: g.imageEmoji, remaining: (g.targetAmount - g.currentAmount).toString() } });
+                  router.push({ pathname: "/contribute-gift", params: { 
+                    giftId: g.id, 
+                    giftName: g.name, 
+                    giftEmoji: g.imageEmoji, 
+                    remaining: (g.targetAmount - g.currentAmount).toString(),
+                    hostId: event.hostId,
+                    hostName: event.hostName
+                  } });
                 }}
               />
             ))}

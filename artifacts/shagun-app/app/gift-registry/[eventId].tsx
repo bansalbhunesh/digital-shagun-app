@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, EventGift } from "@/context/AppContext";
+import { useApp, EventGift, Event } from "@/context/AppContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { customFetch, useAddGiftToRegistry } from "@workspace/api-client-react";
 
@@ -100,6 +100,11 @@ export default function GiftRegistryScreen() {
   const { data: gifts = [], isLoading: loading, refetch } = useQuery<EventGift[]>({
     queryKey: ["eventGifts", eventId],
     queryFn: () => customFetch(`/api/gifts/${eventId}`),
+    enabled: !!eventId,
+  });
+  const { data: event } = useQuery<Event>({
+    queryKey: ["eventDetail", eventId],
+    queryFn: () => customFetch(`/api/events/${eventId}`),
     enabled: !!eventId,
   });
   const { mutateAsync: addGiftMutation } = useAddGiftToRegistry();
@@ -328,6 +333,8 @@ export default function GiftRegistryScreen() {
                                 giftName: g.name,
                                 giftEmoji: g.imageEmoji,
                                 remaining: remaining.toString(),
+                                hostId: event?.hostId,
+                                hostName: event?.hostName,
                               },
                             });
                           }}
