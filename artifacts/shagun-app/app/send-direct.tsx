@@ -101,8 +101,6 @@ export default function SendDirectScreen() {
           receiverId,
           amount: finalAmount,
           message: message.trim() || undefined,
-          senderId: user!.id,
-          senderName: user!.name,
         }
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

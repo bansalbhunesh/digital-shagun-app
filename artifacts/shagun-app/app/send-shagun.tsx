@@ -79,8 +79,6 @@ export default function SendShagunScreen() {
           receiverId: receiverId!,
           amount: finalAmount,
           message: message.trim() || undefined,
-          senderId: user!.id,
-          senderName: user!.name,
         }
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

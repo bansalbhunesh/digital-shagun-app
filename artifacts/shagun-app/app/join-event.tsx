@@ -35,7 +35,7 @@ export default function JoinEventScreen() {
       const detail = await customFetch<{ event: { id: string } }>(`/api/events/${code.trim().toUpperCase()}`);
       await joinEvent({
         eventId: detail.event.id,
-        data: { userId: user!.id }
+        data: {}
       });
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

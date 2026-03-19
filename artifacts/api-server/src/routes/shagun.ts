@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, transactionsTable, eventsTable, relationshipLedgerTable } from "@workspace/db";
+import { db, transactionsTable, eventsTable, relationshipLedgerTable, usersTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { validateRequest } from "../middlewares/validate";
@@ -11,11 +11,14 @@ import { generateId } from "../utils/id";
 const REVEAL_DELAY_MINUTES = 10;
 
 router.post("/", requireAuth, validateRequest(SendShagunBody), async (req, res) => {
-  const { eventId, senderId, senderName, receiverId, receiverName, amount, message } = req.body;
+  const { eventId, senderId, receiverId, receiverName, amount, message } = req.body;
   
   if (req.user?.id !== senderId) {
     return res.status(403).json({ error: "Forbidden: You cannot send shagun on behalf of another user." });
   }
+
+  const [sender] = await db.select().from(usersTable).where(eq(usersTable.id, senderId)).limit(1);
+  const senderName = sender?.name ?? "Anonymous";
 
   const resolvedEventId = eventId || "direct";
 

@@ -1,12 +1,17 @@
 import { Router } from "express";
-import { db, eventGiftsTable, giftContributionsTable } from "@workspace/db";
+import { db, eventGiftsTable, giftContributionsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
 import { generateId } from "../utils/id";
-router.post("/contribute", async (req, res) => {
-  const { giftId, contributorId, contributorName, amount } = req.body;
+router.post("/contribute", requireAuth, async (req, res) => {
+  const { giftId, amount } = req.body;
+  const contributorId = req.user!.id;
+  
+  const [contributor] = await db.select().from(usersTable).where(eq(usersTable.id, contributorId)).limit(1);
+  const contributorName = contributor?.name ?? "Anonymous";
 
   const [gift] = await db.select().from(eventGiftsTable).where(eq(eventGiftsTable.id, giftId)).limit(1);
   if (!gift) return res.status(404).json({ error: "Gift not found" });

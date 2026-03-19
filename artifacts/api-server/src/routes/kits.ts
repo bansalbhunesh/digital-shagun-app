@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, eventGiftsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
@@ -98,8 +99,8 @@ router.get("/", (req, res) => {
   return res.json(kits);
 });
 
-router.post("/:eventId", async (req, res) => {
-  const { eventId } = req.params;
+router.post("/:eventId", requireAuth, async (req, res) => {
+  const eventId = req.params.eventId as string;
   const { kitId } = req.body;
 
   const kit = PREDEFINED_KITS.find(k => k.id === kitId);

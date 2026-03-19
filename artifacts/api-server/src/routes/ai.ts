@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, relationshipLedgerTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
+import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
@@ -98,7 +99,7 @@ function suggestAmountForEvent(eventType: string, relationshipHistory: { totalGi
   };
 }
 
-router.get("/suggest", async (req, res) => {
+router.get("/suggest", requireAuth, async (req, res) => {
   const { eventType, senderId, receiverId } = req.query as {
     eventType: string; senderId: string; receiverId: string;
   };

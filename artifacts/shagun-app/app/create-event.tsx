@@ -50,8 +50,6 @@ export default function CreateEventScreen() {
           date: date.trim(),
           venue: venue.trim() || undefined,
           description: description.trim() || undefined,
-          hostId: user!.id,
-          hostName: user!.name,
         }
       });
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });

@@ -27,7 +27,6 @@ export const CreateUserResponse = zod.object({
   name: zod.string(),
   phone: zod.string(),
   avatarColor: zod.string(),
-  upiId: zod.string().nullable().optional(),
   createdAt: zod.string(),
 });
 
@@ -40,13 +39,7 @@ export const GetUserResponse = zod.object({
   name: zod.string(),
   phone: zod.string(),
   avatarColor: zod.string(),
-  upiId: zod.string().nullable().optional(),
   createdAt: zod.string(),
-});
-
-export const UpdateUserBody = zod.object({
-  name: zod.string().optional(),
-  upiId: zod.string().optional(),
 });
 
 export const ListEventsQueryParams = zod.object({
@@ -84,8 +77,6 @@ export const CreateEventBody = zod.object({
     "birthday",
     "festival",
   ]),
-  hostId: zod.string(),
-  hostName: zod.string(),
   date: zod.string(),
   venue: zod.string().optional(),
   description: zod.string().optional(),
@@ -148,9 +139,7 @@ export const JoinEventParams = zod.object({
   eventId: zod.coerce.string(),
 });
 
-export const JoinEventBody = zod.object({
-  userId: zod.string(),
-});
+export const JoinEventBody = zod.object({}).passthrough();
 
 export const JoinEventResponse = zod.object({
   id: zod.string(),
@@ -175,8 +164,6 @@ export const JoinEventResponse = zod.object({
 
 export const SendShagunBody = zod.object({
   eventId: zod.string(),
-  senderId: zod.string(),
-  senderName: zod.string(),
   receiverId: zod.string(),
   amount: zod.number(),
   message: zod.string().optional(),
@@ -242,8 +229,6 @@ export const AddGiftToRegistryBody = zod.object({
 
 export const ContributeToGiftBody = zod.object({
   giftId: zod.string(),
-  contributorId: zod.string(),
-  contributorName: zod.string(),
   amount: zod.number(),
 });
 

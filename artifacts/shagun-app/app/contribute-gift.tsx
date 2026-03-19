@@ -60,8 +60,6 @@ export default function ContributeGiftScreen() {
         data: { 
           giftId: giftId!,
           amount: finalAmount,
-          contributorId: user!.id,
-          contributorName: user!.name
         }
       });
       queryClient.invalidateQueries({ queryKey: ["eventDetail"] });

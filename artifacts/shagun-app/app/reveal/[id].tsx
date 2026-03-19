@@ -32,12 +32,16 @@ export default function RevealScreen() {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mountedRef = useRef(true);
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   useEffect(() => {
     loadRevealStatus();
-    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+    return () => {
+      mountedRef.current = false;
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
   }, []);
 
   const loadRevealStatus = async () => {
@@ -57,10 +61,11 @@ export default function RevealScreen() {
     let secs = initialSeconds;
     countdownRef.current = setInterval(async () => {
       secs -= 1;
+      if (!mountedRef.current) { clearInterval(countdownRef.current!); return; }
       if (secs <= 0) {
         if (countdownRef.current) clearInterval(countdownRef.current);
         const data = await customFetch<RevealStatus>(`/api/shagun/reveal/${id}`);
-        setStatus(data);
+        if (mountedRef.current) setStatus(data);
       } else {
         setStatus(prev => prev ? { ...prev, secondsRemaining: secs } : prev);
       }

@@ -140,10 +140,7 @@ paths:
           application/json:
             schema:
               type: object
-              properties:
-                userId:
-                  type: string
-              required: [userId]
+              properties: {}
       responses:
         "200":
           description: Joined event
@@ -397,17 +394,13 @@ components:
         type:
           type: string
           enum: [wedding, baby_ceremony, housewarming, birthday, festival]
-        hostId:
-          type: string
-        hostName:
-          type: string
         date:
           type: string
         venue:
           type: string
         description:
           type: string
-      required: [title, type, hostId, hostName, date]
+      required: [title, type, date]
 
     Transaction:
       type: object
@@ -439,17 +432,13 @@ components:
       properties:
         eventId:
           type: string
-        senderId:
-          type: string
-        senderName:
-          type: string
         receiverId:
           type: string
         amount:
           type: number
         message:
           type: string
-      required: [eventId, senderId, senderName, receiverId, amount]
+      required: [eventId, receiverId, amount]
 
     RevealStatus:
       type: object
@@ -524,13 +513,9 @@ components:
       properties:
         giftId:
           type: string
-        contributorId:
-          type: string
-        contributorName:
-          type: string
         amount:
           type: number
-      required: [giftId, contributorId, contributorName, amount]
+      required: [giftId, amount]
 
     LedgerEntry:
       type: object

@@ -81,7 +81,7 @@ export default function KitsScreen() {
 
   const { data: kits = [], isLoading: loading } = useQuery<Kit[]>({
     queryKey: ["kits", eventType],
-    queryFn: () => customFetch(`/api/kits?type=${eventType}`),
+    queryFn: () => customFetch(`/api/kits?eventType=${eventType}`),
     enabled: !!eventType
   });
 

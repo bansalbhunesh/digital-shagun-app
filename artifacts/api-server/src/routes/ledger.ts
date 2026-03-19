@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, relationshipLedgerTable, transactionsTable, eventsTable } from "@workspace/db";
 import { eq, and, or } from "drizzle-orm";
+import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
@@ -11,8 +12,9 @@ function suggestAmount(totalGiven: number): number {
   return next ?? Math.ceil(totalGiven / 100) * 100 + 100;
 }
 
-router.get("/:userId", async (req, res) => {
+router.get("/:userId", requireAuth, async (req, res) => {
   const { userId } = req.params;
+  if (req.user!.id !== userId) return res.status(403).json({ error: "Forbidden" });
   const page = parseInt((req.query.page as string) ?? "0");
   const limitValue = parseInt((req.query.limit as string) ?? "20");
 
@@ -39,8 +41,10 @@ router.get("/:userId", async (req, res) => {
   });
 });
 
-router.get("/:userId/:contactId", async (req, res) => {
-  const { userId, contactId } = req.params;
+router.get("/:userId/:contactId", requireAuth, async (req, res) => {
+  const userId = req.params.userId as string;
+  const contactId = req.params.contactId as string;
+  if (req.user!.id !== userId) return res.status(403).json({ error: "Forbidden" });
 
   const [entry] = await db.select().from(relationshipLedgerTable)
     .where(and(

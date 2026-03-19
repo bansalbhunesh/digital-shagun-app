@@ -46,8 +46,9 @@ router.post("/", requireAuth, validateRequest(CreateUserBody), async (req, res) 
   });
 });
 
-router.get("/:userId/stats", async (req, res) => {
+router.get("/:userId/stats", requireAuth, async (req, res) => {
   const { userId } = req.params;
+  if (req.user!.id !== userId) return res.status(403).json({ error: "Forbidden" });
 
   const ledgerRows = await db.select().from(relationshipLedgerTable)
     .where(eq(relationshipLedgerTable.userId, userId));
@@ -56,14 +57,10 @@ router.get("/:userId/stats", async (req, res) => {
   const totalReceived = ledgerRows.reduce((s, r) => s + parseFloat(r.totalReceived ?? "0"), 0);
   const relationshipCount = ledgerRows.length;
 
-  const sentTransactions = await db.select().from(transactionsTable)
-    .where(eq(transactionsTable.senderId, userId));
+  const [{ count: shagunSentCount }] = await db.select({ count: sql<number>`count(*)` }).from(transactionsTable).where(eq(transactionsTable.senderId, userId));
+  const [{ count: shagunReceivedCount }] = await db.select({ count: sql<number>`count(*)` }).from(transactionsTable).where(eq(transactionsTable.receiverId, userId));
+  const [{ count: eventsHosted }] = await db.select({ count: sql<number>`count(*)` }).from(eventsTable).where(eq(eventsTable.hostId, userId));
 
-  const receivedTransactions = await db.select().from(transactionsTable)
-    .where(eq(transactionsTable.receiverId, userId));
-
-  const hostedEvents = await db.select().from(eventsTable)
-    .where(eq(eventsTable.hostId, userId));
 
   const topGiver = ledgerRows
     .filter(r => r.contactName)
@@ -79,9 +76,9 @@ router.get("/:userId/stats", async (req, res) => {
     totalReceived,
     balance: totalReceived - totalGiven,
     relationshipCount,
-    shagunSentCount: sentTransactions.length,
-    shagunReceivedCount: receivedTransactions.length,
-    eventsHosted: hostedEvents.length,
+    shagunSentCount,
+    shagunReceivedCount,
+    eventsHosted,
     topGiver: topGiver ? {
       name: topGiver.contactName,
       amount: parseFloat(topGiver.totalGiven ?? "0"),
@@ -93,8 +90,10 @@ router.get("/:userId/stats", async (req, res) => {
   });
 });
 
-router.get("/:userId", async (req, res) => {
+router.get("/:userId", requireAuth, async (req, res) => {
   const { userId } = req.params;
+  if (req.user!.id !== userId) return res.status(403).json({ error: "Forbidden" });
+
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
   if (!user) return res.status(404).json({ error: "User not found" });
   return res.json({
