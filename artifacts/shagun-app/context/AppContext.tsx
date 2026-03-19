@@ -1,6 +1,7 @@
 import createContextHook from "@nkzw/create-context-hook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect, useCallback } from "react";
+import { supabase } from "./supabase";
 
 const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
@@ -11,6 +12,7 @@ export interface AppUser {
   name: string;
   phone: string;
   avatarColor: string;
+  token?: string;
 }
 
 export interface Event {
@@ -93,11 +95,29 @@ export interface AISuggestion {
 }
 
 async function apiFetch(path: string, options?: RequestInit) {
+  const headers: Record<string, string> = { 
+    "Content-Type": "application/json", 
+    ...(options?.headers as any) 
+  };
+  
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+  } catch (err) {
+    console.error("Failed to get supabase session", err);
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    headers,
   });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`API error: ${res.status} - ${errorText}`);
+  }
   return res.json();
 }
 
@@ -109,8 +129,15 @@ const [AppProvider, useApp] = createContextHook(() => {
   useEffect(() => {
     (async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
         const stored = await AsyncStorage.getItem("shagun_user");
-        if (stored) setUser(JSON.parse(stored));
+        if (stored && session) {
+          setUser(JSON.parse(stored));
+        } else if (!session) {
+          // Local storage had a user but Supabase session is gone
+          setUser(null);
+          await AsyncStorage.removeItem("shagun_user");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -128,6 +155,7 @@ const [AppProvider, useApp] = createContextHook(() => {
   }, []);
 
   const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setUser(null);
     await AsyncStorage.removeItem("shagun_user");
   }, []);

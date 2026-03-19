@@ -58,6 +58,9 @@
   "dependencies": {
     "@expo-google-fonts/poppins": "^0.4.1",
     "@nkzw/create-context-hook": "^1.1.0",
-    "react-native-qrcode-svg": "^6.3.21"
+    "react-native-qrcode-svg": "^6.3.21",
+    "@react-navigation/native": "^6.1.18",
+    "@supabase/supabase-js": "^2.48.0",
+    "react-native-url-polyfill": "^2.0.0"
   }
 }

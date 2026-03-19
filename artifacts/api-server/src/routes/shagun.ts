@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { db, transactionsTable, eventsTable, relationshipLedgerTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
+import { requireAuth } from "../middlewares/auth";
+import { validateRequest } from "../middlewares/validate";
+import { SendShagunBody } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -10,8 +13,13 @@ function generateId(): string {
 
 const REVEAL_DELAY_MINUTES = 10;
 
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, validateRequest(SendShagunBody), async (req, res) => {
   const { eventId, senderId, senderName, receiverId, receiverName, amount, message } = req.body;
+  
+  if (req.user?.id !== senderId) {
+    return res.status(403).json({ error: "Forbidden: You cannot send shagun on behalf of another user." });
+  }
+
   const resolvedEventId = eventId || "direct";
 
   const id = generateId();

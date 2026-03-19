@@ -9,6 +9,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { supabase } from "@/context/supabase";
 
 export default function OnboardingScreen() {
   const { user, login } = useApp();
@@ -16,31 +17,67 @@ export default function OnboardingScreen() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
 
   React.useEffect(() => {
     if (user) router.replace("/(tabs)");
   }, [user]);
 
-  const handleLogin = async () => {
-    if (!name.trim() || !phone.trim()) {
-      setError("Please enter your name and phone number");
-      return;
-    }
-    if (phone.trim().length < 10) {
-      setError("Please enter a valid phone number");
+  const handleSendOtp = async () => {
+    if (!name.trim() || !phone.trim() || phone.trim().length < 10) {
+      setError("Please enter a valid name and phone number (10 digits)");
       return;
     }
     setError("");
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    try {
-      await login(name.trim(), phone.trim());
-      router.replace("/(tabs)");
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
+    
+    // Quick assumption: append +91 if length is exactly 10
+    const formattedPhone = phone.trim().length === 10 ? `+91${phone.trim()}` : phone.trim();
+    
+    const { error } = await supabase.auth.signInWithOtp({ phone: formattedPhone });
+    setLoading(false);
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setOtpSent(true);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp.trim() || otp.trim().length < 6) {
+      setError("Please enter a valid 6-digit OTP");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const formattedPhone = phone.trim().length === 10 ? `+91${phone.trim()}` : phone.trim();
+    const { data: { session }, error } = await supabase.auth.verifyOtp({ 
+      phone: formattedPhone, 
+      token: otp.trim(), 
+      type: 'sms' 
+    });
+
+    if (error) {
+      setError(error.message);
       setLoading(false);
+      return;
+    }
+
+    if (session) {
+      try {
+        await login(name.trim(), phone.trim());
+        router.replace("/(tabs)");
+      } catch (err) {
+        setError("Failed to sync profile");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -95,23 +132,42 @@ export default function OnboardingScreen() {
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
                   maxLength={10}
+                  editable={!otpSent}
                 />
               </View>
             </View>
+
+            {otpSent && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Enter OTP</Text>
+                <View style={styles.inputWrapper}>
+                  <Feather name="lock" size={18} color={Colors.textLight} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="123456"
+                    placeholderTextColor={Colors.textLight}
+                    value={otp}
+                    onChangeText={setOtp}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                  />
+                </View>
+              </View>
+            )}
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Pressable
               style={({ pressed }) => [styles.loginBtn, pressed && styles.loginBtnPressed]}
-              onPress={handleLogin}
+              onPress={otpSent ? handleVerifyOtp : handleSendOtp}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color={Colors.cream} />
               ) : (
                 <>
-                  <Text style={styles.loginBtnText}>Begin with Blessings</Text>
-                  <Feather name="arrow-right" size={20} color={Colors.cream} />
+                  <Text style={styles.loginBtnText}>{otpSent ? "Verify & Login" : "Send OTP"}</Text>
+                  <Feather name={otpSent ? "check-circle" : "arrow-right"} size={20} color={Colors.cream} />
                 </>
               )}
             </Pressable>

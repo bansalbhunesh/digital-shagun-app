@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { db, usersTable, relationshipLedgerTable, transactionsTable, eventsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
+import { requireAuth } from "../middlewares/auth";
+import { validateRequest } from "../middlewares/validate";
+import { CreateUserBody } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -9,26 +12,25 @@ const AVATAR_COLORS = [
   "#483D8B", "#2F4F4F", "#8B1A1A", "#704214", "#5C4033",
 ];
 
-function generateId(): string {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
-}
-
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, validateRequest(CreateUserBody), async (req, res) => {
   const { name, phone } = req.body;
+  const id = req.user!.id;
 
-  const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
+  const existing = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
   if (existing.length > 0) {
     const u = existing[0];
+    if (u.name !== name || u.phone !== phone) {
+      await db.update(usersTable).set({ name, phone }).where(eq(usersTable.id, id));
+    }
     return res.json({
       id: u.id,
-      name: u.name,
-      phone: u.phone,
+      name,
+      phone,
       avatarColor: u.avatarColor,
       createdAt: u.createdAt.toISOString(),
     });
   }
 
-  const id = generateId();
   const avatarColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 
   const [user] = await db.insert(usersTable).values({ id, name, phone, avatarColor }).returning();

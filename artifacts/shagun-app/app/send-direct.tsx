@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Platform,
+  ActivityIndicator, Platform, ScrollView,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -70,7 +70,6 @@ export default function SendDirectScreen() {
       const tx = await sendShagun({
         eventId: "direct",
         receiverId,
-        receiverName: receiverName.trim(),
         amount: finalAmount,
         message: message.trim() || undefined,
       });

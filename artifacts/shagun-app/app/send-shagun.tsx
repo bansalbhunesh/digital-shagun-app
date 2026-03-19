@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Platform,
+  ActivityIndicator, Platform, ScrollView,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { router, useLocalSearchParams } from "expo-router";
@@ -58,7 +58,6 @@ export default function SendShagunScreen() {
       const tx = await sendShagun({
         eventId: eventId!,
         receiverId: receiverId!,
-        receiverName: receiverName ?? undefined,
         amount: finalAmount,
         message: message.trim() || undefined,
       });
