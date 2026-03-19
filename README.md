@@ -1,39 +1,67 @@
-# Digital Shagun — Social Gifting Platform for India
+# 🎁 ShagunX — Social Gifting Platform for Indian Events
 
-> "Blessings that remember" — a mobile-first app for India's cultural gifting tradition
-
-A full-stack Expo (React Native) monorepo application for tracking and celebrating digital *shagun* at weddings, baby ceremonies, housewarmings, birthdays, and festivals.
-
----
-
-## 🌟 Key Features
-
-- **Secure SMS OTP Authentication** — Powered by Supabase, ensuring phone numbers are strictly verified before accessing the ledger.
-- **Send & Receive Digital Shagun** — Track exact monetary gifts along with heartfelt messages and blessings.
-- **Smart Event Management** — Create digital events, generate shareable QR codes, and allow guests to join effortlessly.
-- **Gift Registries** — 42 curated traditional and modern gifts across 8 categories with progress tracking.
-- **AI-Powered Suggestions** — Smart amount recommendations based on past gifting history between specific individuals.
-- **Blessings Ledger** — A comprehensive, relationship-level history of all given and received *shagun*.
-- **Elder-Friendly UX** — Large text, highly readable typography, simple flows, and an Indian cultural aesthetic.
+## 🚀 Overview
+ShagunX is a modern, event-driven social gifting platform designed to digitize and enhance the traditional Indian practice of *shagun* (monetary gifting). Instead of awkward envelope exchanges and unstructured gifting, ShagunX creates a seamless, transparent, and meaningful digital experience for both hosts and guests.
 
 ---
 
-## 🛠 Tech Stack & Architecture
+## ❗ Problem
+In India, social gifting during events like weddings, baby showers, and housewarmings is deeply rooted in culture. However, the current system has several challenges:
+- ❌ **Lack of transparency** — gifts and contributions are not tracked
+- ❌ **Social awkwardness** — uncertainty around “how much to give”
+- ❌ **Inefficient gifting** — duplicate or irrelevant gifts
+- ❌ **No long-term memory** — relationships and past exchanges are forgotten
+- ❌ **Manual handling** — physical envelopes (*lifafa*) are inconvenient and error-prone
 
-This project is built as a highly scalable **pnpm workspace monorepo**.
+Despite widespread digital payments (UPI), there is no solution that addresses the social and emotional layer of gifting.
+
+---
+
+## 💡 Solution
+ShagunX transforms traditional gifting into a structured, intelligent, and interactive experience:
+- 🎉 **Event-Based Gifting** — Create events and invite guests via QR or link.
+- 💸 **Instant Shagun Payments** — Fast, preset or custom contributions.
+- 🎁 **Curated Gift Registry** — Select meaningful gifts instead of random items.
+- 🏠 **Life Kits (Group Gifting)** — Guests contribute to complete real-life setups (e.g., Home Kit, Baby Kit).
+- 🎭 **Mystery Shagun** — Delayed reveal feature to make gifting exciting.
+- 🧠 **Smart Suggestions (AI-assisted)** — Helps users decide appropriate amounts based on history.
+- 🧾 **Relationship Ledger** — Tracks long-term gifting history between people.
+
+---
+
+## 🧠 Why This Matters
+ShagunX is not just a payment tool — it builds a social gifting infrastructure:
+- Reduces friction in cultural practices.
+- Brings structure to informal economies.
+- Strengthens social relationships through data.
+- Enables collaborative and meaningful gifting.
+
+---
+
+## 🌍 Impact
+- 🇮🇳 Designed for Indian cultural use cases at scale.
+- 📈 Applicable to millions of events annually.
+- 🤝 Encourages financial transparency and social harmony.
+- 💡 Bridges the gap between digital payments and real-world behavior.
+
+---
+
+## 🏗 Tech Stack & Architecture
+
+This project is built as a highly scalable **pnpm workspace monorepo**, ensuring a robust separation of concerns between the mobile client and backend services.
 
 | Layer | Technology |
 |-------|------------|
-| **Mobile App** | Expo 52, React Native, Expo Router, React Query |
-| **API Server** | Node.js, Express 5, TypeScript |
+| **Frontend** | Expo, React Native, Expo Router. |
+| **Backend** | Node.js, Express, TypeScript |
 | **Database** | PostgreSQL, Drizzle ORM |
-| **Authentication** | Supabase Auth (SMS OTP & Session Management) |
+| **Authentication** | Supabase (OTP & Session Management) |
 | **Validation** | Zod (End-to-end type safety) |
 | **API Client** | Orval (Auto-generated Axios hooks from OpenAPI) |
 
 ### Workspace Breakdown
 ```text
-digital-shagun-app/
+shagunx/
 ├── artifacts/
 │   ├── shagun-app/        # The Expo React Native frontend application
 │   └── api-server/        # The Express REST API backend
@@ -45,6 +73,14 @@ digital-shagun-app/
 
 ---
 
+## 🔐 Key Design Principles
+- **Simplicity-first UX** — usable by all age groups.
+- **Privacy-first** — no public exposure of financial data.
+- **AI-assisted, not AI-dependent** — suggestions act as guides, not enforcers.
+- **Scalable** — event-driven architecture handles high request volume during ceremonies.
+
+---
+
 ## 🚀 Getting Started Locally
 
 ### Prerequisites
@@ -52,7 +88,7 @@ digital-shagun-app/
 - pnpm (`npm install -g pnpm`)
 - A [Supabase](https://supabase.com) project for Authentication
 - A PostgreSQL database instance
-- The Expo Go app installed on your physical mobile device
+- Expo Go app installed on your physical mobile device
 
 ### 1. Installation
 
@@ -74,7 +110,7 @@ DATABASE_URL="postgresql://user:password@host:port/dbname"
 ```
 
 **Frontend (`artifacts/shagun-app/context/supabase.ts`)**:
-Update the `supabaseUrl` and `supabaseAnonKey` with your own project credentials to enable the SMS OTP functionality.
+Update the `supabaseUrl` and `supabaseAnonKey` with your own project credentials to enable SMS OTP authentication capability.
 
 ### 3. Database Migration
 
@@ -128,15 +164,24 @@ eas build --platform ios --profile preview
 
 ---
 
-## 🎨 Design System
-
-Our UI is designed to reflect the warmth and tradition of Indian celebrations:
-- **Auspicous Red (Primary):** `#8B1A1A` 
-- **Envelope Gold:** `#C9A84C`
-- **Warm Cream (Background):** `#FFF8F0`
-- **Typography:** Poppins (Google Fonts)
+## 🚀 Future Scope
+- **Advanced AI personalization** for gifting amounts.
+- **Social graph insights** mapped to ledger data.
+- **Regional and cultural customization** (different themes per state/festival).
+- **Merchant integrations** for direct gift fulfillment and registries.
+- **Financial insights** & analytics tracking lifelong gifting impact.
 
 ---
 
-## Security Note
-This application utilizes **fully typed Zod validation** via middleware in Express to reject malformed data dynamically, and relies on **Supabase JWTs** verified server-side to guarantee zero API spoofing.
+## 🏁 Vision
+To become India’s default platform for social gifting — transforming how people celebrate, contribute, and build lifelong relationships.
+
+---
+
+## 🤝 Contributing
+We welcome contributions, ideas, and feedback to improve the platform.
+
+---
+
+## 📬 Contact
+For collaborations or queries, feel free to reach out.
