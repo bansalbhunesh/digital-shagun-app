@@ -9,6 +9,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useCreateEvent } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const EVENT_TYPES = [
   { key: "wedding", emoji: "💍", label: "Shaadi", desc: "Wedding" },
@@ -19,7 +21,9 @@ const EVENT_TYPES = [
 ] as const;
 
 export default function CreateEventScreen() {
-  const { createEvent } = useApp();
+  const { user } = useApp();
+  const queryClient = useQueryClient();
+  const { mutateAsync: createEvent } = useCreateEvent();
   const insets = useSafeAreaInsets();
   const [selectedType, setSelectedType] = useState<string>("wedding");
   const [title, setTitle] = useState("");
@@ -40,12 +44,17 @@ export default function CreateEventScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const event = await createEvent({
-        title: title.trim(),
-        type: selectedType,
-        date: date.trim(),
-        venue: venue.trim() || undefined,
-        description: description.trim() || undefined,
+        data: {
+          title: title.trim(),
+          type: selectedType as any,
+          date: date.trim(),
+          venue: venue.trim() || undefined,
+          description: description.trim() || undefined,
+          hostId: user!.id,
+          hostName: user!.name,
+        }
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSuccess({ id: event.id, shareCode: event.shareCode });
     } catch {

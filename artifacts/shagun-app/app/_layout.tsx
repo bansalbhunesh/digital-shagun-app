@@ -15,6 +15,20 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider } from "@/context/AppContext";
+import { supabase } from "@/context/supabase";
+import { setApiConfig } from "@workspace/api-client-react";
+import { Platform } from "react-native";
+
+const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
+  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+  : Platform.OS === "android"
+  ? "http://10.0.2.2:3000"
+  : "http://localhost:3000";
+
+setApiConfig(API_BASE, async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || null;
+});
 
 SplashScreen.preventAutoHideAsync();
 

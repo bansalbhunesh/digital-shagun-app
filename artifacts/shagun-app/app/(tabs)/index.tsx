@@ -7,6 +7,9 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useQuery } from "@tanstack/react-query";
+// @ts-expect-error - Subpath not exposed in package.json exports but works in metro
+import { customFetch } from "@workspace/api-client-react/src/custom-fetch";
 
 interface UserStats {
   totalGiven: number;
@@ -29,16 +32,21 @@ const EVENT_TYPE_INFO: Record<string, { icon: string; label: string; color: stri
 };
 
 export default function HomeScreen() {
-  const { user, getUserStats } = useApp();
+  const { user } = useApp();
   const insets = useSafeAreaInsets();
-  const [stats, setStats] = useState<UserStats | null>(null);
+
+  const { data: stats, refetch } = useQuery<UserStats>({
+    queryKey: ["userStats", user?.id],
+    queryFn: () => customFetch(`/api/users/${user?.id}/stats`),
+    enabled: !!user?.id,
+  });
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   useFocusEffect(
     useCallback(() => {
-      getUserStats().then(s => { if (s) setStats(s); }).catch(() => {});
-    }, [getUserStats])
+      refetch();
+    }, [refetch])
   );
 
   const mainActions = [

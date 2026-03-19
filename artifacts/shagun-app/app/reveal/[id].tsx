@@ -9,6 +9,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+// @ts-expect-error - Subpath not exposed in package.json exports but works in metro
+import { customFetch } from "@workspace/api-client-react/src/custom-fetch";
 
 interface RevealStatus {
   id: string;
@@ -21,7 +23,7 @@ interface RevealStatus {
 
 export default function RevealScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { revealShagun } = useApp();
+  const { user } = useApp();
   const insets = useSafeAreaInsets();
   const [status, setStatus] = useState<RevealStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export default function RevealScreen() {
   const loadRevealStatus = async () => {
     if (!id) return;
     try {
-      const data = await revealShagun(id);
+      const data = await customFetch<RevealStatus>(`/api/shagun/reveal/${id}`);
       setStatus(data);
       if (!data.isRevealed) {
         startCountdown(data.secondsRemaining);
@@ -58,7 +60,7 @@ export default function RevealScreen() {
       secs -= 1;
       if (secs <= 0) {
         if (countdownRef.current) clearInterval(countdownRef.current);
-        const data = await revealShagun(id!);
+        const data = await customFetch<RevealStatus>(`/api/shagun/reveal/${id}`);
         setStatus(data);
       } else {
         setStatus(prev => prev ? { ...prev, secondsRemaining: secs } : prev);

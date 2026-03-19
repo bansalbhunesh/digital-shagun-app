@@ -8,7 +8,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, LedgerEntry } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
+import { LedgerEntry } from "@/context/AppContext"; // Need to preserve type or extract it
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { customFetch } from "@workspace/api-client-react";
 
 function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: () => void; onSend: () => void }) {
   const balance = entry.totalGiven - entry.totalReceived;
@@ -73,25 +76,30 @@ function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: (
 }
 
 export default function LedgerScreen() {
-  const { user, getLedger } = useApp();
+  const { user } = useApp();
   const insets = useSafeAreaInsets();
-  const [entries, setEntries] = useState<LedgerEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: loading,
+    refetch,
+    isRefetching: refreshing,
+  } = useInfiniteQuery({
+    queryKey: ["ledger", user?.id],
+    queryFn: ({ pageParam = 0 }) => 
+      customFetch<{ data: LedgerEntry[], nextCursor: number | null }>(`/api/ledger/${user?.id}?page=${pageParam}&limit=15`),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    enabled: !!user?.id,
+    initialPageParam: 0,
+  });
+
+  const entries = data?.pages.flatMap(page => page.data) ?? [];
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  const load = useCallback(async () => {
-    try {
-      const data = await getLedger();
-      setEntries(data);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [getLedger]);
-
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
 
   const totalGiven = entries.reduce((s, e) => s + e.totalGiven, 0);
   const totalReceived = entries.reduce((s, e) => s + e.totalReceived, 0);
@@ -135,7 +143,18 @@ export default function LedgerScreen() {
           keyExtractor={item => item.contactId}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={Colors.primary} />}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
+          onEndReachedThreshold={0.5}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor={Colors.primary} />}
+          ListFooterComponent={
+            <View style={{ height: 100, alignItems: "center", justifyContent: "center" }}>
+              {isFetchingNextPage && <ActivityIndicator color={Colors.primary} />}
+            </View>
+          }
           renderItem={({ item }) => (
             <LedgerCard
               entry={item}
@@ -160,7 +179,6 @@ export default function LedgerScreen() {
               </Text>
             </View>
           }
-          ListFooterComponent={<View style={{ height: 100 }} />}
         />
       )}
     </View>

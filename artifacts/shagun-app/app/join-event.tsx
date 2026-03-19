@@ -9,9 +9,13 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useJoinEvent, customFetch } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function JoinEventScreen() {
-  const { getEvent, joinEvent } = useApp();
+  const { user } = useApp();
+  const queryClient = useQueryClient();
+  const { mutateAsync: joinEvent } = useJoinEvent();
   const insets = useSafeAreaInsets();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,8 +31,12 @@ export default function JoinEventScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      const detail = await getEvent(code.trim().toUpperCase());
-      await joinEvent(detail.event.id);
+      const detail = await customFetch<{ event: { id: string } }>(`/api/events/${code.trim().toUpperCase()}`);
+      await joinEvent({
+        eventId: detail.event.id,
+        data: { userId: user!.id }
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace({ pathname: "/event/[id]", params: { id: detail.event.id } });
     } catch {

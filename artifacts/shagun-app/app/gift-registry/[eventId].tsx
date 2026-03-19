@@ -10,6 +10,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp, EventGift } from "@/context/AppContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { customFetch, useAddGiftToRegistry } from "@workspace/api-client-react";
 
 const CURATED_GIFTS = [
   { name: "Microwave Oven",        category: "Kitchen",         emoji: "📦", amount: 8000,  desc: "Multi-function 25L convection" },
@@ -91,34 +93,26 @@ const pbStyles = StyleSheet.create({
 
 export default function GiftRegistryScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
-  const { getEventGifts, addGiftToRegistry } = useApp();
+  const { user } = useApp();
   const insets = useSafeAreaInsets();
-  const [gifts, setGifts] = useState<EventGift[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: gifts = [], isLoading: loading, refetch } = useQuery<EventGift[]>({
+    queryKey: ["eventGifts", eventId],
+    queryFn: () => customFetch(`/api/gifts/${eventId}`),
+    enabled: !!eventId,
+  });
+  const { mutateAsync: addGiftMutation } = useAddGiftToRegistry();
+
   const [adding, setAdding] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [tab, setTab] = useState<"registry" | "catalog">("catalog");
+  const [tab, setTab] = useState<"registry" | "catalog">(gifts.length > 0 ? "registry" : "catalog");
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
-
-  const load = useCallback(async () => {
-    if (!eventId) return;
-    try {
-      const data = await getEventGifts(eventId);
-      setGifts(data);
-      if (data.length > 0) setTab("registry");
-    } finally {
-      setLoading(false);
-    }
-  }, [eventId, getEventGifts]);
-
-  useEffect(() => { load(); }, [load]);
 
   useFocusEffect(
     useCallback(() => {
-      if (!loading) {
-        getEventGifts(eventId!).then(data => setGifts(data)).catch(() => {});
-      }
-    }, [eventId, getEventGifts, loading])
+      refetch();
+    }, [refetch])
   );
 
   const addedNames = gifts.map(g => g.name);
@@ -136,13 +130,16 @@ export default function GiftRegistryScreen() {
     setAdding(gift.name);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      const newGift = await addGiftToRegistry(eventId, {
-        name: gift.name,
-        category: gift.category,
-        targetAmount: gift.amount,
-        imageEmoji: gift.emoji,
+      const newGift = await addGiftMutation({
+        eventId: eventId,
+        data: {
+          name: gift.name,
+          category: gift.category,
+          targetAmount: gift.amount,
+          imageEmoji: gift.emoji,
+        }
       });
-      setGifts(prev => [...prev, newGift]);
+      queryClient.invalidateQueries({ queryKey: ["eventGifts", eventId] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (gifts.length + 1 >= IDEAL_MIN) setTab("registry");
     } finally {

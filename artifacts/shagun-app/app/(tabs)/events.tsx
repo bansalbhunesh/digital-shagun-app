@@ -8,7 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, Event } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
+import { useListEvents, Event } from "@workspace/api-client-react";
 
 const EVENT_TYPE_INFO: Record<string, { emoji: string; label: string; color: string }> = {
   wedding: { emoji: "💍", label: "Shaadi", color: "#8B1A1A" },
@@ -77,28 +78,22 @@ function EventCard({ event, onPress }: { event: Event; onPress: () => void }) {
 }
 
 export default function EventsScreen() {
-  const { user, fetchMyEvents } = useApp();
+  const { user } = useApp();
   const insets = useSafeAreaInsets();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+
+  const {
+    data: events = [],
+    isLoading: loading,
+    isRefetching: refreshing,
+    refetch,
+  } = useListEvents(
+    { hostId: user?.id ?? "" }, 
+    { query: { enabled: !!user?.id, queryKey: ["/api/events", { hostId: user?.id ?? "" }] } }
+  );
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  const load = useCallback(async () => {
-    if (!user) return;
-    try {
-      const data = await fetchMyEvents(user.id);
-      setEvents(data);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [user, fetchMyEvents]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const onRefresh = () => { setRefreshing(true); load(); };
+  const onRefresh = () => refetch();
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>

@@ -4,11 +4,14 @@ import {
   ActivityIndicator, Share, Alert, Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp, Event, Transaction, EventGift } from "@/context/AppContext";
+import { useQuery } from "@tanstack/react-query";
+import { customFetch } from "@workspace/api-client-react";
 
 const EVENT_TYPE_EMOJI: Record<string, string> = {
   wedding: "💍",
@@ -99,28 +102,22 @@ function ShagunItem({ tx }: { tx: Transaction }) {
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user, getEvent, sendShagun } = useApp();
+  const { user } = useApp();
   const insets = useSafeAreaInsets();
-  const [loading, setLoading] = useState(true);
-  const [event, setEvent] = useState<Event | null>(null);
-  const [shagunList, setShagunList] = useState<Transaction[]>([]);
-  const [gifts, setGifts] = useState<EventGift[]>([]);
+
+  const { data, isLoading: loading, refetch } = useQuery<{ event: Event; shagunList: Transaction[]; gifts: EventGift[] }>({
+    queryKey: ["eventDetail", id],
+    queryFn: () => customFetch(`/api/events/${id}`),
+    enabled: !!id,
+  });
+
+  const event = data?.event ?? null;
+  const shagunList = data?.shagunList ?? [];
+  const gifts = data?.gifts ?? [];
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  const load = useCallback(async () => {
-    if (!id) return;
-    try {
-      const data = await getEvent(id);
-      setEvent(data.event);
-      setShagunList(data.shagunList);
-      setGifts(data.gifts);
-    } finally {
-      setLoading(false);
-    }
-  }, [id, getEvent]);
-
-  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { if (id) refetch(); }, [id, refetch]));
 
   const handleShare = async () => {
     if (!event) return;

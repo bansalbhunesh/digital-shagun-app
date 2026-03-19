@@ -2,6 +2,7 @@ import createContextHook from "@nkzw/create-context-hook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabase";
+import { createUser } from "@workspace/api-client-react";
 
 const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
@@ -94,32 +95,7 @@ export interface AISuggestion {
   auspiciousNote: string;
 }
 
-async function apiFetch(path: string, options?: RequestInit) {
-  const headers: Record<string, string> = { 
-    "Content-Type": "application/json", 
-    ...(options?.headers as any) 
-  };
-  
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      headers["Authorization"] = `Bearer ${session.access_token}`;
-    }
-  } catch (err) {
-    console.error("Failed to get supabase session", err);
-  }
-
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
-  
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`API error: ${res.status} - ${errorText}`);
-  }
-  return res.json();
-}
+// Manual logic stripped in favor of Orval React Query hooks in lib/api-client-react
 
 const [AppProvider, useApp] = createContextHook(() => {
   const [user, setUser] = useState<AppUser | null>(null);
@@ -145,11 +121,8 @@ const [AppProvider, useApp] = createContextHook(() => {
   }, []);
 
   const login = useCallback(async (name: string, phone: string) => {
-    const u = await apiFetch("/users", {
-      method: "POST",
-      body: JSON.stringify({ name, phone }),
-    });
-    setUser(u);
+    const u = await createUser({ name, phone });
+    setUser(u as AppUser);
     await AsyncStorage.setItem("shagun_user", JSON.stringify(u));
     return u as AppUser;
   }, []);
@@ -160,126 +133,8 @@ const [AppProvider, useApp] = createContextHook(() => {
     await AsyncStorage.removeItem("shagun_user");
   }, []);
 
-  const fetchMyEvents = useCallback(async (userId: string) => {
-    const events = await apiFetch(`/events?hostId=${userId}`);
-    setMyEvents(events);
-    return events as Event[];
-  }, []);
-
-  const createEvent = useCallback(async (data: {
-    title: string; type: string; date: string; venue?: string; description?: string;
-  }) => {
-    if (!user) throw new Error("Not logged in");
-    const event = await apiFetch("/events", {
-      method: "POST",
-      body: JSON.stringify({ ...data, hostId: user.id, hostName: user.name }),
-    });
-    setMyEvents(prev => [event, ...prev]);
-    return event as Event;
-  }, [user]);
-
-  const getEvent = useCallback(async (eventIdOrCode: string) => {
-    return apiFetch(`/events/${eventIdOrCode}`) as Promise<{ event: Event; shagunList: Transaction[]; gifts: EventGift[] }>;
-  }, []);
-
-  const joinEvent = useCallback(async (eventId: string) => {
-    if (!user) throw new Error("Not logged in");
-    return apiFetch(`/events/${eventId}/join`, {
-      method: "POST",
-      body: JSON.stringify({ userId: user.id }),
-    }) as Promise<Event>;
-  }, [user]);
-
-  const sendShagun = useCallback(async (data: {
-    eventId: string; receiverId: string; amount: number; message?: string;
-  }) => {
-    if (!user) throw new Error("Not logged in");
-    return apiFetch("/shagun", {
-      method: "POST",
-      body: JSON.stringify({ ...data, senderId: user.id, senderName: user.name }),
-    }) as Promise<Transaction>;
-  }, [user]);
-
-  const revealShagun = useCallback(async (transactionId: string) => {
-    return apiFetch(`/shagun/reveal/${transactionId}`);
-  }, []);
-
-  const getEventShagun = useCallback(async (eventId: string) => {
-    return apiFetch(`/shagun/${eventId}`) as Promise<Transaction[]>;
-  }, []);
-
-  const getEventGifts = useCallback(async (eventId: string) => {
-    return apiFetch(`/gifts/${eventId}`) as Promise<EventGift[]>;
-  }, []);
-
-  const addGiftToRegistry = useCallback(async (eventId: string, gift: {
-    name: string; category: string; targetAmount: number; imageEmoji: string;
-  }) => {
-    return apiFetch(`/gifts/${eventId}`, {
-      method: "POST",
-      body: JSON.stringify(gift),
-    }) as Promise<EventGift>;
-  }, []);
-
-  const contributeToGift = useCallback(async (data: {
-    giftId: string; amount: number;
-  }) => {
-    if (!user) throw new Error("Not logged in");
-    return apiFetch("/gifts/contribute", {
-      method: "POST",
-      body: JSON.stringify({ ...data, contributorId: user.id, contributorName: user.name }),
-    });
-  }, [user]);
-
-  const getKits = useCallback(async (eventType?: string) => {
-    const query = eventType ? `?eventType=${eventType}` : "";
-    return apiFetch(`/kits${query}`) as Promise<Kit[]>;
-  }, []);
-
-  const addKitToEvent = useCallback(async (eventId: string, kitId: string) => {
-    return apiFetch(`/kits/${eventId}`, {
-      method: "POST",
-      body: JSON.stringify({ kitId }),
-    });
-  }, []);
-
-  const getAISuggestion = useCallback(async (params: {
-    eventType: string; receiverId?: string;
-  }) => {
-    if (!user) return null;
-    const query = new URLSearchParams({
-      eventType: params.eventType,
-      senderId: user.id,
-      ...(params.receiverId ? { receiverId: params.receiverId } : {}),
-    });
-    return apiFetch(`/ai/suggest?${query}`) as Promise<AISuggestion>;
-  }, [user]);
-
-  const getLedger = useCallback(async () => {
-    if (!user) return [];
-    return apiFetch(`/ledger/${user.id}`) as Promise<LedgerEntry[]>;
-  }, [user]);
-
-  const getLedgerDetail = useCallback(async (contactId: string) => {
-    if (!user) throw new Error("Not logged in");
-    return apiFetch(`/ledger/${user.id}/${contactId}`);
-  }, [user]);
-
-  const getUserStats = useCallback(async () => {
-    if (!user) return null;
-    return apiFetch(`/users/${user.id}/stats`);
-  }, [user]);
-
   return {
-    user, isLoading, myEvents,
-    login, logout,
-    fetchMyEvents, createEvent, getEvent, joinEvent,
-    sendShagun, revealShagun, getEventShagun,
-    getEventGifts, addGiftToRegistry, contributeToGift,
-    getKits, addKitToEvent,
-    getAISuggestion,
-    getLedger, getLedgerDetail,
-    getUserStats,
+    user, isLoading, login, logout,
   };
 });
 

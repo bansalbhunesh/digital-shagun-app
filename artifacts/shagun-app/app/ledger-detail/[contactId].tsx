@@ -8,6 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useQuery } from "@tanstack/react-query";
+import { customFetch } from "@workspace/api-client-react";
 
 interface LedgerDetail {
   contactId: string;
@@ -37,23 +39,16 @@ const EVENT_TYPE_EMOJI: Record<string, string> = {
 
 export default function LedgerDetailScreen() {
   const { contactId, name } = useLocalSearchParams<{ contactId: string; name: string }>();
-  const { getLedgerDetail } = useApp();
+  const { user } = useApp();
   const insets = useSafeAreaInsets();
-  const [detail, setDetail] = useState<LedgerDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  
+  const { data: detail, isLoading: loading } = useQuery<LedgerDetail>({
+    queryKey: ["ledgerDetail", user?.id, contactId],
+    queryFn: () => customFetch(`/api/ledger/${user!.id}/${contactId}`),
+    enabled: !!contactId && !!user?.id,
+  });
+
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
-
-  const load = useCallback(async () => {
-    if (!contactId) return;
-    try {
-      const data = await getLedgerDetail(contactId);
-      setDetail(data);
-    } finally {
-      setLoading(false);
-    }
-  }, [contactId, getLedgerDetail]);
-
-  useEffect(() => { load(); }, [load]);
 
   const initials = (name ?? "?").split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase();
 

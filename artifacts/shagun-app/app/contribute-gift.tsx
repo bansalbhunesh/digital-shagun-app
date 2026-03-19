@@ -9,6 +9,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useContributeToGift } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000];
 
@@ -16,7 +18,9 @@ export default function ContributeGiftScreen() {
   const { giftId, giftName, giftEmoji, remaining } = useLocalSearchParams<{
     giftId: string; giftName: string; giftEmoji: string; remaining: string;
   }>();
-  const { contributeToGift } = useApp();
+  const { user } = useApp();
+  const queryClient = useQueryClient();
+  const { mutateAsync: contributeMutation } = useContributeToGift();
   const insets = useSafeAreaInsets();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
@@ -35,7 +39,16 @@ export default function ContributeGiftScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
-      await contributeToGift({ giftId: giftId!, amount: finalAmount });
+      await contributeMutation({
+        data: { 
+          giftId: giftId!,
+          amount: finalAmount,
+          contributorId: user!.id,
+          contributorName: user!.name
+        }
+      });
+      queryClient.invalidateQueries({ queryKey: ["eventDetail"] });
+      queryClient.invalidateQueries({ queryKey: ["eventGifts"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setDone(true);
     } catch {

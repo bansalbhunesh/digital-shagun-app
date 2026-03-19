@@ -13,9 +13,13 @@ function suggestAmount(totalGiven: number): number {
 
 router.get("/:userId", async (req, res) => {
   const { userId } = req.params;
+  const page = parseInt((req.query.page as string) ?? "0");
+  const limitValue = parseInt((req.query.limit as string) ?? "20");
 
   const entries = await db.select().from(relationshipLedgerTable)
-    .where(eq(relationshipLedgerTable.userId, userId));
+    .where(eq(relationshipLedgerTable.userId, userId))
+    .limit(limitValue)
+    .offset(page * limitValue);
 
   const result = entries.map(e => ({
     contactId: e.contactId,
@@ -29,7 +33,10 @@ router.get("/:userId", async (req, res) => {
     transactionCount: 1,
   }));
 
-  return res.json(result);
+  return res.json({
+    data: result,
+    nextCursor: entries.length === limitValue ? page + 1 : null,
+  });
 });
 
 router.get("/:userId/:contactId", async (req, res) => {

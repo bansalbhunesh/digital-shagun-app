@@ -19,6 +19,14 @@ function resolveMethod(input: RequestInfo | URL, explicitMethod?: string): strin
   return "GET";
 }
 
+let customBaseUrl = "";
+let customGetToken: (() => Promise<string | null>) | null = null;
+
+export function setApiConfig(baseUrl: string, getToken?: () => Promise<string | null>) {
+  customBaseUrl = baseUrl;
+  customGetToken = getToken || null;
+}
+
 // Use loose check for URL — some runtimes (e.g. React Native) polyfill URL
 // differently, so `instanceof URL` can fail.
 function isUrl(input: RequestInfo | URL): input is URL {
@@ -26,9 +34,15 @@ function isUrl(input: RequestInfo | URL): input is URL {
 }
 
 function resolveUrl(input: RequestInfo | URL): string {
-  if (typeof input === "string") return input;
-  if (isUrl(input)) return input.toString();
-  return input.url;
+  let urlStr = "";
+  if (typeof input === "string") urlStr = input;
+  else if (isUrl(input)) urlStr = input.toString();
+  else urlStr = input.url;
+
+  if (urlStr.startsWith("/") && customBaseUrl) {
+    return `${customBaseUrl}${urlStr}`;
+  }
+  return urlStr;
 }
 
 function mergeHeaders(...sources: Array<HeadersInit | undefined>): Headers {
@@ -284,6 +298,17 @@ export async function customFetch<T = unknown>(
   }
 
   const headers = mergeHeaders(isRequest(input) ? input.headers : undefined, headersInit);
+
+  if (customGetToken) {
+    try {
+      const token = await customGetToken();
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+    } catch (err) {
+      console.warn("customFetch: Failed to fetch auth token", err);
+    }
+  }
 
   if (
     typeof init.body === "string" &&

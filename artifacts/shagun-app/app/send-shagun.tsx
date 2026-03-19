@@ -10,6 +10,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp, AISuggestion } from "@/context/AppContext";
+import { customFetch } from "@workspace/api-client-react/custom-fetch";
+import { useSendShagun } from "@workspace/api-client-react";
 
 const PRESET_AMOUNTS = [101, 251, 501, 1100];
 
@@ -17,7 +19,8 @@ export default function SendShagunScreen() {
   const { eventId, receiverId, receiverName, eventType } = useLocalSearchParams<{
     eventId: string; receiverId: string; receiverName: string; eventType?: string;
   }>();
-  const { sendShagun, getAISuggestion } = useApp();
+  const { user } = useApp();
+  const { mutateAsync: sendShagunMutation } = useSendShagun();
   const insets = useSafeAreaInsets();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
@@ -33,18 +36,21 @@ export default function SendShagunScreen() {
   const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : null);
 
   useEffect(() => {
+    if (!user) return;
     (async () => {
       try {
-        const suggestion = await getAISuggestion({
+        const query = new URLSearchParams({
           eventType: eventType ?? "wedding",
-          receiverId: receiverId ?? undefined,
+          senderId: user.id,
+          ...(receiverId ? { receiverId } : {}),
         });
-        setAiSuggestion(suggestion);
+        const suggestion = await customFetch(`/api/ai/suggest?${query}`);
+        setAiSuggestion(suggestion as AISuggestion);
       } finally {
         setAiLoading(false);
       }
     })();
-  }, []);
+  }, [user, eventType, receiverId]);
 
   const handleSend = async () => {
     if (!finalAmount || finalAmount < 1) {
@@ -55,11 +61,15 @@ export default function SendShagunScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
-      const tx = await sendShagun({
-        eventId: eventId!,
-        receiverId: receiverId!,
-        amount: finalAmount,
-        message: message.trim() || undefined,
+      const tx = await sendShagunMutation({
+        data: {
+          eventId: eventId!,
+          receiverId: receiverId!,
+          amount: finalAmount,
+          message: message.trim() || undefined,
+          senderId: user!.id,
+          senderName: user!.name,
+        }
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSent(tx.id);
@@ -260,7 +270,7 @@ export default function SendShagunScreen() {
 
         {aiSuggestion && aiSuggestion.suggestedMessages.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.blessingsScroll}>
-            {aiSuggestion.suggestedMessages.map((b, i) => (
+            {aiSuggestion.suggestedMessages.map((b: string, i: number) => (
               <Pressable
                 key={i}
                 style={({ pressed }) => [styles.blessingChip, pressed && styles.chipPressed]}

@@ -10,6 +10,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp, AISuggestion } from "@/context/AppContext";
+import { customFetch } from "@workspace/api-client-react/custom-fetch";
+import { useSendShagun } from "@workspace/api-client-react";
 
 const PRESET_AMOUNTS = [101, 251, 501, 1100, 2100, 5100];
 
@@ -26,7 +28,8 @@ export default function SendDirectScreen() {
   const params = useLocalSearchParams<{
     receiverName?: string; receiverId?: string; occasion?: string;
   }>();
-  const { sendShagun, getAISuggestion, user } = useApp();
+  const { user } = useApp();
+  const { mutateAsync: sendShagunMutation } = useSendShagun();
   const insets = useSafeAreaInsets();
 
   const [receiverName, setReceiverName] = useState(params.receiverName ?? "");
@@ -47,11 +50,15 @@ export default function SendDirectScreen() {
   useEffect(() => {
     if (!user) return;
     setAiLoading(true);
-    getAISuggestion({
+    const query = new URLSearchParams({
       eventType: occasion,
-      receiverId: params.receiverId,
-    }).then(s => { if (s) setAiSuggestion(s); }).finally(() => setAiLoading(false));
-  }, [occasion]);
+      senderId: user.id,
+      ...(params.receiverId ? { receiverId: params.receiverId } : {}),
+    });
+    customFetch(`/api/ai/suggest?${query}`)
+      .then((s: any) => { if (s) setAiSuggestion(s as AISuggestion); })
+      .finally(() => setAiLoading(false));
+  }, [occasion, user, params.receiverId]);
 
   const handleSend = async () => {
     if (!receiverName.trim()) {
@@ -67,11 +74,15 @@ export default function SendDirectScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
       const receiverId = params.receiverId ?? ("direct_" + receiverName.trim().toLowerCase().replace(/\s+/g, "_"));
-      const tx = await sendShagun({
-        eventId: "direct",
-        receiverId,
-        amount: finalAmount,
-        message: message.trim() || undefined,
+      const tx = await sendShagunMutation({
+        data: {
+          eventId: "direct",
+          receiverId,
+          amount: finalAmount,
+          message: message.trim() || undefined,
+          senderId: user!.id,
+          senderName: user!.name,
+        }
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSent(tx.id);
@@ -284,7 +295,7 @@ export default function SendDirectScreen() {
             style={styles.blessingsScroll}
             bottomOffset={0}
           >
-            {aiSuggestion.suggestedMessages.map((b, i) => (
+            {aiSuggestion.suggestedMessages.map((b: string, i: number) => (
               <Pressable
                 key={i}
                 style={({ pressed }) => [styles.blessingChip, pressed && styles.chipPressed]}

@@ -9,6 +9,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp, Kit } from "@/context/AppContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { customFetch } from "@workspace/api-client-react";
 
 function KitCard({ kit, onAdd, adding }: { kit: Kit; onAdd: () => void; adding: boolean }) {
   const [expanded, setExpanded] = useState(false);
@@ -73,31 +75,31 @@ function KitCard({ kit, onAdd, adding }: { kit: Kit; onAdd: () => void; adding: 
 
 export default function KitsScreen() {
   const { eventId, eventType } = useLocalSearchParams<{ eventId: string; eventType: string }>();
-  const { getKits, addKitToEvent } = useApp();
+  const { user } = useApp();
   const insets = useSafeAreaInsets();
-  const [kits, setKits] = useState<Kit[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: kits = [], isLoading: loading } = useQuery<Kit[]>({
+    queryKey: ["kits", eventType],
+    queryFn: () => customFetch(`/api/kits?type=${eventType}`),
+    enabled: !!eventType
+  });
+
   const [adding, setAdding] = useState<string | null>(null);
   const [addedKits, setAddedKits] = useState<Set<string>>(new Set());
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
-
-  const load = useCallback(async () => {
-    try {
-      const all = await getKits(eventType);
-      setKits(all);
-    } finally {
-      setLoading(false);
-    }
-  }, [getKits, eventType]);
-
-  useEffect(() => { load(); }, [load]);
 
   const handleAddKit = async (kit: Kit) => {
     if (!eventId) return;
     setAdding(kit.id);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
-      const result = await addKitToEvent(eventId, kit.id);
+      const result = await customFetch<{ itemsAdded: number }>(`/api/events/${eventId}/kits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kitId: kit.id })
+      });
+      queryClient.invalidateQueries({ queryKey: ["eventGifts", eventId] });
       setAddedKits(prev => new Set([...prev, kit.id]));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
