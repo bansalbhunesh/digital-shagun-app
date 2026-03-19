@@ -91,6 +91,8 @@ export const CreateEventRequestType = {
 export interface CreateEventRequest {
   title: string;
   type: CreateEventRequestType;
+  hostId: string;
+  hostName: string;
   date: string;
   venue?: string;
   description?: string;
@@ -98,6 +100,8 @@ export interface CreateEventRequest {
 
 export interface SendShagunRequest {
   eventId: string;
+  senderId: string;
+  senderName: string;
   receiverId: string;
   amount: number;
   message?: string;
@@ -130,6 +134,8 @@ export interface GiftContribution {
 
 export interface ContributeGiftRequest {
   giftId: string;
+  contributorId: string;
+  contributorName: string;
   amount: number;
 }
 
@@ -177,4 +183,6 @@ export type ListEventsParams = {
   hostId?: string;
 };
 
-export type JoinEventBody = { [key: string]: unknown };
+export type JoinEventBody = {
+  userId: string;
+};

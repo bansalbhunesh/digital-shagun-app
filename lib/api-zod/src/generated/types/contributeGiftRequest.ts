@@ -8,5 +8,7 @@
 
 export interface ContributeGiftRequest {
   giftId: string;
+  contributorId: string;
+  contributorName: string;
   amount: number;
 }

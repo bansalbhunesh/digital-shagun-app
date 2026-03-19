@@ -7,7 +7,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import Colors from "@/constants/colors";
-import { useApp, formatINR, useCurrentUser } from "@/context/AppContext";
+import { useCurrentUser, formatINR } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
@@ -39,14 +39,13 @@ const EVENT_TYPE_EMOJI: Record<string, string> = {
 
 export default function LedgerDetailScreen() {
   const { contactId, name } = useLocalSearchParams<{ contactId: string; name: string }>();
-  const { user } = useApp();
   const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
   
   const { data: detail, isLoading: loading } = useQuery<LedgerDetail>({
     queryKey: ["ledgerDetail", currentUser.id, contactId],
-    queryFn: () => customFetch(`/api/ledger/${currentUser.id}/${contactId}`),
-    enabled: !!contactId && !!user?.id,
+    queryFn: () => customFetch<LedgerDetail>(`/api/ledger/${currentUser.id}/${contactId}`),
+    enabled: !!currentUser.id && !!contactId,
   });
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;

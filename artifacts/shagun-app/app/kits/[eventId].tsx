@@ -75,7 +75,6 @@ function KitCard({ kit, onAdd, adding }: { kit: Kit; onAdd: () => void; adding: 
 
 export default function KitsScreen() {
   const { eventId, eventType } = useLocalSearchParams<{ eventId: string; eventType: string }>();
-  const { user } = useApp();
   const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();

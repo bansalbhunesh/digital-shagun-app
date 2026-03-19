@@ -9,13 +9,14 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import QRCode from "react-native-qrcode-svg";
 import Colors from "@/constants/colors";
-import { useApp, Event } from "@/context/AppContext";
+import { useCurrentUser } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
+import type { Event } from "@/context/AppContext";
 
 export default function EventQRScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user } = useApp();
+  const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
   
   const { data: eventData, isLoading } = useQuery({

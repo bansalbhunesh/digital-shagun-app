@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, LedgerEntry, formatINR } from "@/context/AppContext";
+import { useCurrentUser, LedgerEntry, formatINR } from "@/context/AppContext";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
@@ -75,7 +75,7 @@ function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: (
 }
 
 export default function LedgerScreen() {
-  const { user } = useApp();
+  const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
 
   const {
@@ -87,11 +87,11 @@ export default function LedgerScreen() {
     refetch,
     isRefetching: refreshing,
   } = useInfiniteQuery({
-    queryKey: ["ledger", user?.id],
+    queryKey: ["ledger", currentUser.id],
     queryFn: ({ pageParam = 0 }) => 
-      customFetch<{ data: LedgerEntry[], nextCursor: number | null }>(`/api/ledger/${user?.id}?page=${pageParam}&limit=15`),
+      customFetch<{ data: LedgerEntry[], nextCursor: number | null }>(`/api/ledger/${currentUser.id}?page=${pageParam}&limit=15`),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    enabled: !!user?.id,
+    enabled: !!currentUser.id,
     initialPageParam: 0,
   });
 

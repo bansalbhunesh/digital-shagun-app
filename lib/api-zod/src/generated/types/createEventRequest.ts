@@ -10,6 +10,8 @@ import type { CreateEventRequestType } from "./createEventRequestType";
 export interface CreateEventRequest {
   title: string;
   type: CreateEventRequestType;
+  hostId: string;
+  hostName: string;
   date: string;
   venue?: string;
   description?: string;

@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, AISuggestion, formatINR, useCurrentUser } from "@/context/AppContext";
+import { AISuggestion, formatINR, useCurrentUser } from "@/context/AppContext";
 import { customFetch } from "@workspace/api-client-react/custom-fetch";
 import { useSendShagun } from "@workspace/api-client-react";
 import PaymentService from "@/services/PaymentService";
@@ -20,7 +20,6 @@ export default function SendShagunScreen() {
   const { eventId, receiverId, receiverName, eventType } = useLocalSearchParams<{
     eventId: string; receiverId: string; receiverName: string; eventType?: string;
   }>();
-  const { user } = useApp();
   const currentUser = useCurrentUser();
   const { mutateAsync: sendShagunMutation } = useSendShagun();
   const insets = useSafeAreaInsets();
@@ -38,12 +37,12 @@ export default function SendShagunScreen() {
   const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount, 10) : null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!currentUser) return;
     (async () => {
       try {
         const query = new URLSearchParams({
           eventType: eventType ?? "wedding",
-          senderId: user.id,
+          senderId: currentUser.id,
           ...(receiverId ? { receiverId } : {}),
         });
         const suggestion = await customFetch(`/api/ai/suggest?${query}`);
@@ -52,7 +51,7 @@ export default function SendShagunScreen() {
         setAiLoading(false);
       }
     })();
-  }, [user, eventType, receiverId]);
+  }, [currentUser, eventType, receiverId]);
 
   const handleSend = async () => {
     if (!finalAmount || finalAmount < 1) {
@@ -81,6 +80,8 @@ export default function SendShagunScreen() {
       const tx = await sendShagunMutation({
         data: {
           eventId: eventId!,
+          senderId: currentUser.id,
+          senderName: currentUser.name,
           receiverId: receiverId!,
           amount: finalAmount,
           message: message.trim() || undefined,

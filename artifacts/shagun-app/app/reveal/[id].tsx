@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, formatINR, useCurrentUser } from "@/context/AppContext";
+import { formatINR, useCurrentUser } from "@/context/AppContext";
 import { customFetch } from "@/lib/apiClient";
 
 interface RevealStatus {
@@ -22,7 +22,6 @@ interface RevealStatus {
 
 export default function RevealScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user } = useApp();
   const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
   const [status, setStatus] = useState<RevealStatus | null>(null);

@@ -8,14 +8,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, useCurrentUser } from "@/context/AppContext";
+import { useCurrentUser } from "@/context/AppContext";
 import { useJoinEvent } from "@workspace/api-client-react";
 import { customFetch } from "@/lib/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function JoinEventScreen() {
   const { qrCode } = useLocalSearchParams<{ qrCode?: string }>();
-  const { user } = useApp(); // still needed for optional checks if any, or just useCurrentUser if we're sure
   const currentUser = useCurrentUser();
   const queryClient = useQueryClient();
   const { mutateAsync: joinEvent } = useJoinEvent();
@@ -43,7 +42,7 @@ export default function JoinEventScreen() {
       const detail = await customFetch<{ event: { id: string } }>(`/api/events/${code.trim().toUpperCase()}`);
       await joinEvent({
         eventId: detail.event.id,
-        data: {}
+        data: { userId: currentUser.id }
       });
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

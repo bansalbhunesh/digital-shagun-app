@@ -94,7 +94,6 @@ const pbStyles = StyleSheet.create({
 
 export default function GiftRegistryScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
-  const { user } = useApp();
   const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();

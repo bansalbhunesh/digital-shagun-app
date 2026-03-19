@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, Event, Transaction, EventGift, formatINR, useCurrentUser } from "@/context/AppContext";
+import { Event, Transaction, EventGift, formatINR, useCurrentUser } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
@@ -102,7 +102,6 @@ function ShagunItem({ tx }: { tx: Transaction }) {
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user } = useApp();
   const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
 

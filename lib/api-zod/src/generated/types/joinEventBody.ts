@@ -6,4 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type JoinEventBody = { [key: string]: unknown };
+export type JoinEventBody = {
+  userId: string;
+};

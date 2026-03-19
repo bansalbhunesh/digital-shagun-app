@@ -8,6 +8,8 @@
 
 export interface SendShagunRequest {
   eventId: string;
+  senderId: string;
+  senderName: string;
   receiverId: string;
   amount: number;
   message?: string;

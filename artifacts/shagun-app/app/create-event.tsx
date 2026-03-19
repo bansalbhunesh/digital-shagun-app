@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, useCurrentUser } from "@/context/AppContext";
+import { useCurrentUser } from "@/context/AppContext";
 import { useCreateEvent } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -21,7 +21,6 @@ const EVENT_TYPES = [
 ] as const;
 
 export default function CreateEventScreen() {
-  const { user } = useApp();
   const currentUser = useCurrentUser();
   const queryClient = useQueryClient();
   const { mutateAsync: createEvent } = useCreateEvent();
@@ -48,6 +47,8 @@ export default function CreateEventScreen() {
         data: {
           title: title.trim(),
           type: selectedType as any,
+          hostId: currentUser.id,
+          hostName: currentUser.name,
           date: date.trim(),
           venue: venue.trim() || undefined,
           description: description.trim() || undefined,

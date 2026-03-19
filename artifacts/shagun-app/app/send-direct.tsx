@@ -9,7 +9,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, AISuggestion, formatINR, useCurrentUser } from "@/context/AppContext";
+import { AISuggestion, formatINR, useCurrentUser } from "@/context/AppContext";
 import { customFetch } from "@workspace/api-client-react/custom-fetch";
 import { useSendShagun } from "@workspace/api-client-react";
 import PaymentService from "@/services/PaymentService";
@@ -29,7 +29,6 @@ export default function SendDirectScreen() {
   const params = useLocalSearchParams<{
     receiverName?: string; receiverId?: string; occasion?: string;
   }>();
-  const { user } = useApp();
   const currentUser = useCurrentUser();
   const { mutateAsync: sendShagunMutation } = useSendShagun();
   const insets = useSafeAreaInsets();
@@ -50,17 +49,24 @@ export default function SendDirectScreen() {
   const bottomPadding = Platform.OS === "web" ? 34 : insets.bottom;
 
   useEffect(() => {
-    if (!user) return;
+    if (!currentUser) return;
     setAiLoading(true);
-    const query = new URLSearchParams({
-      eventType: occasion,
-      senderId: user.id,
-      ...(params.receiverId ? { receiverId: params.receiverId } : {}),
-    });
-    customFetch(`/api/ai/suggest?${query}`)
-      .then((s: any) => { if (s) setAiSuggestion(s as AISuggestion); })
-      .finally(() => setAiLoading(false));
-  }, [occasion, user, params.receiverId]);
+    (async () => {
+      try {
+        const query = new URLSearchParams({
+          eventType: occasion,
+          senderId: currentUser.id,
+          ...(params.receiverId ? { receiverId: params.receiverId } : {}),
+        });
+        const s: any = await customFetch(`/api/ai/suggest?${query}`);
+        if (s) setAiSuggestion(s as AISuggestion);
+      } catch (e) {
+        console.error("Failed to fetch AI suggestion", e);
+      } finally {
+        setAiLoading(false);
+      }
+    })();
+  }, [occasion, currentUser, params.receiverId]);
 
   const handleSend = async () => {
     if (!receiverName.trim()) {
@@ -103,6 +109,8 @@ export default function SendDirectScreen() {
       const tx = await sendShagunMutation({
         data: {
           eventId: "direct",
+          senderId: currentUser.id,
+          senderName: currentUser.name,
           receiverId,
           amount: finalAmount,
           message: message.trim() || undefined,

@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, formatINR, useCurrentUser } from "@/context/AppContext";
+import { formatINR, useCurrentUser } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
@@ -31,7 +31,6 @@ const EVENT_TYPE_INFO: Record<string, { icon: string; label: string; color: stri
 };
 
 export default function HomeScreen() {
-  const { user } = useApp();
   const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
 
@@ -86,15 +85,15 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Namaste 🙏</Text>
-            <Text style={styles.userName}>{user?.name ?? "Guest"}</Text>
+            <Text style={styles.userName}>{currentUser.name}</Text>
           </View>
           <Pressable
             style={styles.avatarContainer}
             onPress={() => router.push("/(tabs)/profile")}
           >
-            <View style={[styles.avatar, { backgroundColor: user?.avatarColor ?? Colors.primary }]}>
+            <View style={[styles.avatar, { backgroundColor: currentUser.avatarColor ?? Colors.primary }]}>
               <Text style={styles.avatarText}>
-                {(user?.name ?? "G").charAt(0).toUpperCase()}
+                {currentUser.name.charAt(0).toUpperCase()}
               </Text>
             </View>
           </Pressable>

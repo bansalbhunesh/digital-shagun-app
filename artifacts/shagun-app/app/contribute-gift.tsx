@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, formatINR, useCurrentUser } from "@/context/AppContext";
+import { formatINR, useCurrentUser } from "@/context/AppContext";
 import { useContributeToGift } from "@workspace/api-client-react";
 import { customFetch } from "@/lib/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,7 +21,6 @@ export default function ContributeGiftScreen() {
     giftId: string; giftName: string; giftEmoji: string; remaining: string;
     hostId: string; hostName: string;
   }>();
-  const { user } = useApp();
   const currentUser = useCurrentUser();
   const queryClient = useQueryClient();
   const { mutateAsync: contributeMutation } = useContributeToGift();
@@ -60,6 +59,8 @@ export default function ContributeGiftScreen() {
       await contributeMutation({
         data: { 
           giftId: giftId!,
+          contributorId: currentUser.id,
+          contributorName: currentUser.name,
           amount: finalAmount,
         }
       });

@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, formatINR } from "@/context/AppContext";
+import { useCurrentUser, formatINR } from "@/context/AppContext";
 import { useListEvents, Event } from "@workspace/api-client-react";
 
 const EVENT_TYPE_INFO: Record<string, { emoji: string; label: string; color: string }> = {
@@ -78,7 +78,7 @@ function EventCard({ event, onPress, userId }: { event: Event; onPress: () => vo
 }
 
 export default function EventsScreen() {
-  const { user } = useApp();
+  const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
 
   const {
@@ -87,8 +87,8 @@ export default function EventsScreen() {
     isRefetching: refreshing,
     refetch,
   } = useListEvents(
-    {},
-    { query: { enabled: !!user?.id, queryKey: ["/api/events"] } }
+    { hostId: currentUser.id },
+    { query: { enabled: !!currentUser.id, queryKey: ["/api/events", { hostId: currentUser.id }] } }
   );
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
