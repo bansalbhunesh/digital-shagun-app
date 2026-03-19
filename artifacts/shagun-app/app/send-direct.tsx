@@ -44,7 +44,7 @@ export default function SendDirectScreen() {
   const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : null);
+  const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount, 10) : null);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
   const bottomPadding = Platform.OS === "web" ? 34 : insets.bottom;
 

@@ -4,10 +4,7 @@ import { eq } from "drizzle-orm";
 
 const router = Router();
 
-function generateId(): string {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
-}
-
+import { generateId } from "../utils/id";
 router.post("/contribute", async (req, res) => {
   const { giftId, contributorId, contributorName, amount } = req.body;
 

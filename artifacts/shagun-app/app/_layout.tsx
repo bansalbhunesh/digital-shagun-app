@@ -16,7 +16,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider } from "@/context/AppContext";
 import { supabase } from "@/context/supabase";
-import { setApiConfig } from "@workspace/api-client-react";
+import { setApiConfig } from "@/lib/apiClient";
 import { Platform } from "react-native";
 
 const API_BASE = process.env.EXPO_PUBLIC_DOMAIN

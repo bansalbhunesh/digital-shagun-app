@@ -10,26 +10,21 @@ import * as Haptics from "expo-haptics";
 import QRCode from "react-native-qrcode-svg";
 import Colors from "@/constants/colors";
 import { useApp, Event } from "@/context/AppContext";
+import { useQuery } from "@tanstack/react-query";
+import { customFetch } from "@/lib/apiClient";
 
 export default function EventQRScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getEvent } = useApp();
+  const { user } = useApp();
   const insets = useSafeAreaInsets();
-  const [event, setEvent] = useState<Event | null>(null);
-  const [loading, setLoading] = useState(true);
+  
+  const { data: eventData, isLoading } = useQuery({
+    queryKey: ["eventDetail", id],
+    queryFn: () => customFetch<{event: Event}>(`/api/events/${id}`),
+    enabled: !!id,
+  });
+  const event = eventData?.event;
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
-
-  const load = useCallback(async () => {
-    if (!id) return;
-    try {
-      const data = await getEvent(id);
-      setEvent(data.event);
-    } finally {
-      setLoading(false);
-    }
-  }, [id, getEvent]);
-
-  useEffect(() => { load(); }, [load]);
 
   const shareCode = event?.shareCode ?? "";
   const qrValue = `shagun://join/${shareCode}`;
@@ -53,7 +48,7 @@ export default function EventQRScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      {loading ? (
+      {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>

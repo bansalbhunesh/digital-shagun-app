@@ -11,7 +11,7 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp, Event, Transaction, EventGift } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
-import { customFetch } from "@workspace/api-client-react";
+import { customFetch } from "@/lib/apiClient";
 
 const EVENT_TYPE_EMOJI: Record<string, string> = {
   wedding: "💍",

@@ -10,10 +10,9 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { useContributeToGift } from "@workspace/api-client-react";
+import { customFetch } from "@/lib/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 import PaymentService from "@/services/PaymentService";
-// @ts-expect-error - Subpath not exposed in package.json exports but works in metro
-import { customFetch } from "@workspace/api-client-react/src/custom-fetch";
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000];
 
@@ -33,8 +32,8 @@ export default function ContributeGiftScreen() {
   const [done, setDone] = useState(false);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : null);
-  const remainingAmt = parseInt(remaining ?? "0");
+  const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount, 10) : null);
+  const remainingAmt = parseInt(remaining ?? "0", 10);
 
   const handleContribute = async () => {
     if (!finalAmount || finalAmount < 1) { setError("Please enter an amount"); return; }

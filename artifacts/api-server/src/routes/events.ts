@@ -1,13 +1,11 @@
 import { Router } from "express";
 import { db, eventsTable, eventGuestsTable, transactionsTable, eventGiftsTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
+import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
-function generateId(): string {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
-}
-
+import { generateId } from "../utils/id";
 function generateShareCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -53,7 +51,7 @@ router.get("/", async (req, res) => {
   return res.json(result);
 });
 
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
   const { title, type, hostId, hostName, date, venue, description } = req.body;
   const id = generateId();
   let shareCode = generateShareCode();

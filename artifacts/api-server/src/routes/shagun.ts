@@ -7,10 +7,7 @@ import { SendShagunBody } from "@workspace/api-zod";
 
 const router = Router();
 
-function generateId(): string {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
-}
-
+import { generateId } from "../utils/id";
 const REVEAL_DELAY_MINUTES = 10;
 
 router.post("/", requireAuth, validateRequest(SendShagunBody), async (req, res) => {

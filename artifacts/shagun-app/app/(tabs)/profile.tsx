@@ -8,8 +8,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
-// @ts-expect-error - Subpath not exposed in package.json exports but works in metro
-import { customFetch } from "@workspace/api-client-react/src/custom-fetch";
+import { customFetch } from "@/lib/apiClient";
 
 export default function ProfileScreen() {
   const { user, logout } = useApp();

@@ -8,8 +8,7 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
-// @ts-expect-error - Subpath not exposed in package.json exports but works in metro
-import { customFetch } from "@workspace/api-client-react/src/custom-fetch";
+import { customFetch } from "@/lib/apiClient";
 
 interface UserStats {
   totalGiven: number;

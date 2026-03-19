@@ -34,7 +34,7 @@ export default function SendShagunScreen() {
   const [showAiPanel, setShowAiPanel] = useState(true);
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
-  const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount) : null);
+  const finalAmount = selectedAmount ?? (customAmount ? parseInt(customAmount, 10) : null);
 
   useEffect(() => {
     if (!user) return;

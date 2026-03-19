@@ -9,7 +9,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
-import { useJoinEvent, customFetch } from "@workspace/api-client-react";
+import { useJoinEvent } from "@workspace/api-client-react";
+import { customFetch } from "@/lib/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function JoinEventScreen() {

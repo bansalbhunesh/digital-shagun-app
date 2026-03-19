@@ -11,7 +11,8 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp, EventGift, Event } from "@/context/AppContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { customFetch, useAddGiftToRegistry } from "@workspace/api-client-react";
+import { useAddGiftToRegistry } from "@workspace/api-client-react";
+import { customFetch } from "@/lib/apiClient";
 
 const CURATED_GIFTS = [
   { name: "Microwave Oven",        category: "Kitchen",         emoji: "📦", amount: 8000,  desc: "Multi-function 25L convection" },

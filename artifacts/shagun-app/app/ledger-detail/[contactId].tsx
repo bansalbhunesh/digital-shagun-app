@@ -9,7 +9,7 @@ import { Feather } from "@expo/vector-icons";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
-import { customFetch } from "@workspace/api-client-react";
+import { customFetch } from "@/lib/apiClient";
 
 interface LedgerDetail {
   contactId: string;

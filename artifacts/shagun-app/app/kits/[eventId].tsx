@@ -10,7 +10,7 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp, Kit } from "@/context/AppContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { customFetch } from "@workspace/api-client-react";
+import { customFetch } from "@/lib/apiClient";
 
 function KitCard({ kit, onAdd, adding }: { kit: Kit; onAdd: () => void; adding: boolean }) {
   const [expanded, setExpanded] = useState(false);
@@ -94,7 +94,7 @@ export default function KitsScreen() {
     setAdding(kit.id);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
-      const result = await customFetch<{ itemsAdded: number }>(`/api/events/${eventId}/kits`, {
+      const result = await customFetch<{ itemsAdded: number }>(`/api/kits/${eventId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kitId: kit.id })

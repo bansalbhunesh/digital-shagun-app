@@ -11,7 +11,7 @@ import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { LedgerEntry } from "@/context/AppContext"; // Need to preserve type or extract it
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { customFetch } from "@workspace/api-client-react";
+import { customFetch } from "@/lib/apiClient";
 
 function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: () => void; onSend: () => void }) {
   const balance = entry.totalGiven - entry.totalReceived;
