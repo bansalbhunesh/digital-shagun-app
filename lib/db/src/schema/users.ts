@@ -7,6 +7,7 @@ export const usersTable = pgTable("users", {
   name: text("name").notNull(),
   phone: text("phone").notNull().unique(),
   avatarColor: text("avatar_color").notNull().default("#8B0000"),
+  upiId: text("upi_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

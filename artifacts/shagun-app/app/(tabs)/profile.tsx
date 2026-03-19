@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, Pressable, ScrollView, Alert, Platform,
+  View, Text, StyleSheet, Pressable, ScrollView, Alert, Platform, TextInput, ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,11 +8,35 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+// @ts-expect-error - Subpath not exposed in package.json exports but works in metro
+import { customFetch } from "@workspace/api-client-react/src/custom-fetch";
 
 export default function ProfileScreen() {
   const { user, logout } = useApp();
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
+
+  const [upiId, setUpiId] = useState(user?.upiId ?? "");
+  const [editingUpi, setEditingUpi] = useState(false);
+  const [savingUpi, setSavingUpi] = useState(false);
+
+  const handleSaveUpi = async () => {
+    const trimmed = upiId.trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      Alert.alert("Invalid UPI ID", "Please enter a valid UPI ID (e.g. yourname@okicici)");
+      return;
+    }
+    setSavingUpi(true);
+    try {
+      await customFetch(`/api/users/${user!.id}`, { method: "PUT", body: JSON.stringify({ upiId: trimmed }) });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setEditingUpi(false);
+    } catch {
+      Alert.alert("Error", "Could not save UPI ID. Please try again.");
+    } finally {
+      setSavingUpi(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -46,6 +70,59 @@ export default function ProfileScreen() {
             <Feather name="star" size={12} color={Colors.gold} />
             <Text style={styles.goldenBadgeText}>Shagun Member</Text>
           </View>
+        </View>
+
+        {/* UPI Section */}
+        <View style={styles.upiSection}>
+          <View style={styles.upiHeader}>
+            <View style={styles.upiIconBadge}>
+              <Text style={{ fontSize: 16 }}>💳</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.upiTitle}>UPI ID</Text>
+              <Text style={styles.upiSubtitle}>Required for receiving shagun</Text>
+            </View>
+            {!editingUpi && (
+              <Pressable onPress={() => setEditingUpi(true)} style={styles.upiEditBtn}>
+                <Feather name={upiId ? "edit-2" : "plus"} size={14} color={Colors.primary} />
+              </Pressable>
+            )}
+          </View>
+          {editingUpi ? (
+            <View style={styles.upiEditRow}>
+              <TextInput
+                style={styles.upiInput}
+                placeholder="yourname@okicici"
+                placeholderTextColor={Colors.textLight}
+                value={upiId}
+                onChangeText={setUpiId}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+              />
+              <Pressable
+                style={({ pressed }) => [styles.upiSaveBtn, pressed && { opacity: 0.85 }]}
+                onPress={handleSaveUpi}
+                disabled={savingUpi}
+              >
+                {savingUpi ? (
+                  <ActivityIndicator size="small" color={Colors.cream} />
+                ) : (
+                  <Text style={styles.upiSaveBtnText}>Save</Text>
+                )}
+              </Pressable>
+              <Pressable onPress={() => { setEditingUpi(false); setUpiId(user?.upiId ?? ""); }} style={styles.upiCancelBtn}>
+                <Feather name="x" size={18} color={Colors.textLight} />
+              </Pressable>
+            </View>
+          ) : upiId ? (
+            <View style={styles.upiDisplayRow}>
+              <Feather name="check-circle" size={16} color="#22c55e" />
+              <Text style={styles.upiDisplayText}>{upiId}</Text>
+            </View>
+          ) : (
+            <Text style={styles.upiNotSet}>Not set — tap + to add</Text>
+          )}
         </View>
 
         <View style={styles.menuSection}>
@@ -273,6 +350,100 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     color: Colors.textSecondary,
     textAlign: "center",
+  },
+  upiSection: {
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.gold + "40",
+    gap: 12,
+  },
+  upiHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  upiIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: Colors.gold + "22",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  upiTitle: {
+    fontSize: 14,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.text,
+  },
+  upiSubtitle: {
+    fontSize: 11,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.textLight,
+  },
+  upiEditBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: Colors.primary + "12",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  upiEditRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  upiInput: {
+    flex: 1,
+    backgroundColor: Colors.cream,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontFamily: "Poppins_500Medium",
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  upiSaveBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  upiSaveBtnText: {
+    fontSize: 13,
+    fontFamily: "Poppins_600SemiBold",
+    color: Colors.cream,
+  },
+  upiCancelBtn: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  upiDisplayRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#22c55e12",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  upiDisplayText: {
+    fontSize: 14,
+    fontFamily: "Poppins_600SemiBold",
+    color: Colors.text,
+  },
+  upiNotSet: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.textLight,
+    fontStyle: "italic",
   },
   logoutBtn: {
     flexDirection: "row",

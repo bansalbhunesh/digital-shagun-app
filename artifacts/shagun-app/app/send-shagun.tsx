@@ -12,6 +12,7 @@ import Colors from "@/constants/colors";
 import { useApp, AISuggestion } from "@/context/AppContext";
 import { customFetch } from "@workspace/api-client-react/custom-fetch";
 import { useSendShagun } from "@workspace/api-client-react";
+import PaymentService from "@/services/PaymentService";
 
 const PRESET_AMOUNTS = [101, 251, 501, 1100];
 
@@ -61,6 +62,17 @@ export default function SendShagunScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
+      // Fetch receiver's UPI ID
+      const receiverData: any = await customFetch(`/api/users/${receiverId}`);
+      const paid = await PaymentService.processPayment({
+        amount: finalAmount,
+        receiverUpiId: receiverData?.upiId ?? null,
+        receiverName: receiverName ?? "Host",
+      });
+      if (!paid) {
+        setLoading(false);
+        return;
+      }
       const tx = await sendShagunMutation({
         data: {
           eventId: eventId!,

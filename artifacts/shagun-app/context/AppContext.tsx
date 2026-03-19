@@ -13,6 +13,7 @@ export interface AppUser {
   name: string;
   phone: string;
   avatarColor: string;
+  upiId?: string | null;
   token?: string;
 }
 

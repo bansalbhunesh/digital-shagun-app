@@ -12,6 +12,7 @@ import Colors from "@/constants/colors";
 import { useApp, AISuggestion } from "@/context/AppContext";
 import { customFetch } from "@workspace/api-client-react/custom-fetch";
 import { useSendShagun } from "@workspace/api-client-react";
+import PaymentService from "@/services/PaymentService";
 
 const PRESET_AMOUNTS = [101, 251, 501, 1100, 2100, 5100];
 
@@ -74,6 +75,26 @@ export default function SendDirectScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
       const receiverId = params.receiverId ?? ("direct_" + receiverName.trim().toLowerCase().replace(/\s+/g, "_"));
+      
+      // Try to fetch receiver's UPI ID if we have a real receiverId
+      let receiverUpiId: string | null = null;
+      if (params.receiverId) {
+        try {
+          const receiverData: any = await customFetch(`/api/users/${params.receiverId}`);
+          receiverUpiId = receiverData?.upiId ?? null;
+        } catch { /* receiver may not exist in DB */ }
+      }
+
+      const paid = await PaymentService.processPayment({
+        amount: finalAmount,
+        receiverUpiId,
+        receiverName: receiverName.trim(),
+      });
+      if (!paid) {
+        setLoading(false);
+        return;
+      }
+
       const tx = await sendShagunMutation({
         data: {
           eventId: "direct",

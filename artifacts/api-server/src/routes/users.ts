@@ -27,6 +27,7 @@ router.post("/", requireAuth, validateRequest(CreateUserBody), async (req, res) 
       name,
       phone,
       avatarColor: u.avatarColor,
+      upiId: u.upiId,
       createdAt: u.createdAt.toISOString(),
     });
   }
@@ -40,6 +41,7 @@ router.post("/", requireAuth, validateRequest(CreateUserBody), async (req, res) 
     name: user.name,
     phone: user.phone,
     avatarColor: user.avatarColor,
+    upiId: user.upiId,
     createdAt: user.createdAt.toISOString(),
   });
 });
@@ -100,6 +102,32 @@ router.get("/:userId", async (req, res) => {
     name: user.name,
     phone: user.phone,
     avatarColor: user.avatarColor,
+    upiId: user.upiId,
+    createdAt: user.createdAt.toISOString(),
+  });
+});
+
+router.put("/:userId", requireAuth, async (req, res) => {
+  const { userId } = req.params;
+  if (req.user!.id !== userId) return res.status(403).json({ error: "Forbidden" });
+
+  const { name, upiId } = req.body;
+  
+  const updateData: any = {};
+  if (name !== undefined) updateData.name = name;
+  if (upiId !== undefined) updateData.upiId = upiId;
+
+  if (Object.keys(updateData).length > 0) {
+    await db.update(usersTable).set(updateData).where(eq(usersTable.id, userId));
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  return res.json({
+    id: user.id,
+    name: user.name,
+    phone: user.phone,
+    avatarColor: user.avatarColor,
+    upiId: user.upiId,
     createdAt: user.createdAt.toISOString(),
   });
 });

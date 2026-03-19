@@ -27,6 +27,7 @@ export const CreateUserResponse = zod.object({
   name: zod.string(),
   phone: zod.string(),
   avatarColor: zod.string(),
+  upiId: zod.string().nullable().optional(),
   createdAt: zod.string(),
 });
 
@@ -39,7 +40,13 @@ export const GetUserResponse = zod.object({
   name: zod.string(),
   phone: zod.string(),
   avatarColor: zod.string(),
+  upiId: zod.string().nullable().optional(),
   createdAt: zod.string(),
+});
+
+export const UpdateUserBody = zod.object({
+  name: zod.string().optional(),
+  upiId: zod.string().optional(),
 });
 
 export const ListEventsQueryParams = zod.object({
