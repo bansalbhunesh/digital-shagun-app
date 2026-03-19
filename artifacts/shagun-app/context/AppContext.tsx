@@ -3,6 +3,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabase";
 import { createUser } from "@workspace/api-client-react";
+import { customFetch } from "@/lib/apiClient";
+export { formatINR } from "@/lib/format";
 
 const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
@@ -134,8 +136,20 @@ const [AppProvider, useApp] = createContextHook(() => {
     await AsyncStorage.removeItem("shagun_user");
   }, []);
 
+  const updateProfile = useCallback(async (updates: { name?: string; upiId?: string }) => {
+    if (!user) return;
+    const updated = await customFetch<AppUser>(`/api/users/${user.id}`, {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    });
+    const merged: AppUser = { ...user, ...updated };
+    setUser(merged);
+    await AsyncStorage.setItem("shagun_user", JSON.stringify(merged));
+    return merged;
+  }, [user]);
+
   return {
-    user, isLoading, login, logout,
+    user, isLoading, login, logout, updateProfile,
   };
 });
 

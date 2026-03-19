@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
+import { useApp, formatINR } from "@/context/AppContext";
 import { useContributeToGift } from "@workspace/api-client-react";
 import { customFetch } from "@/lib/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,7 +37,7 @@ export default function ContributeGiftScreen() {
 
   const handleContribute = async () => {
     if (!finalAmount || finalAmount < 1) { setError("Please enter an amount"); return; }
-    if (finalAmount > remainingAmt) { setError(`Maximum contribution is ₹${remainingAmt.toLocaleString("en-IN")}`); return; }
+    if (finalAmount > remainingAmt) { setError(`Maximum contribution is ₹${remainingAmt}`); return; }
     setError("");
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -80,7 +80,7 @@ export default function ContributeGiftScreen() {
           <Text style={styles.doneEmoji}>{giftEmoji}</Text>
           <Text style={styles.doneTitle}>Contribution Made!</Text>
           <Text style={styles.doneSub}>
-            You contributed ₹{finalAmount?.toLocaleString("en-IN")} toward{"\n"}
+            You contributed ₹{formatINR(finalAmount ?? 0)} toward{"\n"}
             <Text style={styles.doneHighlight}>{giftName}</Text>
           </Text>
           <Pressable
@@ -109,7 +109,7 @@ export default function ContributeGiftScreen() {
           <Text style={styles.giftEmoji}>{giftEmoji}</Text>
           <View>
             <Text style={styles.giftName}>{giftName}</Text>
-            <Text style={styles.remainingText}>₹{remainingAmt.toLocaleString("en-IN")} remaining</Text>
+            <Text style={styles.remainingText}>₹{formatINR(remainingAmt)} remaining</Text>
           </View>
         </View>
 
@@ -126,7 +126,7 @@ export default function ContributeGiftScreen() {
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedAmount(amt); setCustomAmount(""); }}
             >
               <Text style={[styles.presetChipText, selectedAmount === amt && styles.presetChipTextSelected]}>
-                ₹{amt.toLocaleString("en-IN")}
+                ₹{formatINR(amt)}
               </Text>
             </Pressable>
           ))}
@@ -139,7 +139,7 @@ export default function ContributeGiftScreen() {
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setSelectedAmount(remainingAmt); setCustomAmount(""); }}
           >
             <Text style={[styles.presetChipText, selectedAmount === remainingAmt && styles.presetChipTextSelected]}>
-              Full ₹{remainingAmt.toLocaleString("en-IN")}
+              Full ₹{formatINR(remainingAmt)}
             </Text>
           </Pressable>
         </View>
@@ -170,7 +170,7 @@ export default function ContributeGiftScreen() {
             <>
               <Feather name="heart" size={18} color={Colors.cream} />
               <Text style={styles.payBtnText}>
-                Contribute {finalAmount ? `₹${finalAmount.toLocaleString("en-IN")}` : ""}
+                Contribute {finalAmount ? `₹${finalAmount}` : ""}
               </Text>
             </>
           )}

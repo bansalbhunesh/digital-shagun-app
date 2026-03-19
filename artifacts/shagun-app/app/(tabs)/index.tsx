@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
+import { useApp, formatINR } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
@@ -111,12 +111,12 @@ export default function HomeScreen() {
             </View>
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>₹{stats.totalGiven.toLocaleString("en-IN")}</Text>
+                <Text style={styles.statValue}>₹{formatINR(stats.totalGiven)}</Text>
                 <Text style={styles.statLabel}>Given</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, styles.statReceived]}>₹{stats.totalReceived.toLocaleString("en-IN")}</Text>
+                <Text style={[styles.statValue, styles.statReceived]}>₹{formatINR(stats.totalReceived)}</Text>
                 <Text style={styles.statLabel}>Received</Text>
               </View>
               <View style={styles.statDivider} />
@@ -134,7 +134,7 @@ export default function HomeScreen() {
               <View style={styles.statsHighlight}>
                 <Feather name="award" size={12} color={Colors.gold} />
                 <Text style={styles.statsHighlightText} numberOfLines={1}>
-                  {stats.topGiver.name} gave you most — ₹{stats.topGiver.amount.toLocaleString("en-IN")}
+                  {stats.topGiver.name} gave you most — ₹{formatINR(stats.topGiver.amount)}
                 </Text>
               </View>
             )}

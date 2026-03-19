@@ -8,10 +8,9 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
-import { customFetch } from "@/lib/apiClient";
 
 export default function ProfileScreen() {
-  const { user, logout } = useApp();
+  const { user, logout, updateProfile } = useApp();
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
@@ -27,7 +26,7 @@ export default function ProfileScreen() {
     }
     setSavingUpi(true);
     try {
-      await customFetch(`/api/users/${user!.id}`, { method: "PUT", body: JSON.stringify({ upiId: trimmed }) });
+      await updateProfile({ upiId: trimmed });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setEditingUpi(false);
     } catch {

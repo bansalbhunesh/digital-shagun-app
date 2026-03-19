@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
+import { useApp, formatINR } from "@/context/AppContext";
 import { useListEvents, Event } from "@workspace/api-client-react";
 
 const EVENT_TYPE_INFO: Record<string, { emoji: string; label: string; color: string }> = {
@@ -56,7 +56,7 @@ function EventCard({ event, onPress, userId }: { event: Event; onPress: () => vo
 
         <View style={styles.cardStats}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>₹{event.totalReceived.toLocaleString("en-IN")}</Text>
+            <Text style={styles.statValue}>₹{formatINR(event.totalReceived)}</Text>
             <Text style={styles.statLabel}>Received</Text>
           </View>
           <View style={styles.statDivider} />
@@ -87,8 +87,8 @@ export default function EventsScreen() {
     isRefetching: refreshing,
     refetch,
   } = useListEvents(
-    { hostId: user?.id ?? "" }, 
-    { query: { enabled: !!user?.id, queryKey: ["/api/events", { hostId: user?.id ?? "" }] } }
+    {},
+    { query: { enabled: !!user?.id, queryKey: ["/api/events"] } }
   );
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;

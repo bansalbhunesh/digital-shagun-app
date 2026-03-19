@@ -9,7 +9,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, AISuggestion } from "@/context/AppContext";
+import { useApp, AISuggestion, formatINR } from "@/context/AppContext";
 import { customFetch } from "@workspace/api-client-react/custom-fetch";
 import { useSendShagun } from "@workspace/api-client-react";
 import PaymentService from "@/services/PaymentService";
@@ -121,7 +121,7 @@ export default function SendDirectScreen() {
           </View>
           <Text style={styles.successTitle}>Shagun Sent!</Text>
           <Text style={styles.successSub}>
-            ₹{finalAmount?.toLocaleString("en-IN")} sent to{" "}
+            ₹{formatINR(finalAmount ?? 0)} sent to{" "}
             <Text style={{ fontFamily: "Poppins_700Bold", color: Colors.goldLight }}>{receiverName}</Text>
           </Text>
           <Text style={styles.successBlessing}>
@@ -230,7 +230,7 @@ export default function SendDirectScreen() {
                   >
                     <Text style={styles.aiChipLabel}>Recommended</Text>
                     <Text style={[styles.aiChipAmt, selectedAmount === aiSuggestion.suggestedAmount && styles.aiChipAmtActive]}>
-                      ₹{aiSuggestion.suggestedAmount.toLocaleString("en-IN")}
+                      ₹{formatINR(aiSuggestion.suggestedAmount)}
                     </Text>
                   </Pressable>
                   <Pressable
@@ -243,7 +243,7 @@ export default function SendDirectScreen() {
                   >
                     <Text style={styles.aiChipLabel}>Alternative</Text>
                     <Text style={[styles.aiChipAmt, selectedAmount === aiSuggestion.alternativeAmount && styles.aiChipAmtActive]}>
-                      ₹{aiSuggestion.alternativeAmount.toLocaleString("en-IN")}
+                      ₹{formatINR(aiSuggestion.alternativeAmount)}
                     </Text>
                   </Pressable>
                 </View>
@@ -271,7 +271,7 @@ export default function SendDirectScreen() {
               }}
             >
               <Text style={[styles.presetAmt, selectedAmount === amt && styles.presetAmtActive]}>
-                ₹{amt.toLocaleString("en-IN")}
+                ₹{formatINR(amt)}
               </Text>
               {amt === 501 && <Text style={styles.popularBadge}>Popular</Text>}
             </Pressable>
@@ -332,7 +332,7 @@ export default function SendDirectScreen() {
         {finalAmount && finalAmount > 0 ? (
           <View style={styles.amountPreview}>
             <Text style={styles.amountPreviewLabel}>Sending</Text>
-            <Text style={styles.amountPreviewValue}>₹{finalAmount.toLocaleString("en-IN")}</Text>
+            <Text style={styles.amountPreviewValue}>₹{formatINR(finalAmount)}</Text>
             <Text style={styles.amountPreviewTo}>to {receiverName || "..."}</Text>
           </View>
         ) : null}
@@ -352,7 +352,7 @@ export default function SendDirectScreen() {
             <>
               <Text style={styles.sendBtnEmoji}>🙏</Text>
               <Text style={styles.sendBtnText}>
-                {finalAmount ? `Send ₹${finalAmount.toLocaleString("en-IN")} Shagun` : "Send Shagun"}
+                {finalAmount ? `Send ₹${finalAmount} Shagun` : "Send Shagun"}
               </Text>
             </>
           )}

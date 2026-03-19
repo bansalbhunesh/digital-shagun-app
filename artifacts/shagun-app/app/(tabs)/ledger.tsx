@@ -8,8 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
-import { LedgerEntry } from "@/context/AppContext"; // Need to preserve type or extract it
+import { useApp, LedgerEntry, formatINR } from "@/context/AppContext";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
@@ -40,14 +39,14 @@ function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: (
           <View style={styles.amtItem}>
             <Text style={styles.amtLabel}>Given</Text>
             <Text style={[styles.amtValue, { color: Colors.success }]}>
-              ₹{entry.totalGiven.toLocaleString("en-IN")}
+              ₹{formatINR(entry.totalGiven)}
             </Text>
           </View>
           <View style={styles.amtDivider} />
           <View style={styles.amtItem}>
             <Text style={styles.amtLabel}>Received</Text>
             <Text style={[styles.amtValue, { color: Colors.primary }]}>
-              ₹{entry.totalReceived.toLocaleString("en-IN")}
+              ₹{formatINR(entry.totalReceived)}
             </Text>
           </View>
         </View>
@@ -66,7 +65,7 @@ function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: (
             Suggest
           </Text>
           <Text style={[styles.suggestAmount, { color: isPositive ? Colors.success : Colors.primary }]}>
-            ₹{entry.suggestedAmount.toLocaleString("en-IN")}
+            ₹{formatINR(entry.suggestedAmount)}
           </Text>
         </View>
         <Feather name="chevron-right" size={16} color={Colors.textLight} style={{ marginTop: 8 }} />
@@ -113,12 +112,12 @@ export default function LedgerScreen() {
 
       <View style={styles.summaryCard}>
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryValue}>₹{totalGiven.toLocaleString("en-IN")}</Text>
+          <Text style={styles.summaryValue}>₹{formatINR(totalGiven)}</Text>
           <Text style={styles.summaryLabel}>Blessings Given</Text>
         </View>
         <View style={styles.summaryDivider} />
         <View style={styles.summaryItem}>
-          <Text style={[styles.summaryValue, { color: Colors.gold }]}>₹{totalReceived.toLocaleString("en-IN")}</Text>
+          <Text style={[styles.summaryValue, { color: Colors.gold }]}>₹{formatINR(totalReceived)}</Text>
           <Text style={styles.summaryLabel}>Blessings Received</Text>
         </View>
         <View style={styles.summaryDivider} />

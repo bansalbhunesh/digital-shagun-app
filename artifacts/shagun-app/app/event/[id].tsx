@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, Event, Transaction, EventGift } from "@/context/AppContext";
+import { useApp, Event, Transaction, EventGift, formatINR } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 

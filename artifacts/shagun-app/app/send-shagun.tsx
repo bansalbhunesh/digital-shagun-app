@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, AISuggestion } from "@/context/AppContext";
+import { useApp, AISuggestion, formatINR } from "@/context/AppContext";
 import { customFetch } from "@workspace/api-client-react/custom-fetch";
 import { useSendShagun } from "@workspace/api-client-react";
 import PaymentService from "@/services/PaymentService";
@@ -100,7 +100,7 @@ export default function SendShagunScreen() {
           <Text style={styles.successTitle}>Shagun Sent!</Text>
           <Text style={styles.successSub}>
             Your blessing of{" "}
-            <Text style={styles.successAmountText}>₹{finalAmount?.toLocaleString("en-IN")}</Text>
+            <Text style={styles.successAmountText}>₹{formatINR(finalAmount ?? 0)}</Text>
             {" "}has been sent to {receiverName}
           </Text>
           <View style={styles.revealInfo}>
@@ -186,7 +186,7 @@ export default function SendShagunScreen() {
                       styles.aiAmountChipValue,
                       selectedAmount === aiSuggestion.suggestedAmount && styles.aiAmountChipValueSelected,
                     ]}>
-                      ₹{aiSuggestion.suggestedAmount.toLocaleString("en-IN")}
+                      ₹{formatINR(aiSuggestion.suggestedAmount)}
                     </Text>
                   </Pressable>
                   <Pressable
@@ -207,7 +207,7 @@ export default function SendShagunScreen() {
                       styles.aiAmountChipValue,
                       selectedAmount === aiSuggestion.alternativeAmount && styles.aiAmountChipValueSelected,
                     ]}>
-                      ₹{aiSuggestion.alternativeAmount.toLocaleString("en-IN")}
+                      ₹{formatINR(aiSuggestion.alternativeAmount)}
                     </Text>
                   </Pressable>
                 </View>
@@ -219,7 +219,7 @@ export default function SendShagunScreen() {
                   <View style={styles.aiHistoryRow}>
                     <Feather name="clock" size={12} color={Colors.textLight} />
                     <Text style={styles.aiHistoryText}>
-                      Past: given ₹{aiSuggestion.previouslyGiven.toLocaleString("en-IN")}, received ₹{aiSuggestion.previouslyReceived.toLocaleString("en-IN")}
+                      Past: given ₹{formatINR(aiSuggestion.previouslyGiven)}, received ₹{formatINR(aiSuggestion.previouslyReceived)}
                     </Text>
                   </View>
                 )}
@@ -245,7 +245,7 @@ export default function SendShagunScreen() {
               }}
             >
               <Text style={[styles.presetAmt, selectedAmount === amt && styles.presetAmtSelected]}>
-                ₹{amt.toLocaleString("en-IN")}
+                ₹{formatINR(amt)}
               </Text>
               {amt === 501 && <Text style={styles.presetPopular}>Popular</Text>}
             </Pressable>
@@ -316,7 +316,7 @@ export default function SendShagunScreen() {
             <>
               <Text style={styles.sendBtnEmoji}>🙏</Text>
               <Text style={styles.sendBtnText}>
-                Send ₹{finalAmount?.toLocaleString("en-IN") ?? "..."} Shagun
+                Send ₹{finalAmount ? formatINR(finalAmount) : "..."} Shagun
               </Text>
             </>
           )}
