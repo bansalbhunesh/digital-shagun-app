@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, formatINR } from "@/context/AppContext";
+import { useApp, formatINR, useCurrentUser } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
@@ -32,12 +32,13 @@ const EVENT_TYPE_INFO: Record<string, { icon: string; label: string; color: stri
 
 export default function HomeScreen() {
   const { user } = useApp();
+  const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
 
   const { data: stats, refetch } = useQuery<UserStats>({
-    queryKey: ["userStats", user?.id],
-    queryFn: () => customFetch(`/api/users/${user?.id}/stats`),
-    enabled: !!user?.id,
+    queryKey: ["userStats", currentUser.id],
+    queryFn: () => customFetch(`/api/users/${currentUser.id}/stats`),
+    enabled: !!currentUser.id,
   });
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
@@ -62,6 +63,13 @@ export default function HomeScreen() {
       sub: "Scan or enter code",
       color: Colors.gold,
       onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/join-event"); },
+    },
+    {
+      icon: "maximize" as const,
+      label: "Scan QR",
+      sub: "Quick join event",
+      color: Colors.gold,
+      onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/scanner"); },
     },
     {
       icon: "plus-circle" as const,

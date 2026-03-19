@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import {
   View, Text, StyleSheet, Pressable,
-  ScrollView, ActivityIndicator, Platform,
+  ScrollView, ActivityIndicator, Platform, Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, EventGift, Event, formatINR } from "@/context/AppContext";
+import { useApp, EventGift, Event, formatINR, useCurrentUser } from "@/context/AppContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAddGiftToRegistry } from "@workspace/api-client-react";
 import { customFetch } from "@/lib/apiClient";
@@ -95,18 +95,19 @@ const pbStyles = StyleSheet.create({
 export default function GiftRegistryScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
   const { user } = useApp();
+  const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
   const { data: gifts = [], isLoading: loading, refetch } = useQuery<EventGift[]>({
-    queryKey: ["eventGifts", eventId],
-    queryFn: () => customFetch(`/api/gifts/${eventId}`),
-    enabled: !!eventId,
+    queryKey: ["eventGifts", eventId, currentUser.id],
+    queryFn: () => customFetch<EventGift[]>(`/api/gifts/${eventId}`),
+    enabled: !!eventId && !!currentUser.id,
   });
   const { data: event } = useQuery<Event>({
-    queryKey: ["eventDetail", eventId],
-    queryFn: () => customFetch(`/api/events/${eventId}`),
-    enabled: !!eventId,
+    queryKey: ["eventDetail", eventId, currentUser.id],
+    queryFn: () => customFetch<Event>(`/api/events/${eventId}`),
+    enabled: !!eventId && !!currentUser.id,
   });
   const { mutateAsync: addGiftMutation } = useAddGiftToRegistry();
 
@@ -148,6 +149,9 @@ export default function GiftRegistryScreen() {
       queryClient.invalidateQueries({ queryKey: ["eventGifts", eventId] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (gifts.length + 1 >= IDEAL_MIN) setTab("registry");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Could not add gift. Please try again.";
+      Alert.alert("Error", msg);
     } finally {
       setAdding(null);
     }
@@ -254,13 +258,13 @@ export default function GiftRegistryScreen() {
                   <View style={styles.summaryRow}>
                     <View style={styles.summaryStat}>
                       <Text style={styles.summaryValue}>
-                        ₹{totalFunded.toLocaleString("en-IN")}
+                        ₹{formatINR(totalFunded)}
                       </Text>
                       <Text style={styles.summaryLabel}>Contributed</Text>
                     </View>
                     <View style={styles.summaryStat}>
                       <Text style={styles.summaryValue}>
-                        ₹{totalTarget.toLocaleString("en-IN")}
+                        ₹{formatINR(totalTarget)}
                       </Text>
                       <Text style={styles.summaryLabel}>Total Goal</Text>
                     </View>
@@ -314,10 +318,10 @@ export default function GiftRegistryScreen() {
                         </View>
                         <View style={styles.amountsRow}>
                           <Text style={styles.raisedText}>
-                            ₹{g.currentAmount.toLocaleString("en-IN")} raised
+                            ₹{formatINR(g.currentAmount)} raised
                           </Text>
                           <Text style={styles.targetText}>
-                            Goal: ₹{g.targetAmount.toLocaleString("en-IN")}
+                            Goal: ₹{formatINR(g.targetAmount)}
                           </Text>
                         </View>
                       </View>
@@ -342,7 +346,7 @@ export default function GiftRegistryScreen() {
                         >
                           <Feather name="heart" size={14} color={Colors.primary} />
                           <Text style={styles.contributeBtnText}>
-                            Contribute · ₹{remaining.toLocaleString("en-IN")} needed
+                            Contribute · ₹{formatINR(remaining)} needed
                           </Text>
                         </Pressable>
                       )}
@@ -413,7 +417,7 @@ export default function GiftRegistryScreen() {
                     <Text style={styles.catalogDesc} numberOfLines={1}>{gift.desc}</Text>
                     <View style={styles.catalogMeta}>
                       <Text style={styles.catalogCategory}>{gift.category}</Text>
-                      <Text style={styles.catalogAmount}>₹{gift.amount.toLocaleString("en-IN")}</Text>
+                      <Text style={styles.catalogAmount}>₹{formatINR(gift.amount)}</Text>
                     </View>
                   </View>
                   <View style={styles.addBtnWrap}>

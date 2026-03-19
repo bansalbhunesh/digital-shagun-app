@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, Event, Transaction, EventGift, formatINR } from "@/context/AppContext";
+import { useApp, Event, Transaction, EventGift, formatINR, useCurrentUser } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
@@ -58,7 +58,7 @@ function GiftProgressCard({ gift, onContribute }: { gift: EventGift; onContribut
           <View style={[styles.progressFill, { width: `${progressPct}%` as any, backgroundColor: gift.isFullyFunded ? Colors.success : Colors.gold }]} />
         </View>
         <Text style={styles.progressText}>
-          ₹{gift.currentAmount.toLocaleString("en-IN")} / ₹{gift.targetAmount.toLocaleString("en-IN")}
+          ₹{formatINR(gift.currentAmount)} / ₹{formatINR(gift.targetAmount)}
         </Text>
       </View>
 
@@ -88,7 +88,7 @@ function ShagunItem({ tx }: { tx: Transaction }) {
       </View>
       <View style={styles.shagunRight}>
         {isRevealed ? (
-          <Text style={styles.shagunAmount}>₹{tx.amount.toLocaleString("en-IN")}</Text>
+          <Text style={styles.shagunAmount}>₹{formatINR(tx.amount)}</Text>
         ) : (
           <View style={styles.hiddenAmount}>
             <Feather name="eye-off" size={12} color={Colors.textLight} />
@@ -103,12 +103,13 @@ function ShagunItem({ tx }: { tx: Transaction }) {
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useApp();
+  const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
 
   const { data, isLoading: loading, refetch } = useQuery<{ event: Event; shagunList: Transaction[]; gifts: EventGift[] }>({
-    queryKey: ["eventDetail", id],
+    queryKey: ["eventDetail", id, currentUser.id],
     queryFn: () => customFetch(`/api/events/${id}`),
-    enabled: !!id,
+    enabled: !!id && !!currentUser.id,
   });
 
   const event = data?.event ?? null;
@@ -132,7 +133,7 @@ export default function EventDetailScreen() {
     router.push({ pathname: "/send-shagun", params: { eventId: event.id, receiverId: event.hostId, receiverName: event.hostName, eventType: event.type } });
   };
 
-  const isHost = event?.hostId === user?.id;
+  const isHost = event?.hostId === currentUser.id;
   const emoji = EVENT_TYPE_EMOJI[event?.type ?? "wedding"] ?? "🎉";
 
   if (loading) {
@@ -201,7 +202,7 @@ export default function EventDetailScreen() {
       >
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <Text style={styles.statNum}>₹{event.totalReceived.toLocaleString("en-IN")}</Text>
+            <Text style={styles.statNum}>₹{formatINR(event.totalReceived)}</Text>
             <Text style={styles.statLabel}>Total Shagun</Text>
           </View>
           <View style={styles.statBox}>

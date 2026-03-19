@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   View, Text, StyleSheet, Pressable, Animated,
-  Easing, ActivityIndicator, Platform,
+  Easing, ActivityIndicator, Platform, Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, formatINR } from "@/context/AppContext";
+import { useApp, formatINR, useCurrentUser } from "@/context/AppContext";
 import { customFetch } from "@/lib/apiClient";
 
 interface RevealStatus {
@@ -23,6 +23,7 @@ interface RevealStatus {
 export default function RevealScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useApp();
+  const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
   const [status, setStatus] = useState<RevealStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +53,10 @@ export default function RevealScreen() {
       if (!data.isRevealed) {
         startCountdown(data.secondsRemaining);
       }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Could not load blessing details.";
+      Alert.alert("Error", msg);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
     }
@@ -152,7 +157,7 @@ export default function RevealScreen() {
               <Text style={styles.goldCircleEmoji}>🪙</Text>
             </View>
             <Text style={styles.revealedFrom}>{status.senderName} sent you</Text>
-            <Text style={styles.revealedAmount}>₹{status.amount.toLocaleString("en-IN")}</Text>
+            <Text style={styles.revealedAmount}>₹{formatINR(status.amount)}</Text>
             {status.message && (
               <View style={styles.messageCard}>
                 <Text style={styles.messageQuote}>"</Text>

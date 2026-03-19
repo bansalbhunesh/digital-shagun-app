@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Platform, ScrollView,
+  ActivityIndicator, Platform, ScrollView, Alert,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { router, useLocalSearchParams } from "expo-router";
@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, AISuggestion, formatINR } from "@/context/AppContext";
+import { useApp, AISuggestion, formatINR, useCurrentUser } from "@/context/AppContext";
 import { customFetch } from "@workspace/api-client-react/custom-fetch";
 import { useSendShagun } from "@workspace/api-client-react";
 import PaymentService from "@/services/PaymentService";
@@ -21,6 +21,7 @@ export default function SendShagunScreen() {
     eventId: string; receiverId: string; receiverName: string; eventType?: string;
   }>();
   const { user } = useApp();
+  const currentUser = useCurrentUser();
   const { mutateAsync: sendShagunMutation } = useSendShagun();
   const insets = useSafeAreaInsets();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
@@ -59,6 +60,10 @@ export default function SendShagunScreen() {
       return;
     }
     setError("");
+    if (!eventId || !receiverId) {
+      Alert.alert("Error", "Missing event or receiver information.");
+      return;
+    }
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
@@ -83,8 +88,10 @@ export default function SendShagunScreen() {
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSent(tx.id);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Something went wrong. Please try again.";
+      setError(msg);
+      Alert.alert("Transaction Failed", msg);
     } finally {
       setLoading(false);
     }

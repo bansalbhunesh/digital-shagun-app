@@ -1,20 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, Pressable, TextInput,
   ActivityIndicator, Platform, Alert,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
+import { useApp, useCurrentUser } from "@/context/AppContext";
 import { useJoinEvent } from "@workspace/api-client-react";
 import { customFetch } from "@/lib/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function JoinEventScreen() {
-  const { user } = useApp();
+  const { qrCode } = useLocalSearchParams<{ qrCode?: string }>();
+  const { user } = useApp(); // still needed for optional checks if any, or just useCurrentUser if we're sure
+  const currentUser = useCurrentUser();
   const queryClient = useQueryClient();
   const { mutateAsync: joinEvent } = useJoinEvent();
   const insets = useSafeAreaInsets();
@@ -22,6 +24,12 @@ export default function JoinEventScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
+  
+  useEffect(() => {
+    if (qrCode) {
+      setCode(qrCode.toUpperCase());
+    }
+  }, [qrCode]);
 
   const handleJoin = async () => {
     if (code.trim().length < 4) {
@@ -40,8 +48,10 @@ export default function JoinEventScreen() {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace({ pathname: "/event/[id]", params: { id: detail.event.id } });
-    } catch {
-      setError("Event not found. Please check the code.");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Event not found. Please check the code.";
+      setError(msg);
+      Alert.alert("Join Failed", msg);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);

@@ -154,3 +154,11 @@ const [AppProvider, useApp] = createContextHook(() => {
 });
 
 export { AppProvider, useApp };
+
+export function useCurrentUser() {
+  const { user } = useApp();
+  if (!user) {
+    throw new Error("useCurrentUser must be used within an authenticated context");
+  }
+  return user;
+}

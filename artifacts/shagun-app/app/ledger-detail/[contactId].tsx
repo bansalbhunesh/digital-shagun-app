@@ -7,7 +7,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import Colors from "@/constants/colors";
-import { useApp, formatINR } from "@/context/AppContext";
+import { useApp, formatINR, useCurrentUser } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
@@ -40,11 +40,12 @@ const EVENT_TYPE_EMOJI: Record<string, string> = {
 export default function LedgerDetailScreen() {
   const { contactId, name } = useLocalSearchParams<{ contactId: string; name: string }>();
   const { user } = useApp();
+  const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
   
   const { data: detail, isLoading: loading } = useQuery<LedgerDetail>({
-    queryKey: ["ledgerDetail", user?.id, contactId],
-    queryFn: () => customFetch(`/api/ledger/${user!.id}/${contactId}`),
+    queryKey: ["ledgerDetail", currentUser.id, contactId],
+    queryFn: () => customFetch(`/api/ledger/${currentUser.id}/${contactId}`),
     enabled: !!contactId && !!user?.id,
   });
 
@@ -81,19 +82,19 @@ export default function LedgerDetailScreen() {
           <View style={styles.summaryRow}>
             <View style={styles.summaryBox}>
               <Text style={[styles.summaryAmt, { color: Colors.success }]}>
-                ₹{detail?.totalGiven.toLocaleString("en-IN") ?? 0}
+                ₹{detail ? formatINR(detail.totalGiven) : 0}
               </Text>
               <Text style={styles.summaryLabel}>You Gave</Text>
             </View>
             <View style={styles.summaryBox}>
               <Text style={[styles.summaryAmt, { color: Colors.primary }]}>
-                ₹{detail?.totalReceived.toLocaleString("en-IN") ?? 0}
+                ₹{detail ? formatINR(detail.totalReceived) : 0}
               </Text>
               <Text style={styles.summaryLabel}>They Gave</Text>
             </View>
             <View style={styles.summaryBox}>
               <Text style={[styles.summaryAmt, { color: Colors.gold }]}>
-                ₹{Math.abs(detail?.balance ?? 0).toLocaleString("en-IN")}
+                ₹{formatINR(Math.abs(detail?.balance ?? 0))}
               </Text>
               <Text style={styles.summaryLabel}>
                 {(detail?.balance ?? 0) >= 0 ? "You're ahead" : "They're ahead"}

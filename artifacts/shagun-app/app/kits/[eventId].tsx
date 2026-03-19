@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, Kit, formatINR } from "@/context/AppContext";
+import { useApp, Kit, formatINR, useCurrentUser } from "@/context/AppContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
@@ -30,7 +30,7 @@ function KitCard({ kit, onAdd, adding }: { kit: Kit; onAdd: () => void; adding: 
           <View style={styles.kitMeta}>
             <Text style={styles.kitItemCount}>{kit.items.length} items</Text>
             <Text style={styles.kitSep}>•</Text>
-            <Text style={styles.kitTotal}>₹{kit.totalAmount.toLocaleString("en-IN")}</Text>
+            <Text style={styles.kitTotal}>₹{formatINR(kit.totalAmount)}</Text>
           </View>
         </View>
         <Feather
@@ -49,7 +49,7 @@ function KitCard({ kit, onAdd, adding }: { kit: Kit; onAdd: () => void; adding: 
                 <Text style={styles.kitItemName}>{item.name}</Text>
                 <Text style={styles.kitItemCat}>{item.category}</Text>
               </View>
-              <Text style={styles.kitItemAmt}>₹{item.targetAmount.toLocaleString("en-IN")}</Text>
+              <Text style={styles.kitItemAmt}>₹{formatINR(item.targetAmount)}</Text>
             </View>
           ))}
         </View>
@@ -76,13 +76,14 @@ function KitCard({ kit, onAdd, adding }: { kit: Kit; onAdd: () => void; adding: 
 export default function KitsScreen() {
   const { eventId, eventType } = useLocalSearchParams<{ eventId: string; eventType: string }>();
   const { user } = useApp();
+  const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
   const { data: kits = [], isLoading: loading } = useQuery<Kit[]>({
-    queryKey: ["kits", eventType],
-    queryFn: () => customFetch(`/api/kits?eventType=${eventType}`),
-    enabled: !!eventType
+    queryKey: ["kits", eventType, currentUser.id],
+    queryFn: () => customFetch<Kit[]>(`/api/kits?eventType=${eventType}`),
+    enabled: !!eventType && !!currentUser.id
   });
 
   const [adding, setAdding] = useState<string | null>(null);
