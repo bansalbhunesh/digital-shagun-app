@@ -61,6 +61,7 @@
     "@react-navigation/native": "^6.1.18",
     "@supabase/supabase-js": "^2.48.0",
     "expo-camera": "^55.0.10",
+    "moti": "^0.30.0",
     "react-native-qrcode-svg": "^6.3.21",
     "react-native-url-polyfill": "^2.0.0"
   }

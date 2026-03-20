@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Share } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { API_BASE_URL } from "../../lib/apiClient";
+import { useLocalSearchParams } from "expo-router";
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { MotiView, MotiText } from "moti";
@@ -10,7 +10,6 @@ const { width, height } = Dimensions.get("window");
 
 export default function ShagunRevealPage() {
   const { id } = useLocalSearchParams();
-  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isOpened, setIsOpened] = useState(false);
