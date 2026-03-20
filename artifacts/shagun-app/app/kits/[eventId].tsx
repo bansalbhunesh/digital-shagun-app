@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   View, Text, StyleSheet, Pressable, ScrollView,
   ActivityIndicator, Platform, Alert,
@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, Kit, formatINR, useCurrentUser } from "@/context/AppContext";
+import { Kit, formatINR, useCurrentUser } from "@/context/AppContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 

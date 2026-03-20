@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React from "react";
 import {
   View, Text, StyleSheet, Pressable, ScrollView,
   ActivityIndicator, Platform,
@@ -120,7 +120,7 @@ export default function LedgerDetailScreen() {
             {(detail?.transactions ?? []).length === 0 ? (
               <Text style={styles.emptyText}>No transactions found</Text>
             ) : (
-              detail?.transactions.map((tx, i) => (
+              detail?.transactions.map((tx) => (
                 <View key={tx.id} style={styles.txRow}>
                   <View style={[styles.txIndicator, { backgroundColor: tx.direction === "given" ? Colors.success : Colors.primary }]} />
                   <View style={styles.txEmoji}>

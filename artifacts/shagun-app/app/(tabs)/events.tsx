@@ -55,7 +55,7 @@ function EventCard({ event, onPress }: { event: Event; onPress: () => void }) {
 
         <View style={styles.cardStats}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>₹{formatINR(event.totalReceived)}</Text>
+            <Text style={styles.statValue}>₹{formatINR(event.totalReceived ?? 0)}</Text>
             <Text style={styles.statLabel}>Received</Text>
           </View>
           <View style={styles.statDivider} />

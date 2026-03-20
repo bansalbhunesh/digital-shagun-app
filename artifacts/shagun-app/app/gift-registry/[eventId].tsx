@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View, Text, StyleSheet, Pressable,
   ScrollView, ActivityIndicator, Platform, Alert,
@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp, EventGift, Event, formatINR, useCurrentUser } from "@/context/AppContext";
+import { EventGift, Event, formatINR, useCurrentUser } from "@/context/AppContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAddGiftToRegistry } from "@workspace/api-client-react";
 import { customFetch } from "@/lib/apiClient";
@@ -136,7 +136,7 @@ export default function GiftRegistryScreen() {
     setAdding(gift.name);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      const newGift = await addGiftMutation({
+      await addGiftMutation({
         eventId: eventId,
         data: {
           name: gift.name,

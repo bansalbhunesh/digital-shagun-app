@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback } from "react";
 import {
   View, Text, StyleSheet, Pressable, ScrollView,
-  ActivityIndicator, Share, Alert, Platform,
+  ActivityIndicator, Share, Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -24,7 +24,6 @@ const EVENT_TYPE_EMOJI: Record<string, string> = {
 function GiftProgressCard({ gift, onContribute }: { gift: EventGift; onContribute: () => void }) {
   const progress = gift.targetAmount > 0 ? gift.currentAmount / gift.targetAmount : 0;
   const progressPct = Math.min(progress * 100, 100);
-  const remaining = gift.targetAmount - gift.currentAmount;
   const isAlmostDone = progressPct >= 75 && progressPct < 100;
 
   return (
