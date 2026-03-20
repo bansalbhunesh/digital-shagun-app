@@ -145,6 +145,7 @@ export const SendShagunBody = zod.object({
   receiverId: zod.string(),
   amount: zod.number().min(1),
   message: zod.string().optional(),
+  requestId: zod.string().optional(),
 });
 
 export const GetShagunByEventParams = zod.object({

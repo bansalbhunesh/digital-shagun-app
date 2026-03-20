@@ -18,9 +18,33 @@ import { generateId } from "../utils/id";
 const REVEAL_DELAY_MINUTES = 10;
 
 router.post("/", requireAuth, validateRequest(SendShagunBody), async (req, res) => {
-  const { eventId, receiverId, receiverName, amount, message } = req.body;
+  const { eventId, receiverId, receiverName, amount, message, requestId } = req.body;
   const senderId = req.user!.id;
   const senderName = req.user!.name;
+
+  // Idempotency Check: Skip if requestId already exists
+  if (requestId) {
+    const [existing] = await db
+      .select()
+      .from(transactionsTable)
+      .where(eq(transactionsTable.requestId, requestId))
+      .limit(1);
+    if (existing) {
+      return res.status(200).json({
+        id: existing.id,
+        eventId: existing.eventId,
+        senderId: existing.senderId,
+        senderName: existing.senderName,
+        receiverId: existing.receiverId,
+        amount: parseFloat(existing.amount),
+        message: existing.message ?? null,
+        isRevealed: existing.isRevealed === "true",
+        revealAt: existing.revealAt.toISOString(),
+        createdAt: existing.createdAt.toISOString(),
+        _idempotent: true,
+      });
+    }
+  }
 
   const resolvedEventId = eventId || "direct";
 
@@ -40,6 +64,7 @@ router.post("/", requireAuth, validateRequest(SendShagunBody), async (req, res) 
         message: message ?? null,
         isRevealed: "false",
         revealAt,
+        requestId: requestId ?? null,
       })
       .returning();
 

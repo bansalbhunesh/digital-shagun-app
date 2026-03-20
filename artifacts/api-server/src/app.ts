@@ -2,12 +2,20 @@ import express, { type Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import pinoHttp from "pino-http";
 import router from "./routes";
 import { env } from "./lib/env";
 import { errorHandler } from "./middlewares/error";
+import logger from "./lib/logger";
 
 const app: Express = express();
 
+if (!env.WEB_CLIENT_URL && env.NODE_ENV === "production") {
+  logger.error("❌ WEB_CLIENT_URL is missing in production!");
+  throw new Error("Critical Configuration Error: WEB_CLIENT_URL must be set in production.");
+}
+
+app.use(pinoHttp({ logger }));
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(
   rateLimit({

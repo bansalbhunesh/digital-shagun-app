@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, numeric, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const transactionsTable = pgTable(
   "transactions",
@@ -14,6 +14,7 @@ export const transactionsTable = pgTable(
     message: text("message"),
     isRevealed: text("is_revealed").notNull().default("false"),
     revealAt: timestamp("reveal_at").notNull(),
+    requestId: text("request_id"), // Optional: For client-side idempotency
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
@@ -21,10 +22,23 @@ export const transactionsTable = pgTable(
     index("tx_sender_id_idx").on(table.senderId),
     index("tx_receiver_id_idx").on(table.receiverId),
     index("tx_reveal_at_idx").on(table.revealAt),
+    index("tx_request_id_idx").on(table.requestId),
     index("tx_sender_receiver_idx").on(table.senderId, table.receiverId),
   ]
 );
 
-export const insertTransactionSchema = createInsertSchema(transactionsTable);
+export const insertTransactionSchema = z.object({
+  id: z.string(),
+  eventId: z.string(),
+  senderId: z.string(),
+  senderName: z.string(),
+  receiverId: z.string(),
+  amount: z.string(),
+  message: z.string().nullable().optional(),
+  isRevealed: z.string().default("false"),
+  revealAt: z.date(),
+  requestId: z.string().nullable().optional(),
+});
+
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactionsTable.$inferSelect;
