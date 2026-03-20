@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, Pressable, ScrollView, Alert, Platform, TextInput, ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  Alert,
+  Platform,
+  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -57,10 +65,10 @@ export default function ProfileScreen() {
         <Text style={styles.headerTitle}>Profile</Text>
 
         <View style={styles.profileCard}>
-          <View style={[styles.bigAvatar, { backgroundColor: user?.avatarColor ?? Colors.primary }]}>
-            <Text style={styles.bigAvatarText}>
-              {(user?.name ?? "G").charAt(0).toUpperCase()}
-            </Text>
+          <View
+            style={[styles.bigAvatar, { backgroundColor: user?.avatarColor ?? Colors.primary }]}
+          >
+            <Text style={styles.bigAvatarText}>{(user?.name ?? "G").charAt(0).toUpperCase()}</Text>
           </View>
           <Text style={styles.profileName}>{user?.name}</Text>
           <Text style={styles.profilePhone}>{user?.phone}</Text>
@@ -109,7 +117,13 @@ export default function ProfileScreen() {
                   <Text style={styles.upiSaveBtnText}>Save</Text>
                 )}
               </Pressable>
-              <Pressable onPress={() => { setEditingUpi(false); setUpiId(user?.upiId ?? ""); }} style={styles.upiCancelBtn}>
+              <Pressable
+                onPress={() => {
+                  setEditingUpi(false);
+                  setUpiId(user?.upiId ?? "");
+                }}
+                style={styles.upiCancelBtn}
+              >
                 <Feather name="x" size={18} color={Colors.textLight} />
               </Pressable>
             </View>
@@ -126,10 +140,30 @@ export default function ProfileScreen() {
         <View style={styles.menuSection}>
           <Text style={styles.menuTitle}>Account</Text>
           {[
-            { icon: "calendar", label: "My Events", sub: "View all your celebrations", onPress: () => router.push("/(tabs)/events") },
-            { icon: "heart", label: "Blessings Ledger", sub: "Track gift relationships", onPress: () => router.push("/(tabs)/ledger") },
-            { icon: "plus-circle", label: "Create Event", sub: "Host a new celebration", onPress: () => router.push("/create-event") },
-            { icon: "users", label: "Join Event", sub: "Scan or enter code", onPress: () => router.push("/join-event") },
+            {
+              icon: "calendar",
+              label: "My Events",
+              sub: "View all your celebrations",
+              onPress: () => router.push("/(tabs)/events"),
+            },
+            {
+              icon: "heart",
+              label: "Blessings Ledger",
+              sub: "Track gift relationships",
+              onPress: () => router.push("/(tabs)/ledger"),
+            },
+            {
+              icon: "plus-circle",
+              label: "Create Event",
+              sub: "Host a new celebration",
+              onPress: () => router.push("/create-event"),
+            },
+            {
+              icon: "users",
+              label: "Join Event",
+              sub: "Scan or enter code",
+              onPress: () => router.push("/join-event"),
+            },
           ].map((item, i) => (
             <Pressable
               key={i}
@@ -153,7 +187,9 @@ export default function ProfileScreen() {
           <View style={styles.aboutCard}>
             <Text style={styles.aboutTitle}>Digital Shagun Platform</Text>
             <Text style={styles.aboutText}>
-              Shagun is India's first social gifting platform designed to preserve the emotional tradition of shagun across celebrations — with cultural warmth and digital convenience.
+              Shagun is India's first social gifting platform designed to preserve the emotional
+              tradition of shagun across celebrations — with cultural warmth and digital
+              convenience.
             </Text>
             <View style={styles.aboutDivider} />
             <View style={styles.aboutStats}>

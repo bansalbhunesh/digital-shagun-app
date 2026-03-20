@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, Pressable, ScrollView,
-  ActivityIndicator, Platform, Alert,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+  Platform,
+  Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,16 +23,15 @@ function KitCard({ kit, onAdd, adding }: { kit: Kit; onAdd: () => void; adding: 
 
   return (
     <View style={[styles.kitCard, { borderTopColor: kit.color }]}>
-      <Pressable
-        style={styles.kitHeader}
-        onPress={() => setExpanded(v => !v)}
-      >
+      <Pressable style={styles.kitHeader} onPress={() => setExpanded((v) => !v)}>
         <View style={[styles.kitEmojiContainer, { backgroundColor: kit.color + "22" }]}>
           <Text style={styles.kitEmoji}>{kit.emoji}</Text>
         </View>
         <View style={styles.kitHeaderBody}>
           <Text style={styles.kitName}>{kit.name}</Text>
-          <Text style={styles.kitDesc} numberOfLines={1}>{kit.description}</Text>
+          <Text style={styles.kitDesc} numberOfLines={1}>
+            {kit.description}
+          </Text>
           <View style={styles.kitMeta}>
             <Text style={styles.kitItemCount}>{kit.items.length} items</Text>
             <Text style={styles.kitSep}>•</Text>
@@ -56,7 +61,11 @@ function KitCard({ kit, onAdd, adding }: { kit: Kit; onAdd: () => void; adding: 
       )}
 
       <Pressable
-        style={({ pressed }) => [styles.addKitBtn, { backgroundColor: kit.color }, pressed && styles.btnPressed]}
+        style={({ pressed }) => [
+          styles.addKitBtn,
+          { backgroundColor: kit.color },
+          pressed && styles.btnPressed,
+        ]}
         onPress={onAdd}
         disabled={adding}
       >
@@ -82,7 +91,7 @@ export default function KitsScreen() {
   const { data: kits = [], isLoading: loading } = useQuery<Kit[]>({
     queryKey: ["kits", eventType, currentUser.id],
     queryFn: () => customFetch<Kit[]>(`/api/kits?eventType=${eventType}`),
-    enabled: !!eventType && !!currentUser.id
+    enabled: !!eventType && !!currentUser.id,
   });
 
   const [adding, setAdding] = useState<string | null>(null);
@@ -97,10 +106,10 @@ export default function KitsScreen() {
       const result = await customFetch<{ itemsAdded: number }>(`/api/kits/${eventId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kitId: kit.id })
+        body: JSON.stringify({ kitId: kit.id }),
       });
       queryClient.invalidateQueries({ queryKey: ["eventGifts", eventId] });
-      setAddedKits(prev => new Set([...prev, kit.id]));
+      setAddedKits((prev) => new Set([...prev, kit.id]));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         `${kit.emoji} Kit Added!`,
@@ -145,7 +154,7 @@ export default function KitsScreen() {
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-          {kits.map(kit => (
+          {kits.map((kit) => (
             <View key={kit.id} style={{ position: "relative" }}>
               {addedKits.has(kit.id) && (
                 <View style={styles.addedOverlay}>
@@ -153,11 +162,7 @@ export default function KitsScreen() {
                   <Text style={styles.addedOverlayText}>Added to Registry</Text>
                 </View>
               )}
-              <KitCard
-                kit={kit}
-                onAdd={() => handleAddKit(kit)}
-                adding={adding === kit.id}
-              />
+              <KitCard kit={kit} onAdd={() => handleAddKit(kit)} adding={adding === kit.id} />
             </View>
           ))}
           <Text style={styles.footerNote}>

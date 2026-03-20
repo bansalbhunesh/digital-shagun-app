@@ -1,7 +1,13 @@
 import React, { useCallback } from "react";
 import {
-  View, Text, StyleSheet, Pressable, FlatList,
-  RefreshControl, ActivityIndicator, Platform,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  FlatList,
+  RefreshControl,
+  ActivityIndicator,
+  Platform,
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,10 +18,23 @@ import { useCurrentUser, LedgerEntry, formatINR } from "@/context/AppContext";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { customFetch } from "@/lib/apiClient";
 
-function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: () => void; onSend: () => void }) {
+function LedgerCard({
+  entry,
+  onPress,
+  onSend,
+}: {
+  entry: LedgerEntry;
+  onPress: () => void;
+  onSend: () => void;
+}) {
   const balance = entry.totalGiven - entry.totalReceived;
   const isPositive = balance >= 0;
-  const initials = entry.contactName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
+  const initials = entry.contactName
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <Pressable
@@ -23,7 +42,9 @@ function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: (
       onPress={onPress}
     >
       <View style={styles.cardLeft}>
-        <View style={[styles.avatar, { backgroundColor: isPositive ? Colors.primary : Colors.gold }]}>
+        <View
+          style={[styles.avatar, { backgroundColor: isPositive ? Colors.primary : Colors.gold }]}
+        >
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
       </View>
@@ -52,7 +73,10 @@ function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: (
         </View>
         <Pressable
           style={({ pressed }) => [styles.sendBtn, pressed && styles.sendBtnPressed]}
-          onPress={e => { e.stopPropagation(); onSend(); }}
+          onPress={(e) => {
+            e.stopPropagation();
+            onSend();
+          }}
         >
           <Feather name="send" size={12} color={Colors.primary} />
           <Text style={styles.sendBtnText}>Send Shagun</Text>
@@ -60,11 +84,23 @@ function LedgerCard({ entry, onPress, onSend }: { entry: LedgerEntry; onPress: (
       </View>
 
       <View style={styles.cardRight}>
-        <View style={[styles.suggestBadge, { backgroundColor: isPositive ? Colors.successLight : Colors.cream }]}>
-          <Text style={[styles.suggestLabel, { color: isPositive ? Colors.success : Colors.textSecondary }]}>
+        <View
+          style={[
+            styles.suggestBadge,
+            { backgroundColor: isPositive ? Colors.successLight : Colors.cream },
+          ]}
+        >
+          <Text
+            style={[
+              styles.suggestLabel,
+              { color: isPositive ? Colors.success : Colors.textSecondary },
+            ]}
+          >
             Suggest
           </Text>
-          <Text style={[styles.suggestAmount, { color: isPositive ? Colors.success : Colors.primary }]}>
+          <Text
+            style={[styles.suggestAmount, { color: isPositive ? Colors.success : Colors.primary }]}
+          >
             ₹{formatINR(entry.suggestedAmount)}
           </Text>
         </View>
@@ -88,17 +124,23 @@ export default function LedgerScreen() {
     isRefetching: refreshing,
   } = useInfiniteQuery({
     queryKey: ["ledger", currentUser.id],
-    queryFn: ({ pageParam = 0 }) => 
-      customFetch<{ data: LedgerEntry[], nextCursor: number | null }>(`/api/ledger/${currentUser.id}?page=${pageParam}&limit=15`),
+    queryFn: ({ pageParam = 0 }) =>
+      customFetch<{ data: LedgerEntry[]; nextCursor: number | null }>(
+        `/api/ledger/${currentUser.id}?page=${pageParam}&limit=15`
+      ),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     enabled: !!currentUser.id,
     initialPageParam: 0,
   });
 
-  const entries = data?.pages.flatMap(page => page.data) ?? [];
+  const entries = data?.pages.flatMap((page) => page.data) ?? [];
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
 
   const totalGiven = entries.reduce((s, e) => s + e.totalGiven, 0);
   const totalReceived = entries.reduce((s, e) => s + e.totalReceived, 0);
@@ -117,7 +159,9 @@ export default function LedgerScreen() {
         </View>
         <View style={styles.summaryDivider} />
         <View style={styles.summaryItem}>
-          <Text style={[styles.summaryValue, { color: Colors.gold }]}>₹{formatINR(totalReceived)}</Text>
+          <Text style={[styles.summaryValue, { color: Colors.gold }]}>
+            ₹{formatINR(totalReceived)}
+          </Text>
           <Text style={styles.summaryLabel}>Blessings Received</Text>
         </View>
         <View style={styles.summaryDivider} />
@@ -139,7 +183,7 @@ export default function LedgerScreen() {
       ) : (
         <FlatList
           data={entries}
-          keyExtractor={item => item.contactId}
+          keyExtractor={(item) => item.contactId}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           onEndReached={() => {
@@ -148,7 +192,13 @@ export default function LedgerScreen() {
             }
           }}
           onEndReachedThreshold={0.5}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor={Colors.primary} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={refetch}
+              tintColor={Colors.primary}
+            />
+          }
           ListFooterComponent={
             <View style={{ height: 100, alignItems: "center", justifyContent: "center" }}>
               {isFetchingNextPage && <ActivityIndicator color={Colors.primary} />}
@@ -159,11 +209,17 @@ export default function LedgerScreen() {
               entry={item}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push({ pathname: "/ledger-detail/[contactId]", params: { contactId: item.contactId, name: item.contactName } });
+                router.push({
+                  pathname: "/ledger-detail/[contactId]",
+                  params: { contactId: item.contactId, name: item.contactName },
+                });
               }}
               onSend={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push({ pathname: "/send-direct", params: { receiverName: item.contactName, receiverId: item.contactId } });
+                router.push({
+                  pathname: "/send-direct",
+                  params: { receiverName: item.contactName, receiverId: item.contactId },
+                });
               }}
             />
           )}
@@ -174,7 +230,8 @@ export default function LedgerScreen() {
               </View>
               <Text style={styles.emptyTitle}>No blessings tracked yet</Text>
               <Text style={styles.emptyText}>
-                When you give or receive shagun, your relationships will appear here — privately, for your memory.
+                When you give or receive shagun, your relationships will appear here — privately,
+                for your memory.
               </Text>
             </View>
           }

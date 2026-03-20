@@ -33,16 +33,16 @@ export default function ScannerScreen() {
   }
 
   const insets = useSafeAreaInsets();
-  
+
   const handleBarcodeScanned = ({ data }: { data: string }) => {
     if (scanned) return;
     setScanned(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
+
     // Check if it's a Shagun event URL or code
     // Assuming QR contains the shareCode
     if (data) {
-       router.replace({ pathname: "/join-event", params: { qrCode: data } });
+      router.replace({ pathname: "/join-event", params: { qrCode: data } });
     } else {
       Alert.alert("Invalid QR", "This QR code is not recognized.");
       setScanned(false);
@@ -58,7 +58,7 @@ export default function ScannerScreen() {
           barcodeTypes: ["qr"],
         }}
       />
-      
+
       <View style={styles.overlay}>
         <View style={styles.unfocusedContainer} />
         <View style={styles.middleContainer}>

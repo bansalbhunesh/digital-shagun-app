@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Platform, Alert,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  ActivityIndicator,
+  Platform,
+  Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,8 +24,12 @@ const QUICK_AMOUNTS = [500, 1000, 2000, 5000];
 
 export default function ContributeGiftScreen() {
   const { giftId, giftName, giftEmoji, remaining, hostId, hostName } = useLocalSearchParams<{
-    giftId: string; giftName: string; giftEmoji: string; remaining: string;
-    hostId: string; hostName: string;
+    giftId: string;
+    giftName: string;
+    giftEmoji: string;
+    remaining: string;
+    hostId: string;
+    hostName: string;
   }>();
   const queryClient = useQueryClient();
   const { mutateAsync: contributeMutation } = useContributeToGift();
@@ -35,15 +45,21 @@ export default function ContributeGiftScreen() {
   const remainingAmt = parseInt(remaining ?? "0", 10);
 
   const handleContribute = async () => {
-    if (!finalAmount || finalAmount < 1) { setError("Please enter an amount"); return; }
-    if (finalAmount > remainingAmt) { setError(`Maximum contribution is ₹${remainingAmt}`); return; }
+    if (!finalAmount || finalAmount < 1) {
+      setError("Please enter an amount");
+      return;
+    }
+    if (finalAmount > remainingAmt) {
+      setError(`Maximum contribution is ₹${remainingAmt}`);
+      return;
+    }
     setError("");
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
       // Fetch receiver's UPI ID (the event host)
       const receiverData: any = await customFetch(`/api/users/${hostId}`);
-      
+
       const paid = await PaymentService.processPayment({
         amount: finalAmount,
         receiverUpiId: receiverData?.upiId ?? null,
@@ -56,10 +72,10 @@ export default function ContributeGiftScreen() {
       }
 
       await contributeMutation({
-        data: { 
+        data: {
           giftId: giftId!,
           amount: finalAmount,
-        }
+        },
       });
       queryClient.invalidateQueries({ queryKey: ["eventDetail"] });
       queryClient.invalidateQueries({ queryKey: ["eventGifts"] });
@@ -116,7 +132,7 @@ export default function ContributeGiftScreen() {
 
         <Text style={styles.sectionLabel}>Choose Amount</Text>
         <View style={styles.presetRow}>
-          {QUICK_AMOUNTS.filter(a => a <= remainingAmt).map(amt => (
+          {QUICK_AMOUNTS.filter((a) => a <= remainingAmt).map((amt) => (
             <Pressable
               key={amt}
               style={({ pressed }) => [
@@ -124,9 +140,18 @@ export default function ContributeGiftScreen() {
                 selectedAmount === amt && styles.presetChipSelected,
                 pressed && styles.chipPressed,
               ]}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedAmount(amt); setCustomAmount(""); }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedAmount(amt);
+                setCustomAmount("");
+              }}
             >
-              <Text style={[styles.presetChipText, selectedAmount === amt && styles.presetChipTextSelected]}>
+              <Text
+                style={[
+                  styles.presetChipText,
+                  selectedAmount === amt && styles.presetChipTextSelected,
+                ]}
+              >
                 ₹{formatINR(amt)}
               </Text>
             </Pressable>
@@ -137,9 +162,18 @@ export default function ContributeGiftScreen() {
               selectedAmount === remainingAmt && styles.presetChipSelected,
               pressed && styles.chipPressed,
             ]}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setSelectedAmount(remainingAmt); setCustomAmount(""); }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setSelectedAmount(remainingAmt);
+              setCustomAmount("");
+            }}
           >
-            <Text style={[styles.presetChipText, selectedAmount === remainingAmt && styles.presetChipTextSelected]}>
+            <Text
+              style={[
+                styles.presetChipText,
+                selectedAmount === remainingAmt && styles.presetChipTextSelected,
+              ]}
+            >
               Full ₹{formatINR(remainingAmt)}
             </Text>
           </Pressable>
@@ -153,7 +187,10 @@ export default function ContributeGiftScreen() {
             placeholder="Amount"
             placeholderTextColor={Colors.textLight}
             value={customAmount}
-            onChangeText={t => { setCustomAmount(t.replace(/[^0-9]/g, "")); setSelectedAmount(null); }}
+            onChangeText={(t) => {
+              setCustomAmount(t.replace(/[^0-9]/g, ""));
+              setSelectedAmount(null);
+            }}
             keyboardType="numeric"
           />
         </View>

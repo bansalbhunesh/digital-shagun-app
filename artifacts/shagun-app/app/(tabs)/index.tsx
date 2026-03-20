@@ -54,28 +54,40 @@ export default function HomeScreen() {
       label: "Give Shagun",
       sub: "Send to anyone",
       color: Colors.primary,
-      onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/send-direct"); },
+      onPress: () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.push("/send-direct");
+      },
     },
     {
       icon: "calendar" as const,
       label: "Join Event",
       sub: "Scan or enter code",
       color: Colors.gold,
-      onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/join-event"); },
+      onPress: () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.push("/join-event");
+      },
     },
     {
       icon: "maximize" as const,
       label: "Scan QR",
       sub: "Quick join event",
       color: Colors.gold,
-      onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/scanner"); },
+      onPress: () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.push("/scanner");
+      },
     },
     {
       icon: "plus-circle" as const,
       label: "Create Event",
       sub: "Host a celebration",
       color: Colors.primaryDark,
-      onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/create-event"); },
+      onPress: () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.push("/create-event");
+      },
     },
   ];
 
@@ -87,31 +99,29 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>Namaste 🙏</Text>
             <Text style={styles.userName}>{currentUser.name}</Text>
           </View>
-          <Pressable
-            style={styles.avatarContainer}
-            onPress={() => router.push("/(tabs)/profile")}
-          >
-            <View style={[styles.avatar, { backgroundColor: currentUser.avatarColor ?? Colors.primary }]}>
-              <Text style={styles.avatarText}>
-                {currentUser.name.charAt(0).toUpperCase()}
-              </Text>
+          <Pressable style={styles.avatarContainer} onPress={() => router.push("/(tabs)/profile")}>
+            <View
+              style={[
+                styles.avatar,
+                { backgroundColor: currentUser.avatarColor ?? Colors.primary },
+              ]}
+            >
+              <Text style={styles.avatarText}>{currentUser.name.charAt(0).toUpperCase()}</Text>
             </View>
           </Pressable>
         </View>
 
         <View style={styles.heroCard}>
           <View style={styles.heroPattern} />
-          <Text style={styles.heroQuote}>
-            "शुभ अवसर पर दिया गया आशीर्वाद{'\n'}सदा फलता है"
+          <Text style={styles.heroQuote}>"शुभ अवसर पर दिया गया आशीर्वाद{"\n"}सदा फलता है"</Text>
+          <Text style={styles.heroQuoteEn}>
+            Blessings given on auspicious occasions always bear fruit
           </Text>
-          <Text style={styles.heroQuoteEn}>Blessings given on auspicious occasions always bear fruit</Text>
         </View>
 
-        {(stats && (stats.totalGiven > 0 || stats.totalReceived > 0 || stats.relationshipCount > 0)) ? (
-          <Pressable
-            style={styles.statsCard}
-            onPress={() => router.push("/(tabs)/ledger")}
-          >
+        {stats &&
+        (stats.totalGiven > 0 || stats.totalReceived > 0 || stats.relationshipCount > 0) ? (
+          <Pressable style={styles.statsCard} onPress={() => router.push("/(tabs)/ledger")}>
             <View style={styles.statsCardHeader}>
               <Text style={styles.statsCardTitle}>Your Shagun Summary</Text>
               <Feather name="chevron-right" size={16} color={Colors.goldLight} />
@@ -123,7 +133,9 @@ export default function HomeScreen() {
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, styles.statReceived]}>₹{formatINR(stats.totalReceived)}</Text>
+                <Text style={[styles.statValue, styles.statReceived]}>
+                  ₹{formatINR(stats.totalReceived)}
+                </Text>
                 <Text style={styles.statLabel}>Received</Text>
               </View>
               <View style={styles.statDivider} />
@@ -201,7 +213,9 @@ export default function HomeScreen() {
             </View>
             <View style={styles.kitsPromoBody}>
               <Text style={styles.kitsPromoTitle}>Gift Kits — New!</Text>
-              <Text style={styles.kitsPromoText}>Curated bundles for life's big moments. Home Setup, Baby, Wedding & more.</Text>
+              <Text style={styles.kitsPromoText}>
+                Curated bundles for life's big moments. Home Setup, Baby, Wedding & more.
+              </Text>
             </View>
           </View>
           <View style={styles.kitsPromoBadge}>
@@ -221,7 +235,12 @@ export default function HomeScreen() {
               <View style={styles.stepBadge}>
                 <Text style={styles.stepNum}>{item.step}</Text>
               </View>
-              <Feather name={item.icon as any} size={16} color={Colors.gold} style={styles.howIcon} />
+              <Feather
+                name={item.icon as any}
+                size={16}
+                color={Colors.gold}
+                style={styles.howIcon}
+              />
               <Text style={styles.howText}>{item.text}</Text>
             </View>
           ))}

@@ -1,16 +1,10 @@
 import createContextHook from "@nkzw/create-context-hook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabase";
 import { createUser } from "@workspace/api-client-react";
 import { customFetch } from "@/lib/apiClient";
 export { formatINR } from "@/lib/format";
-
-
 
 export interface AppUser {
   id: string;
@@ -102,7 +96,7 @@ export interface AISuggestion {
 
 /**
  * AppContext provides global authentication state and user profile management.
- * NOTE: Data-fetching hooks (events, ledger, etc.) have been moved to Orval-generated 
+ * NOTE: Data-fetching hooks (events, ledger, etc.) have been moved to Orval-generated
  * React Query hooks in `@workspace/api-client-react` for better performance and caching.
  */
 
@@ -113,7 +107,9 @@ const [AppProvider, useApp] = createContextHook(() => {
   useEffect(() => {
     (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         const stored = await AsyncStorage.getItem("shagun_user");
         if (stored && session) {
           setUser(JSON.parse(stored));
@@ -141,20 +137,27 @@ const [AppProvider, useApp] = createContextHook(() => {
     await AsyncStorage.removeItem("shagun_user");
   }, []);
 
-  const updateProfile = useCallback(async (updates: { name?: string; upiId?: string }) => {
-    if (!user) return;
-    const updated = await customFetch<AppUser>(`/api/users/${user.id}`, {
-      method: "PUT",
-      body: JSON.stringify(updates),
-    });
-    const merged: AppUser = { ...user, ...updated };
-    setUser(merged);
-    await AsyncStorage.setItem("shagun_user", JSON.stringify(merged));
-    return merged;
-  }, [user]);
+  const updateProfile = useCallback(
+    async (updates: { name?: string; upiId?: string }) => {
+      if (!user) return;
+      const updated = await customFetch<AppUser>(`/api/users/${user.id}`, {
+        method: "PUT",
+        body: JSON.stringify(updates),
+      });
+      const merged: AppUser = { ...user, ...updated };
+      setUser(merged);
+      await AsyncStorage.setItem("shagun_user", JSON.stringify(merged));
+      return merged;
+    },
+    [user]
+  );
 
   return {
-    user, isLoading, login, logout, updateProfile,
+    user,
+    isLoading,
+    login,
+    logout,
+    updateProfile,
   };
 });
 

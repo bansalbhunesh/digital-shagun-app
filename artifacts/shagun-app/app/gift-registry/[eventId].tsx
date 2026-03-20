@@ -1,7 +1,13 @@
 import React, { useState, useCallback } from "react";
 import {
-  View, Text, StyleSheet, Pressable,
-  ScrollView, ActivityIndicator, Platform, Alert,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+  Platform,
+  Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -15,58 +21,313 @@ import { useAddGiftToRegistry } from "@workspace/api-client-react";
 import { customFetch } from "@/lib/apiClient";
 
 const CURATED_GIFTS = [
-  { name: "Microwave Oven",        category: "Kitchen",         emoji: "📦", amount: 8000,  desc: "Multi-function 25L convection" },
-  { name: "Mixer Grinder",         category: "Kitchen",         emoji: "🥣", amount: 4500,  desc: "750W with 3 jars" },
-  { name: "Air Fryer",             category: "Kitchen",         emoji: "🍳", amount: 6000,  desc: "5-litre digital panel" },
-  { name: "Pressure Cooker Set",   category: "Kitchen",         emoji: "🫕", amount: 3500,  desc: "3L + 5L stainless steel" },
-  { name: "Induction Cooktop",     category: "Kitchen",         emoji: "🔥", amount: 3000,  desc: "2000W with auto-off" },
-  { name: "Electric Kettle",       category: "Kitchen",         emoji: "☕", amount: 1500,  desc: "1.7L stainless steel" },
-  { name: "Non-Stick Cookware Set",category: "Kitchen",         emoji: "🍲", amount: 4000,  desc: "5-piece granite coated" },
-  { name: "Dishwasher",            category: "Kitchen",         emoji: "🫧", amount: 22000, desc: "8-place settings, freestanding" },
+  {
+    name: "Microwave Oven",
+    category: "Kitchen",
+    emoji: "📦",
+    amount: 8000,
+    desc: "Multi-function 25L convection",
+  },
+  {
+    name: "Mixer Grinder",
+    category: "Kitchen",
+    emoji: "🥣",
+    amount: 4500,
+    desc: "750W with 3 jars",
+  },
+  {
+    name: "Air Fryer",
+    category: "Kitchen",
+    emoji: "🍳",
+    amount: 6000,
+    desc: "5-litre digital panel",
+  },
+  {
+    name: "Pressure Cooker Set",
+    category: "Kitchen",
+    emoji: "🫕",
+    amount: 3500,
+    desc: "3L + 5L stainless steel",
+  },
+  {
+    name: "Induction Cooktop",
+    category: "Kitchen",
+    emoji: "🔥",
+    amount: 3000,
+    desc: "2000W with auto-off",
+  },
+  {
+    name: "Electric Kettle",
+    category: "Kitchen",
+    emoji: "☕",
+    amount: 1500,
+    desc: "1.7L stainless steel",
+  },
+  {
+    name: "Non-Stick Cookware Set",
+    category: "Kitchen",
+    emoji: "🍲",
+    amount: 4000,
+    desc: "5-piece granite coated",
+  },
+  {
+    name: "Dishwasher",
+    category: "Kitchen",
+    emoji: "🫧",
+    amount: 22000,
+    desc: "8-place settings, freestanding",
+  },
 
-  { name: "Smart TV 43\"",         category: "Home & Living",   emoji: "📺", amount: 32000, desc: "4K UHD Android TV" },
-  { name: "Washing Machine",       category: "Home & Living",   emoji: "🌀", amount: 24000, desc: "7kg fully automatic" },
-  { name: "Refrigerator",          category: "Home & Living",   emoji: "🧊", amount: 28000, desc: "265L frost-free" },
-  { name: "Sofa Set",              category: "Home & Living",   emoji: "🛋️", amount: 20000, desc: "L-shaped 5-seater fabric" },
-  { name: "Bed & Mattress",        category: "Home & Living",   emoji: "🛏️", amount: 16000, desc: "Queen-size orthopaedic" },
-  { name: "Air Conditioner",       category: "Home & Living",   emoji: "❄️", amount: 36000, desc: "1.5 Ton 5-star inverter" },
-  { name: "Dining Table Set",      category: "Home & Living",   emoji: "🪑", amount: 18000, desc: "6-seater solid wood" },
-  { name: "Curtains & Blinds Set", category: "Home & Living",   emoji: "🪟", amount: 5000,  desc: "Blackout for 3 rooms" },
+  {
+    name: 'Smart TV 43"',
+    category: "Home & Living",
+    emoji: "📺",
+    amount: 32000,
+    desc: "4K UHD Android TV",
+  },
+  {
+    name: "Washing Machine",
+    category: "Home & Living",
+    emoji: "🌀",
+    amount: 24000,
+    desc: "7kg fully automatic",
+  },
+  {
+    name: "Refrigerator",
+    category: "Home & Living",
+    emoji: "🧊",
+    amount: 28000,
+    desc: "265L frost-free",
+  },
+  {
+    name: "Sofa Set",
+    category: "Home & Living",
+    emoji: "🛋️",
+    amount: 20000,
+    desc: "L-shaped 5-seater fabric",
+  },
+  {
+    name: "Bed & Mattress",
+    category: "Home & Living",
+    emoji: "🛏️",
+    amount: 16000,
+    desc: "Queen-size orthopaedic",
+  },
+  {
+    name: "Air Conditioner",
+    category: "Home & Living",
+    emoji: "❄️",
+    amount: 36000,
+    desc: "1.5 Ton 5-star inverter",
+  },
+  {
+    name: "Dining Table Set",
+    category: "Home & Living",
+    emoji: "🪑",
+    amount: 18000,
+    desc: "6-seater solid wood",
+  },
+  {
+    name: "Curtains & Blinds Set",
+    category: "Home & Living",
+    emoji: "🪟",
+    amount: 5000,
+    desc: "Blackout for 3 rooms",
+  },
 
-  { name: "Laptop",                category: "Electronics",     emoji: "💻", amount: 55000, desc: "Core i5, 16GB RAM, SSD" },
-  { name: "Smartphone",            category: "Electronics",     emoji: "📱", amount: 25000, desc: "Latest model flagship" },
-  { name: "Tablet",                category: "Electronics",     emoji: "📲", amount: 18000, desc: "10-inch, Wi-Fi + cellular" },
-  { name: "Bluetooth Speaker",     category: "Electronics",     emoji: "🔊", amount: 3000,  desc: "Waterproof, 20hr battery" },
-  { name: "Smartwatch",            category: "Electronics",     emoji: "⌚", amount: 8000,  desc: "Health tracking, GPS" },
-  { name: "Robot Vacuum",          category: "Electronics",     emoji: "🤖", amount: 15000, desc: "Auto-mapping, app control" },
-  { name: "Water Purifier",        category: "Electronics",     emoji: "💧", amount: 12000, desc: "RO+UV, 7-stage filtration" },
+  {
+    name: "Laptop",
+    category: "Electronics",
+    emoji: "💻",
+    amount: 55000,
+    desc: "Core i5, 16GB RAM, SSD",
+  },
+  {
+    name: "Smartphone",
+    category: "Electronics",
+    emoji: "📱",
+    amount: 25000,
+    desc: "Latest model flagship",
+  },
+  {
+    name: "Tablet",
+    category: "Electronics",
+    emoji: "📲",
+    amount: 18000,
+    desc: "10-inch, Wi-Fi + cellular",
+  },
+  {
+    name: "Bluetooth Speaker",
+    category: "Electronics",
+    emoji: "🔊",
+    amount: 3000,
+    desc: "Waterproof, 20hr battery",
+  },
+  {
+    name: "Smartwatch",
+    category: "Electronics",
+    emoji: "⌚",
+    amount: 8000,
+    desc: "Health tracking, GPS",
+  },
+  {
+    name: "Robot Vacuum",
+    category: "Electronics",
+    emoji: "🤖",
+    amount: 15000,
+    desc: "Auto-mapping, app control",
+  },
+  {
+    name: "Water Purifier",
+    category: "Electronics",
+    emoji: "💧",
+    amount: 12000,
+    desc: "RO+UV, 7-stage filtration",
+  },
 
-  { name: "Baby Cot & Mattress",   category: "Baby & Kids",     emoji: "🛏️", amount: 8000,  desc: "Convertible, with storage" },
-  { name: "Baby Monitor",          category: "Baby & Kids",     emoji: "📹", amount: 5000,  desc: "Video + audio, night vision" },
-  { name: "Stroller / Pram",       category: "Baby & Kids",     emoji: "🍼", amount: 9000,  desc: "Travel system, foldable" },
-  { name: "Baby Swing",            category: "Baby & Kids",     emoji: "🌙", amount: 4000,  desc: "Motorised, 6 speeds" },
-  { name: "Learning Toys Set",     category: "Baby & Kids",     emoji: "🧸", amount: 3000,  desc: "Montessori 0–3 years" },
-  { name: "Baby Wardrobe Set",     category: "Baby & Kids",     emoji: "👕", amount: 3500,  desc: "50-piece seasonal clothing" },
+  {
+    name: "Baby Cot & Mattress",
+    category: "Baby & Kids",
+    emoji: "🛏️",
+    amount: 8000,
+    desc: "Convertible, with storage",
+  },
+  {
+    name: "Baby Monitor",
+    category: "Baby & Kids",
+    emoji: "📹",
+    amount: 5000,
+    desc: "Video + audio, night vision",
+  },
+  {
+    name: "Stroller / Pram",
+    category: "Baby & Kids",
+    emoji: "🍼",
+    amount: 9000,
+    desc: "Travel system, foldable",
+  },
+  {
+    name: "Baby Swing",
+    category: "Baby & Kids",
+    emoji: "🌙",
+    amount: 4000,
+    desc: "Motorised, 6 speeds",
+  },
+  {
+    name: "Learning Toys Set",
+    category: "Baby & Kids",
+    emoji: "🧸",
+    amount: 3000,
+    desc: "Montessori 0–3 years",
+  },
+  {
+    name: "Baby Wardrobe Set",
+    category: "Baby & Kids",
+    emoji: "👕",
+    amount: 3500,
+    desc: "50-piece seasonal clothing",
+  },
 
-  { name: "Honeymoon Fund",        category: "Lifestyle",       emoji: "✈️", amount: 50000, desc: "Travel gift towards your trip" },
-  { name: "Car Fund",              category: "Lifestyle",       emoji: "🚗", amount: 100000,desc: "Contribution toward a new car" },
-  { name: "Gold Savings Fund",     category: "Lifestyle",       emoji: "💰", amount: 50000, desc: "Invest in gold for the future" },
-  { name: "Home Décor Fund",       category: "Lifestyle",       emoji: "🏺", amount: 15000, desc: "Curate your dream home" },
-  { name: "Book Collection",       category: "Lifestyle",       emoji: "📚", amount: 5000,  desc: "50+ bestsellers curated" },
-  { name: "Gym Membership",        category: "Lifestyle",       emoji: "💪", amount: 12000, desc: "1-year premium fitness" },
+  {
+    name: "Honeymoon Fund",
+    category: "Lifestyle",
+    emoji: "✈️",
+    amount: 50000,
+    desc: "Travel gift towards your trip",
+  },
+  {
+    name: "Car Fund",
+    category: "Lifestyle",
+    emoji: "🚗",
+    amount: 100000,
+    desc: "Contribution toward a new car",
+  },
+  {
+    name: "Gold Savings Fund",
+    category: "Lifestyle",
+    emoji: "💰",
+    amount: 50000,
+    desc: "Invest in gold for the future",
+  },
+  {
+    name: "Home Décor Fund",
+    category: "Lifestyle",
+    emoji: "🏺",
+    amount: 15000,
+    desc: "Curate your dream home",
+  },
+  {
+    name: "Book Collection",
+    category: "Lifestyle",
+    emoji: "📚",
+    amount: 5000,
+    desc: "50+ bestsellers curated",
+  },
+  {
+    name: "Gym Membership",
+    category: "Lifestyle",
+    emoji: "💪",
+    amount: 12000,
+    desc: "1-year premium fitness",
+  },
 
-  { name: "Treadmill",             category: "Health",          emoji: "🏃", amount: 22000, desc: "Motorised, 12 programs" },
-  { name: "Yoga Mat & Accessories",category: "Health",          emoji: "🧘", amount: 2500,  desc: "Premium set with blocks" },
-  { name: "Air Purifier",          category: "Health",          emoji: "🌬️", amount: 10000, desc: "HEPA H13, 500 sqft coverage" },
+  {
+    name: "Treadmill",
+    category: "Health",
+    emoji: "🏃",
+    amount: 22000,
+    desc: "Motorised, 12 programs",
+  },
+  {
+    name: "Yoga Mat & Accessories",
+    category: "Health",
+    emoji: "🧘",
+    amount: 2500,
+    desc: "Premium set with blocks",
+  },
+  {
+    name: "Air Purifier",
+    category: "Health",
+    emoji: "🌬️",
+    amount: 10000,
+    desc: "HEPA H13, 500 sqft coverage",
+  },
 
-  { name: "LED Diyas & Lights Set",category: "Festival & Décor",emoji: "🪔", amount: 3000,  desc: "300-piece festive decor set" },
-  { name: "Puja Room Makeover",    category: "Festival & Décor",emoji: "🙏", amount: 8000,  desc: "Marble mandir + accessories" },
-  { name: "Garden Furniture Set",  category: "Festival & Décor",emoji: "🌿", amount: 12000, desc: "4-seater outdoor dining" },
+  {
+    name: "LED Diyas & Lights Set",
+    category: "Festival & Décor",
+    emoji: "🪔",
+    amount: 3000,
+    desc: "300-piece festive decor set",
+  },
+  {
+    name: "Puja Room Makeover",
+    category: "Festival & Décor",
+    emoji: "🙏",
+    amount: 8000,
+    desc: "Marble mandir + accessories",
+  },
+  {
+    name: "Garden Furniture Set",
+    category: "Festival & Décor",
+    emoji: "🌿",
+    amount: 12000,
+    desc: "4-seater outdoor dining",
+  },
 ] as const;
 
-type GiftItem = typeof CURATED_GIFTS[number];
+type GiftItem = (typeof CURATED_GIFTS)[number];
 
-const CATEGORIES = ["All", "Kitchen", "Home & Living", "Electronics", "Baby & Kids", "Lifestyle", "Health", "Festival & Décor"];
+const CATEGORIES = [
+  "All",
+  "Kitchen",
+  "Home & Living",
+  "Electronics",
+  "Baby & Kids",
+  "Lifestyle",
+  "Health",
+  "Festival & Décor",
+];
 const MAX_REGISTRY = 10;
 const IDEAL_MIN = 8;
 
@@ -98,7 +359,11 @@ export default function GiftRegistryScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
-  const { data: gifts = [], isLoading: loading, refetch } = useQuery<EventGift[]>({
+  const {
+    data: gifts = [],
+    isLoading: loading,
+    refetch,
+  } = useQuery<EventGift[]>({
     queryKey: ["eventGifts", eventId, currentUser.id],
     queryFn: () => customFetch<EventGift[]>(`/api/gifts/${eventId}`),
     enabled: !!eventId && !!currentUser.id,
@@ -121,10 +386,11 @@ export default function GiftRegistryScreen() {
     }, [refetch])
   );
 
-  const addedNames = gifts.map(g => g.name);
-  const filteredCatalog = CURATED_GIFTS.filter(g =>
-    (selectedCategory === "All" || g.category === selectedCategory)
-    && !addedNames.includes(g.name)
+  const addedNames = gifts.map((g) => g.name);
+  const filteredCatalog = CURATED_GIFTS.filter(
+    (g) =>
+      (selectedCategory === "All" || g.category === selectedCategory) &&
+      !addedNames.includes(g.name)
   );
 
   const handleAdd = async (gift: GiftItem) => {
@@ -143,7 +409,7 @@ export default function GiftRegistryScreen() {
           category: gift.category,
           targetAmount: gift.amount,
           imageEmoji: gift.emoji,
-        }
+        },
       });
       queryClient.invalidateQueries({ queryKey: ["eventGifts", eventId] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -164,7 +430,7 @@ export default function GiftRegistryScreen() {
     return pctB - pctA;
   });
 
-  const fundedCount = gifts.filter(g => g.isFullyFunded).length;
+  const fundedCount = gifts.filter((g) => g.isFullyFunded).length;
   const totalTarget = gifts.reduce((sum, g) => sum + g.targetAmount, 0);
   const totalFunded = gifts.reduce((sum, g) => sum + g.currentAmount, 0);
 
@@ -192,7 +458,9 @@ export default function GiftRegistryScreen() {
         </Pressable>
         <Text style={styles.headerTitle}>Gift Registry</Text>
         <View style={styles.headerCount}>
-          <Text style={styles.headerCountText}>{gifts.length}/{MAX_REGISTRY}</Text>
+          <Text style={styles.headerCountText}>
+            {gifts.length}/{MAX_REGISTRY}
+          </Text>
         </View>
       </View>
 
@@ -225,7 +493,9 @@ export default function GiftRegistryScreen() {
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>🎁</Text>
               <Text style={styles.emptyTitle}>No gifts added yet</Text>
-              <Text style={styles.emptyText}>Browse our catalog and add 8–10 gifts{"\n"}your guests can contribute toward</Text>
+              <Text style={styles.emptyText}>
+                Browse our catalog and add 8–10 gifts{"\n"}your guests can contribute toward
+              </Text>
               <Pressable style={styles.browseCta} onPress={() => setTab("catalog")}>
                 <Text style={styles.browseCtaText}>Browse Catalog →</Text>
               </Pressable>
@@ -256,15 +526,11 @@ export default function GiftRegistryScreen() {
                 <View style={styles.summaryCard}>
                   <View style={styles.summaryRow}>
                     <View style={styles.summaryStat}>
-                      <Text style={styles.summaryValue}>
-                        ₹{formatINR(totalFunded)}
-                      </Text>
+                      <Text style={styles.summaryValue}>₹{formatINR(totalFunded)}</Text>
                       <Text style={styles.summaryLabel}>Contributed</Text>
                     </View>
                     <View style={styles.summaryStat}>
-                      <Text style={styles.summaryValue}>
-                        ₹{formatINR(totalTarget)}
-                      </Text>
+                      <Text style={styles.summaryValue}>₹{formatINR(totalTarget)}</Text>
                       <Text style={styles.summaryLabel}>Total Goal</Text>
                     </View>
                     <View style={styles.summaryStat}>
@@ -287,22 +553,29 @@ export default function GiftRegistryScreen() {
               )}
 
               <View style={styles.section}>
-                {sortedRegistry.map(g => {
+                {sortedRegistry.map((g) => {
                   const pct = g.targetAmount > 0 ? (g.currentAmount / g.targetAmount) * 100 : 0;
                   const badge = getStatusBadge(g);
                   const barColor = getProgressColor(g);
                   const remaining = g.targetAmount - g.currentAmount;
 
                   return (
-                    <View key={g.id} style={[styles.registryCard, g.isFullyFunded && styles.registryCardFunded]}>
+                    <View
+                      key={g.id}
+                      style={[styles.registryCard, g.isFullyFunded && styles.registryCardFunded]}
+                    >
                       <View style={styles.registryCardTop}>
                         <Text style={styles.registryEmoji}>{g.imageEmoji}</Text>
                         <View style={styles.registryBody}>
                           <View style={styles.registryTitleRow}>
-                            <Text style={styles.registryName} numberOfLines={1}>{g.name}</Text>
+                            <Text style={styles.registryName} numberOfLines={1}>
+                              {g.name}
+                            </Text>
                             {badge && (
                               <View style={[styles.badge, { backgroundColor: badge.color + "20" }]}>
-                                <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+                                <Text style={[styles.badgeText, { color: badge.color }]}>
+                                  {badge.label}
+                                </Text>
                               </View>
                             )}
                           </View>
@@ -313,21 +586,24 @@ export default function GiftRegistryScreen() {
                       <View style={styles.progressSection}>
                         <View style={styles.progressBarRow}>
                           <ProgressBar pct={pct} color={barColor} />
-                          <Text style={[styles.pctText, { color: barColor }]}>{Math.round(pct)}%</Text>
+                          <Text style={[styles.pctText, { color: barColor }]}>
+                            {Math.round(pct)}%
+                          </Text>
                         </View>
                         <View style={styles.amountsRow}>
                           <Text style={styles.raisedText}>
                             ₹{formatINR(g.currentAmount)} raised
                           </Text>
-                          <Text style={styles.targetText}>
-                            Goal: ₹{formatINR(g.targetAmount)}
-                          </Text>
+                          <Text style={styles.targetText}>Goal: ₹{formatINR(g.targetAmount)}</Text>
                         </View>
                       </View>
 
                       {!g.isFullyFunded && (
                         <Pressable
-                          style={({ pressed }) => [styles.contributeBtn, pressed && styles.btnPressed]}
+                          style={({ pressed }) => [
+                            styles.contributeBtn,
+                            pressed && styles.btnPressed,
+                          ]}
                           onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             router.push({
@@ -372,8 +648,8 @@ export default function GiftRegistryScreen() {
               {gifts.length === 0
                 ? "Pick 8–10 gifts for your wishlist"
                 : gifts.length < IDEAL_MIN
-                ? `${IDEAL_MIN - gifts.length} more recommended (${gifts.length} added)`
-                : `${gifts.length} added · ${MAX_REGISTRY - gifts.length} slots left`}
+                  ? `${IDEAL_MIN - gifts.length} more recommended (${gifts.length} added)`
+                  : `${gifts.length} added · ${MAX_REGISTRY - gifts.length} slots left`}
             </Text>
             <Text style={styles.catalogGuidanceSub}>
               {gifts.length >= MAX_REGISTRY
@@ -382,14 +658,24 @@ export default function GiftRegistryScreen() {
             </Text>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll} contentContainerStyle={{ paddingHorizontal: 16 }}>
-            {CATEGORIES.map(cat => (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.catScroll}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+          >
+            {CATEGORIES.map((cat) => (
               <Pressable
                 key={cat}
                 style={[styles.catChip, selectedCategory === cat && styles.catChipSelected]}
                 onPress={() => setSelectedCategory(cat)}
               >
-                <Text style={[styles.catChipText, selectedCategory === cat && styles.catChipTextSelected]}>
+                <Text
+                  style={[
+                    styles.catChipText,
+                    selectedCategory === cat && styles.catChipTextSelected,
+                  ]}
+                >
                   {cat}
                 </Text>
               </Pressable>
@@ -397,7 +683,7 @@ export default function GiftRegistryScreen() {
           </ScrollView>
 
           <View style={styles.section}>
-            {filteredCatalog.map(gift => {
+            {filteredCatalog.map((gift) => {
               const isAtMax = gifts.length >= MAX_REGISTRY;
               return (
                 <Pressable
@@ -413,7 +699,9 @@ export default function GiftRegistryScreen() {
                   <Text style={styles.catalogEmoji}>{gift.emoji}</Text>
                   <View style={styles.catalogBody}>
                     <Text style={styles.catalogName}>{gift.name}</Text>
-                    <Text style={styles.catalogDesc} numberOfLines={1}>{gift.desc}</Text>
+                    <Text style={styles.catalogDesc} numberOfLines={1}>
+                      {gift.desc}
+                    </Text>
                     <View style={styles.catalogMeta}>
                       <Text style={styles.catalogCategory}>{gift.category}</Text>
                       <Text style={styles.catalogAmount}>₹{formatINR(gift.amount)}</Text>

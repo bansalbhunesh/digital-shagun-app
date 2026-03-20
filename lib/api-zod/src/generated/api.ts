@@ -49,13 +49,7 @@ export const ListEventsQueryParams = zod.object({
 export const ListEventsResponseItem = zod.object({
   id: zod.string(),
   title: zod.string(),
-  type: zod.enum([
-    "wedding",
-    "baby_ceremony",
-    "housewarming",
-    "birthday",
-    "festival",
-  ]),
+  type: zod.enum(["wedding", "baby_ceremony", "housewarming", "birthday", "festival"]),
   hostId: zod.string(),
   hostName: zod.string(),
   date: zod.string(),
@@ -70,13 +64,7 @@ export const ListEventsResponse = zod.array(ListEventsResponseItem);
 
 export const CreateEventBody = zod.object({
   title: zod.string(),
-  type: zod.enum([
-    "wedding",
-    "baby_ceremony",
-    "housewarming",
-    "birthday",
-    "festival",
-  ]),
+  type: zod.enum(["wedding", "baby_ceremony", "housewarming", "birthday", "festival"]),
   date: zod.string(),
   venue: zod.string().optional(),
   description: zod.string().optional(),
@@ -90,13 +78,7 @@ export const GetEventResponse = zod.object({
   event: zod.object({
     id: zod.string(),
     title: zod.string(),
-    type: zod.enum([
-      "wedding",
-      "baby_ceremony",
-      "housewarming",
-      "birthday",
-      "festival",
-    ]),
+    type: zod.enum(["wedding", "baby_ceremony", "housewarming", "birthday", "festival"]),
     hostId: zod.string(),
     hostName: zod.string(),
     date: zod.string(),
@@ -119,7 +101,7 @@ export const GetEventResponse = zod.object({
       isRevealed: zod.boolean().optional(),
       revealAt: zod.string().optional(),
       createdAt: zod.string(),
-    }),
+    })
   ),
   gifts: zod.array(
     zod.object({
@@ -131,7 +113,7 @@ export const GetEventResponse = zod.object({
       currentAmount: zod.number(),
       imageEmoji: zod.string(),
       isFullyFunded: zod.boolean(),
-    }),
+    })
   ),
 });
 
@@ -142,13 +124,7 @@ export const JoinEventParams = zod.object({
 export const JoinEventResponse = zod.object({
   id: zod.string(),
   title: zod.string(),
-  type: zod.enum([
-    "wedding",
-    "baby_ceremony",
-    "housewarming",
-    "birthday",
-    "festival",
-  ]),
+  type: zod.enum(["wedding", "baby_ceremony", "housewarming", "birthday", "festival"]),
   hostId: zod.string(),
   hostName: zod.string(),
   date: zod.string(),
@@ -268,6 +244,6 @@ export const GetLedgerDetailResponse = zod.object({
       eventType: zod.string(),
       date: zod.string(),
       message: zod.string().optional(),
-    }),
+    })
   ),
 });

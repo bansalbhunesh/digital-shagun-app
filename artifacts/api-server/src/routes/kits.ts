@@ -16,7 +16,7 @@ export const PREDEFINED_KITS = [
     color: "#4A5C2A",
     totalAmount: 95000,
     items: [
-      { name: "Smart TV (43\")", category: "Electronics", imageEmoji: "📺", targetAmount: 35000 },
+      { name: 'Smart TV (43")', category: "Electronics", imageEmoji: "📺", targetAmount: 35000 },
       { name: "Washing Machine", category: "Appliances", imageEmoji: "🫧", targetAmount: 25000 },
       { name: "Microwave Oven", category: "Kitchen", imageEmoji: "📦", targetAmount: 8000 },
       { name: "Mixer Grinder", category: "Kitchen", imageEmoji: "🥣", targetAmount: 4500 },
@@ -53,7 +53,12 @@ export const PREDEFINED_KITS = [
     totalAmount: 130000,
     items: [
       { name: "Refrigerator", category: "Appliances", imageEmoji: "🧊", targetAmount: 30000 },
-      { name: "Bed & Mattress (King)", category: "Furniture", imageEmoji: "🛏️", targetAmount: 20000 },
+      {
+        name: "Bed & Mattress (King)",
+        category: "Furniture",
+        imageEmoji: "🛏️",
+        targetAmount: 20000,
+      },
       { name: "Dining Table Set", category: "Furniture", imageEmoji: "🪑", targetAmount: 18000 },
       { name: "Air Conditioner", category: "Appliances", imageEmoji: "❄️", targetAmount: 38000 },
       { name: "Honeymoon Fund", category: "Travel", imageEmoji: "✈️", targetAmount: 24000 },
@@ -70,7 +75,12 @@ export const PREDEFINED_KITS = [
     items: [
       { name: "Gaming Console", category: "Entertainment", imageEmoji: "🎮", targetAmount: 12000 },
       { name: "Smart Watch", category: "Accessories", imageEmoji: "⌚", targetAmount: 6000 },
-      { name: "Wireless Headphones", category: "Electronics", imageEmoji: "🎧", targetAmount: 4000 },
+      {
+        name: "Wireless Headphones",
+        category: "Electronics",
+        imageEmoji: "🎧",
+        targetAmount: 4000,
+      },
     ],
   },
   {
@@ -83,8 +93,18 @@ export const PREDEFINED_KITS = [
     totalAmount: 25000,
     items: [
       { name: "LED Festive Lights", category: "Décor", imageEmoji: "✨", targetAmount: 3000 },
-      { name: "Pooja Thali Set (Silver)", category: "Spiritual", imageEmoji: "🪔", targetAmount: 5000 },
-      { name: "Home Theatre System", category: "Entertainment", imageEmoji: "🔊", targetAmount: 12000 },
+      {
+        name: "Pooja Thali Set (Silver)",
+        category: "Spiritual",
+        imageEmoji: "🪔",
+        targetAmount: 5000,
+      },
+      {
+        name: "Home Theatre System",
+        category: "Entertainment",
+        imageEmoji: "🔊",
+        targetAmount: 12000,
+      },
       { name: "Flower Decoration Fund", category: "Décor", imageEmoji: "🌸", targetAmount: 5000 },
     ],
   },
@@ -94,7 +114,7 @@ router.get("/", (req: Request, res: Response) => {
   const { eventType } = req.query as { eventType?: string };
   let kits = PREDEFINED_KITS;
   if (eventType) {
-    kits = kits.filter(k => k.eventTypes.includes(eventType));
+    kits = kits.filter((k) => k.eventTypes.includes(eventType));
   }
   return res.json(kits);
 });
@@ -106,27 +126,34 @@ router.post("/:eventId", requireAuth, async (req: Request, res: Response) => {
 
   const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId)).limit(1);
   if (!event) return res.status(404).json({ error: "Event not found" });
-  if (event.hostId !== userId) return res.status(403).json({ error: "Forbidden: Only the event host can add kits." });
+  if (event.hostId !== userId)
+    return res.status(403).json({ error: "Forbidden: Only the event host can add kits." });
 
-  const kit = PREDEFINED_KITS.find(k => k.id === kitId);
+  const kit = PREDEFINED_KITS.find((k) => k.id === kitId);
   if (!kit) return res.status(404).json({ error: "Kit not found" });
 
-  const existingGifts = await db.select().from(eventGiftsTable)
+  const existingGifts = await db
+    .select()
+    .from(eventGiftsTable)
     .where(eq(eventGiftsTable.eventId, eventId));
-  const existingNames = existingGifts.map(g => g.name);
+  const existingNames = existingGifts.map((g) => g.name);
 
   const addedGifts = [];
   for (const item of kit.items) {
     if (existingNames.includes(item.name)) continue;
     const id = generateId();
-    const [gift] = await db.insert(eventGiftsTable).values({
-      id, eventId,
-      name: item.name,
-      category: `${kit.name} • ${item.category}`,
-      targetAmount: item.targetAmount.toString(),
-      currentAmount: "0",
-      imageEmoji: item.imageEmoji,
-    }).returning();
+    const [gift] = await db
+      .insert(eventGiftsTable)
+      .values({
+        id,
+        eventId,
+        name: item.name,
+        category: `${kit.name} • ${item.category}`,
+        targetAmount: item.targetAmount.toString(),
+        currentAmount: "0",
+        imageEmoji: item.imageEmoji,
+      })
+      .returning();
     addedGifts.push({
       id: gift.id,
       name: gift.name,

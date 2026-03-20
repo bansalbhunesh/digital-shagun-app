@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import {
-  View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Platform, ScrollView, Alert,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  Alert,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { router, useLocalSearchParams } from "expo-router";
@@ -18,7 +25,10 @@ const PRESET_AMOUNTS = [101, 251, 501, 1100];
 
 export default function SendShagunScreen() {
   const { eventId, receiverId, receiverName, eventType } = useLocalSearchParams<{
-    eventId: string; receiverId: string; receiverName: string; eventType?: string;
+    eventId: string;
+    receiverId: string;
+    receiverName: string;
+    eventType?: string;
   }>();
   const currentUser = useCurrentUser();
   const { mutateAsync: sendShagunMutation } = useSendShagun();
@@ -82,7 +92,7 @@ export default function SendShagunScreen() {
           receiverId: receiverId!,
           amount: finalAmount,
           message: message.trim() || undefined,
-        }
+        },
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSent(tx.id);
@@ -105,8 +115,8 @@ export default function SendShagunScreen() {
           <Text style={styles.successTitle}>Shagun Sent!</Text>
           <Text style={styles.successSub}>
             Your blessing of{" "}
-            <Text style={styles.successAmountText}>₹{formatINR(finalAmount ?? 0)}</Text>
-            {" "}has been sent to {receiverName}
+            <Text style={styles.successAmountText}>₹{formatINR(finalAmount ?? 0)}</Text> has been
+            sent to {receiverName}
           </Text>
           <View style={styles.revealInfo}>
             <Feather name="clock" size={16} color={Colors.goldLight} />
@@ -123,7 +133,10 @@ export default function SendShagunScreen() {
           </Pressable>
           <Pressable
             style={({ pressed }) => [styles.doneBtn, pressed && styles.btnPressed]}
-            onPress={() => { router.back(); router.back(); }}
+            onPress={() => {
+              router.back();
+              router.back();
+            }}
           >
             <Text style={styles.doneBtnText}>Done</Text>
           </Pressable>
@@ -142,10 +155,17 @@ export default function SendShagunScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <KeyboardAwareScrollView bottomOffset={24} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView
+        bottomOffset={24}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.recipientCard}>
           <View style={styles.recipientAvatar}>
-            <Text style={styles.recipientAvatarText}>{(receiverName ?? "H").charAt(0).toUpperCase()}</Text>
+            <Text style={styles.recipientAvatarText}>
+              {(receiverName ?? "H").charAt(0).toUpperCase()}
+            </Text>
           </View>
           <View>
             <Text style={styles.recipientTo}>Sending to</Text>
@@ -177,7 +197,8 @@ export default function SendShagunScreen() {
                   <Pressable
                     style={({ pressed }) => [
                       styles.aiAmountChip,
-                      selectedAmount === aiSuggestion.suggestedAmount && styles.aiAmountChipSelected,
+                      selectedAmount === aiSuggestion.suggestedAmount &&
+                        styles.aiAmountChipSelected,
                       pressed && styles.chipPressed,
                     ]}
                     onPress={() => {
@@ -187,10 +208,13 @@ export default function SendShagunScreen() {
                     }}
                   >
                     <Text style={styles.aiAmountChipLabel}>Recommended</Text>
-                    <Text style={[
-                      styles.aiAmountChipValue,
-                      selectedAmount === aiSuggestion.suggestedAmount && styles.aiAmountChipValueSelected,
-                    ]}>
+                    <Text
+                      style={[
+                        styles.aiAmountChipValue,
+                        selectedAmount === aiSuggestion.suggestedAmount &&
+                          styles.aiAmountChipValueSelected,
+                      ]}
+                    >
                       ₹{formatINR(aiSuggestion.suggestedAmount)}
                     </Text>
                   </Pressable>
@@ -198,7 +222,8 @@ export default function SendShagunScreen() {
                     style={({ pressed }) => [
                       styles.aiAmountChip,
                       styles.aiAmountChipAlt,
-                      selectedAmount === aiSuggestion.alternativeAmount && styles.aiAmountChipSelected,
+                      selectedAmount === aiSuggestion.alternativeAmount &&
+                        styles.aiAmountChipSelected,
                       pressed && styles.chipPressed,
                     ]}
                     onPress={() => {
@@ -208,10 +233,13 @@ export default function SendShagunScreen() {
                     }}
                   >
                     <Text style={styles.aiAmountChipLabel}>Alternative</Text>
-                    <Text style={[
-                      styles.aiAmountChipValue,
-                      selectedAmount === aiSuggestion.alternativeAmount && styles.aiAmountChipValueSelected,
-                    ]}>
+                    <Text
+                      style={[
+                        styles.aiAmountChipValue,
+                        selectedAmount === aiSuggestion.alternativeAmount &&
+                          styles.aiAmountChipValueSelected,
+                      ]}
+                    >
                       ₹{formatINR(aiSuggestion.alternativeAmount)}
                     </Text>
                   </Pressable>
@@ -224,7 +252,8 @@ export default function SendShagunScreen() {
                   <View style={styles.aiHistoryRow}>
                     <Feather name="clock" size={12} color={Colors.textLight} />
                     <Text style={styles.aiHistoryText}>
-                      Past: given ₹{formatINR(aiSuggestion.previouslyGiven)}, received ₹{formatINR(aiSuggestion.previouslyReceived)}
+                      Past: given ₹{formatINR(aiSuggestion.previouslyGiven)}, received ₹
+                      {formatINR(aiSuggestion.previouslyReceived)}
                     </Text>
                   </View>
                 )}
@@ -235,7 +264,7 @@ export default function SendShagunScreen() {
 
         <Text style={styles.sectionLabel}>Choose Amount</Text>
         <View style={styles.presetGrid}>
-          {PRESET_AMOUNTS.map(amt => (
+          {PRESET_AMOUNTS.map((amt) => (
             <Pressable
               key={amt}
               style={({ pressed }) => [
@@ -265,7 +294,10 @@ export default function SendShagunScreen() {
             placeholder="Enter amount"
             placeholderTextColor={Colors.textLight}
             value={customAmount}
-            onChangeText={t => { setCustomAmount(t.replace(/[^0-9]/g, "")); setSelectedAmount(null); }}
+            onChangeText={(t) => {
+              setCustomAmount(t.replace(/[^0-9]/g, ""));
+              setSelectedAmount(null);
+            }}
             keyboardType="numeric"
           />
         </View>
@@ -284,7 +316,11 @@ export default function SendShagunScreen() {
         </View>
 
         {aiSuggestion && aiSuggestion.suggestedMessages.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.blessingsScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.blessingsScroll}
+          >
             {aiSuggestion.suggestedMessages.map((b: string, i: number) => (
               <Pressable
                 key={i}
@@ -530,7 +566,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 20,
   },
-  rupeeSymbol: { fontSize: 20, fontFamily: "Poppins_700Bold", color: Colors.primary, marginRight: 6 },
+  rupeeSymbol: {
+    fontSize: 20,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.primary,
+    marginRight: 6,
+  },
   customInput: {
     flex: 1,
     paddingVertical: 14,

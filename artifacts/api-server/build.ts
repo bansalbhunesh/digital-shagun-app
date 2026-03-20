@@ -49,9 +49,7 @@ async function buildAll() {
     ...Object.keys(pkg.devDependencies || {}),
   ];
   const externals = allDeps.filter(
-    (dep) =>
-      !allowlist.includes(dep) &&
-      !(pkg.dependencies?.[dep]?.startsWith("workspace:")),
+    (dep) => !allowlist.includes(dep) && !pkg.dependencies?.[dep]?.startsWith("workspace:")
   );
 
   await esbuild({

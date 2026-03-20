@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, Pressable, TextInput,
-  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -33,10 +40,10 @@ export default function OnboardingScreen() {
     setError("");
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
+
     // Quick assumption: append +91 if length is exactly 10
     const formattedPhone = phone.trim().length === 10 ? `+91${phone.trim()}` : phone.trim();
-    
+
     const { error } = await supabase.auth.signInWithOtp({ phone: formattedPhone });
     setLoading(false);
 
@@ -57,10 +64,13 @@ export default function OnboardingScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     const formattedPhone = phone.trim().length === 10 ? `+91${phone.trim()}` : phone.trim();
-    const { data: { session }, error } = await supabase.auth.verifyOtp({ 
-      phone: formattedPhone, 
-      token: otp.trim(), 
-      type: 'sms' 
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.verifyOtp({
+      phone: formattedPhone,
+      token: otp.trim(),
+      type: "sms",
     });
 
     if (error) {
@@ -89,7 +99,11 @@ export default function OnboardingScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.flex}
       >
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               <Text style={styles.logoEmoji}>🪔</Text>
@@ -141,7 +155,12 @@ export default function OnboardingScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Enter OTP</Text>
                 <View style={styles.inputWrapper}>
-                  <Feather name="lock" size={18} color={Colors.textLight} style={styles.inputIcon} />
+                  <Feather
+                    name="lock"
+                    size={18}
+                    color={Colors.textLight}
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     style={styles.input}
                     placeholder="123456"
@@ -167,7 +186,11 @@ export default function OnboardingScreen() {
               ) : (
                 <>
                   <Text style={styles.loginBtnText}>{otpSent ? "Verify & Login" : "Send OTP"}</Text>
-                  <Feather name={otpSent ? "check-circle" : "arrow-right"} size={20} color={Colors.cream} />
+                  <Feather
+                    name={otpSent ? "check-circle" : "arrow-right"}
+                    size={20}
+                    color={Colors.cream}
+                  />
                 </>
               )}
             </Pressable>

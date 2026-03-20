@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
-  View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Platform, Alert,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  ActivityIndicator,
+  Platform,
+  Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -27,7 +33,9 @@ const OCCASIONS = [
 
 export default function SendDirectScreen() {
   const params = useLocalSearchParams<{
-    receiverName?: string; receiverId?: string; occasion?: string;
+    receiverName?: string;
+    receiverId?: string;
+    occasion?: string;
   }>();
   const currentUser = useCurrentUser();
   const { mutateAsync: sendShagunMutation } = useSendShagun();
@@ -84,15 +92,18 @@ export default function SendDirectScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
-      const receiverId = params.receiverId ?? ("direct_" + receiverName.trim().toLowerCase().replace(/\s+/g, "_"));
-      
+      const receiverId =
+        params.receiverId ?? "direct_" + receiverName.trim().toLowerCase().replace(/\s+/g, "_");
+
       // Try to fetch receiver's UPI ID if we have a real receiverId
       let receiverUpiId: string | null = null;
       if (params.receiverId) {
         try {
           const receiverData: any = await customFetch(`/api/users/${params.receiverId}`);
           receiverUpiId = receiverData?.upiId ?? null;
-        } catch { /* receiver may not exist in DB */ }
+        } catch {
+          /* receiver may not exist in DB */
+        }
       }
 
       const paid = await PaymentService.processPayment({
@@ -111,7 +122,7 @@ export default function SendDirectScreen() {
           receiverId,
           amount: finalAmount,
           message: message.trim() || undefined,
-        }
+        },
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSent(tx.id);
@@ -134,11 +145,11 @@ export default function SendDirectScreen() {
           <Text style={styles.successTitle}>Shagun Sent!</Text>
           <Text style={styles.successSub}>
             ₹{formatINR(finalAmount ?? 0)} sent to{" "}
-            <Text style={{ fontFamily: "Poppins_700Bold", color: Colors.goldLight }}>{receiverName}</Text>
+            <Text style={{ fontFamily: "Poppins_700Bold", color: Colors.goldLight }}>
+              {receiverName}
+            </Text>
           </Text>
-          <Text style={styles.successBlessing}>
-            May your blessing bring joy and prosperity 🙏
-          </Text>
+          <Text style={styles.successBlessing}>May your blessing bring joy and prosperity 🙏</Text>
           <Pressable
             style={({ pressed }) => [styles.doneBtn, pressed && { opacity: 0.85 }]}
             onPress={() => router.back()}
@@ -147,7 +158,10 @@ export default function SendDirectScreen() {
           </Pressable>
           <Pressable
             style={({ pressed }) => [styles.ledgerBtn, pressed && { opacity: 0.7 }]}
-            onPress={() => { router.back(); router.push("/(tabs)/ledger"); }}
+            onPress={() => {
+              router.back();
+              router.push("/(tabs)/ledger");
+            }}
           >
             <Feather name="book-open" size={16} color={Colors.goldLight} />
             <Text style={styles.ledgerBtnText}>View in Blessings Ledger</Text>
@@ -186,15 +200,13 @@ export default function SendDirectScreen() {
             autoCapitalize="words"
             editable={!params.receiverName}
           />
-          {receiverName.length > 1 && (
-            <Feather name="check-circle" size={18} color="#22c55e" />
-          )}
+          {receiverName.length > 1 && <Feather name="check-circle" size={18} color="#22c55e" />}
         </View>
 
         {/* Occasion */}
         <Text style={styles.sectionLabel}>Occasion</Text>
         <View style={styles.occasionGrid}>
-          {OCCASIONS.map(o => (
+          {OCCASIONS.map((o) => (
             <Pressable
               key={o.key}
               style={({ pressed }) => [
@@ -208,7 +220,9 @@ export default function SendDirectScreen() {
               }}
             >
               <Text style={styles.occasionEmoji}>{o.emoji}</Text>
-              <Text style={[styles.occasionLabel, occasion === o.key && styles.occasionLabelActive]}>
+              <Text
+                style={[styles.occasionLabel, occasion === o.key && styles.occasionLabelActive]}
+              >
                 {o.label}
               </Text>
             </Pressable>
@@ -238,10 +252,18 @@ export default function SendDirectScreen() {
                       selectedAmount === aiSuggestion.suggestedAmount && styles.aiChipActive,
                       pressed && styles.chipPressed,
                     ]}
-                    onPress={() => { setSelectedAmount(aiSuggestion.suggestedAmount); setCustomAmount(""); }}
+                    onPress={() => {
+                      setSelectedAmount(aiSuggestion.suggestedAmount);
+                      setCustomAmount("");
+                    }}
                   >
                     <Text style={styles.aiChipLabel}>Recommended</Text>
-                    <Text style={[styles.aiChipAmt, selectedAmount === aiSuggestion.suggestedAmount && styles.aiChipAmtActive]}>
+                    <Text
+                      style={[
+                        styles.aiChipAmt,
+                        selectedAmount === aiSuggestion.suggestedAmount && styles.aiChipAmtActive,
+                      ]}
+                    >
                       ₹{formatINR(aiSuggestion.suggestedAmount)}
                     </Text>
                   </Pressable>
@@ -251,10 +273,18 @@ export default function SendDirectScreen() {
                       selectedAmount === aiSuggestion.alternativeAmount && styles.aiChipActive,
                       pressed && styles.chipPressed,
                     ]}
-                    onPress={() => { setSelectedAmount(aiSuggestion.alternativeAmount); setCustomAmount(""); }}
+                    onPress={() => {
+                      setSelectedAmount(aiSuggestion.alternativeAmount);
+                      setCustomAmount("");
+                    }}
                   >
                     <Text style={styles.aiChipLabel}>Alternative</Text>
-                    <Text style={[styles.aiChipAmt, selectedAmount === aiSuggestion.alternativeAmount && styles.aiChipAmtActive]}>
+                    <Text
+                      style={[
+                        styles.aiChipAmt,
+                        selectedAmount === aiSuggestion.alternativeAmount && styles.aiChipAmtActive,
+                      ]}
+                    >
                       ₹{formatINR(aiSuggestion.alternativeAmount)}
                     </Text>
                   </Pressable>
@@ -268,7 +298,7 @@ export default function SendDirectScreen() {
         {/* Preset amounts */}
         <Text style={styles.sectionLabel}>Choose Amount</Text>
         <View style={styles.presetGrid}>
-          {PRESET_AMOUNTS.map(amt => (
+          {PRESET_AMOUNTS.map((amt) => (
             <Pressable
               key={amt}
               style={({ pressed }) => [
@@ -299,7 +329,10 @@ export default function SendDirectScreen() {
             placeholder="Any amount"
             placeholderTextColor={Colors.textLight}
             value={customAmount}
-            onChangeText={t => { setCustomAmount(t.replace(/[^0-9]/g, "")); setSelectedAmount(null); }}
+            onChangeText={(t) => {
+              setCustomAmount(t.replace(/[^0-9]/g, ""));
+              setSelectedAmount(null);
+            }}
             keyboardType="numeric"
           />
         </View>
@@ -382,162 +415,285 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.cream },
   successBg: { backgroundColor: Colors.primary },
   header: {
-    flexDirection: "row", alignItems: "center",
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: Colors.borderLight,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
   backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   headerTitle: { fontSize: 17, fontFamily: "Poppins_700Bold", color: Colors.text },
   scroll: { paddingHorizontal: 20, paddingTop: 20 },
   sectionLabel: {
-    fontSize: 12, fontFamily: "Poppins_700Bold",
-    color: Colors.textSecondary, textTransform: "uppercase",
-    letterSpacing: 0.8, marginBottom: 10, marginTop: 4,
+    fontSize: 12,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 10,
+    marginTop: 4,
   },
   recipientInput: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    backgroundColor: Colors.white, borderRadius: 14,
-    borderWidth: 1.5, borderColor: Colors.border,
-    paddingHorizontal: 16, height: 54, marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    paddingHorizontal: 16,
+    height: 54,
+    marginBottom: 20,
   },
   recipientField: {
-    flex: 1, fontSize: 16,
-    fontFamily: "Poppins_500Medium", color: Colors.text,
+    flex: 1,
+    fontSize: 16,
+    fontFamily: "Poppins_500Medium",
+    color: Colors.text,
   },
   occasionGrid: {
-    flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 20,
   },
   occasionChip: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    paddingHorizontal: 14, paddingVertical: 9,
-    backgroundColor: Colors.white, borderRadius: 20,
-    borderWidth: 1.5, borderColor: Colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
   },
   occasionChipActive: {
-    borderColor: Colors.primary, backgroundColor: Colors.primary + "0D",
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + "0D",
   },
   occasionEmoji: { fontSize: 16 },
   occasionLabel: { fontSize: 13, fontFamily: "Poppins_500Medium", color: Colors.textSecondary },
   occasionLabelActive: { color: Colors.primary, fontFamily: "Poppins_600SemiBold" },
   chipPressed: { opacity: 0.82, transform: [{ scale: 0.96 }] },
   aiPanel: {
-    backgroundColor: Colors.white, borderRadius: 16,
-    padding: 14, marginBottom: 20,
-    borderWidth: 1.5, borderColor: Colors.gold + "50", gap: 10,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.gold + "50",
+    gap: 10,
   },
   aiHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
   aiIcon: {
-    width: 26, height: 26, borderRadius: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 8,
     backgroundColor: Colors.gold + "22",
-    alignItems: "center", justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "center",
   },
   aiTitle: { fontSize: 13, fontFamily: "Poppins_700Bold", color: Colors.goldDark },
   aiLoadingRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  aiLoadingText: { fontSize: 13, fontFamily: "Poppins_400Regular", color: Colors.textLight, fontStyle: "italic" },
+  aiLoadingText: {
+    fontSize: 13,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.textLight,
+    fontStyle: "italic",
+  },
   aiAmountRow: { flexDirection: "row", gap: 10 },
   aiChip: {
-    flex: 1, borderRadius: 12, padding: 11,
-    alignItems: "center", backgroundColor: Colors.cream,
-    borderWidth: 2, borderColor: Colors.gold + "30", gap: 3,
+    flex: 1,
+    borderRadius: 12,
+    padding: 11,
+    alignItems: "center",
+    backgroundColor: Colors.cream,
+    borderWidth: 2,
+    borderColor: Colors.gold + "30",
+    gap: 3,
   },
   aiChipActive: { borderColor: Colors.gold, backgroundColor: Colors.gold + "15" },
-  aiChipLabel: { fontSize: 9, fontFamily: "Poppins_600SemiBold", color: Colors.textLight, textTransform: "uppercase", letterSpacing: 0.5 },
+  aiChipLabel: {
+    fontSize: 9,
+    fontFamily: "Poppins_600SemiBold",
+    color: Colors.textLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
   aiChipAmt: { fontSize: 17, fontFamily: "Poppins_700Bold", color: Colors.text },
   aiChipAmtActive: { color: Colors.goldDark },
-  aiReason: { fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.textSecondary, lineHeight: 17 },
+  aiReason: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.textSecondary,
+    lineHeight: 17,
+  },
   presetGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 },
   presetCard: {
-    width: "30%", flexGrow: 1,
-    backgroundColor: Colors.white, borderRadius: 14,
-    paddingVertical: 14, alignItems: "center",
-    borderWidth: 2, borderColor: Colors.borderLight, gap: 3,
+    width: "30%",
+    flexGrow: 1,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: Colors.borderLight,
+    gap: 3,
   },
   presetCardActive: { borderColor: Colors.primary, backgroundColor: Colors.primary + "08" },
   presetAmt: { fontSize: 15, fontFamily: "Poppins_700Bold", color: Colors.text },
   presetAmtActive: { color: Colors.primary },
   popularBadge: {
-    fontSize: 9, fontFamily: "Poppins_600SemiBold",
-    color: Colors.gold, textTransform: "uppercase", letterSpacing: 0.5,
+    fontSize: 9,
+    fontFamily: "Poppins_600SemiBold",
+    color: Colors.gold,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   customInput: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: Colors.white, borderRadius: 14,
-    borderWidth: 1.5, borderColor: Colors.border,
-    paddingHorizontal: 16, marginBottom: 20, height: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    height: 54,
   },
   rupee: { fontSize: 20, fontFamily: "Poppins_700Bold", color: Colors.primary, marginRight: 8 },
   customField: { flex: 1, fontSize: 18, fontFamily: "Poppins_600SemiBold", color: Colors.text },
   messageBox: {
-    backgroundColor: Colors.white, borderRadius: 14,
-    borderWidth: 1.5, borderColor: Colors.border,
-    padding: 14, marginBottom: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    padding: 14,
+    marginBottom: 12,
   },
   messageInput: {
-    fontSize: 14, fontFamily: "Poppins_400Regular",
-    color: Colors.text, minHeight: 80, textAlignVertical: "top",
+    fontSize: 14,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.text,
+    minHeight: 80,
+    textAlignVertical: "top",
   },
   blessingsScroll: { marginHorizontal: -20, paddingLeft: 20, marginBottom: 20 },
   blessingChip: {
-    backgroundColor: Colors.white, borderRadius: 20,
-    paddingHorizontal: 14, paddingVertical: 8,
-    marginRight: 10, borderWidth: 1, borderColor: Colors.border, maxWidth: 220,
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    maxWidth: 220,
   },
   blessingChipText: { fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.textSecondary },
-  errorText: { color: Colors.error, fontSize: 13, fontFamily: "Poppins_400Regular", marginBottom: 12 },
-  amountPreview: {
-    alignItems: "center", gap: 2,
-    backgroundColor: Colors.primary + "0A",
-    borderRadius: 14, padding: 14, marginBottom: 14,
-    borderWidth: 1, borderColor: Colors.primary + "20",
+  errorText: {
+    color: Colors.error,
+    fontSize: 13,
+    fontFamily: "Poppins_400Regular",
+    marginBottom: 12,
   },
-  amountPreviewLabel: { fontSize: 11, fontFamily: "Poppins_600SemiBold", color: Colors.textLight, textTransform: "uppercase", letterSpacing: 0.5 },
+  amountPreview: {
+    alignItems: "center",
+    gap: 2,
+    backgroundColor: Colors.primary + "0A",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: Colors.primary + "20",
+  },
+  amountPreviewLabel: {
+    fontSize: 11,
+    fontFamily: "Poppins_600SemiBold",
+    color: Colors.textLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
   amountPreviewValue: { fontSize: 28, fontFamily: "Poppins_700Bold", color: Colors.primary },
   amountPreviewTo: { fontSize: 13, fontFamily: "Poppins_400Regular", color: Colors.textSecondary },
   sendBtn: {
-    backgroundColor: Colors.primary, borderRadius: 18,
-    paddingVertical: 18, flexDirection: "row",
-    alignItems: "center", justifyContent: "center", gap: 10,
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
+    backgroundColor: Colors.primary,
+    borderRadius: 18,
+    paddingVertical: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
     marginBottom: 12,
   },
   sendBtnDisabled: { opacity: 0.45 },
   sendBtnEmoji: { fontSize: 20 },
   sendBtnText: { color: Colors.cream, fontSize: 17, fontFamily: "Poppins_700Bold" },
   noticeText: {
-    fontSize: 11, fontFamily: "Poppins_400Regular",
-    color: Colors.textLight, textAlign: "center", lineHeight: 17,
+    fontSize: 11,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.textLight,
+    textAlign: "center",
+    lineHeight: 17,
   },
   successInner: {
-    flex: 1, alignItems: "center", justifyContent: "center",
-    paddingHorizontal: 32, gap: 14,
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+    gap: 14,
   },
   envelopeBox: {
-    width: 110, height: 110, borderRadius: 32,
+    width: 110,
+    height: 110,
+    borderRadius: 32,
     backgroundColor: Colors.gold,
-    alignItems: "center", justifyContent: "center",
-    shadowColor: Colors.gold, shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4, shadowRadius: 20, elevation: 12, marginBottom: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.gold,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 12,
+    marginBottom: 8,
   },
   envelopeEmoji: { fontSize: 52 },
   successTitle: { fontSize: 30, fontFamily: "Poppins_700Bold", color: Colors.goldLight },
   successSub: {
-    fontSize: 15, fontFamily: "Poppins_400Regular",
-    color: "rgba(255,255,255,0.85)", textAlign: "center", lineHeight: 24,
+    fontSize: 15,
+    fontFamily: "Poppins_400Regular",
+    color: "rgba(255,255,255,0.85)",
+    textAlign: "center",
+    lineHeight: 24,
   },
   successBlessing: {
-    fontSize: 13, fontFamily: "Poppins_400Regular",
-    color: "rgba(255,255,255,0.6)", textAlign: "center", fontStyle: "italic",
+    fontSize: 13,
+    fontFamily: "Poppins_400Regular",
+    color: "rgba(255,255,255,0.6)",
+    textAlign: "center",
+    fontStyle: "italic",
   },
   doneBtn: {
-    backgroundColor: Colors.goldLight, borderRadius: 16,
-    paddingVertical: 14, paddingHorizontal: 48,
-    marginTop: 8, width: "100%", alignItems: "center",
+    backgroundColor: Colors.goldLight,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 48,
+    marginTop: 8,
+    width: "100%",
+    alignItems: "center",
   },
   doneBtnText: { fontSize: 16, fontFamily: "Poppins_700Bold", color: Colors.primary },
   ledgerBtn: {
-    flexDirection: "row", alignItems: "center", gap: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     paddingVertical: 10,
   },
   ledgerBtnText: { fontSize: 13, fontFamily: "Poppins_500Medium", color: Colors.goldLight },

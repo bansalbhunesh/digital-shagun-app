@@ -51,9 +51,7 @@ export const getHealthCheckUrl = () => {
   return `/api/healthz`;
 };
 
-export const healthCheck = async (
-  options?: RequestInit,
-): Promise<HealthStatus> => {
+export const healthCheck = async (options?: RequestInit): Promise<HealthStatus> => {
   return customFetch<HealthStatus>(getHealthCheckUrl(), {
     ...options,
     method: "GET",
@@ -68,20 +66,15 @@ export const getHealthCheckQueryOptions = <
   TData = Awaited<ReturnType<typeof healthCheck>>,
   TError = ErrorType<unknown>,
 >(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof healthCheck>>,
-    TError,
-    TData
-  >;
+  query?: UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>;
   request?: SecondParameter<typeof customFetch>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getHealthCheckQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheck>>> = ({
-    signal,
-  }) => healthCheck({ signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheck>>> = ({ signal }) =>
+    healthCheck({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof healthCheck>>,
@@ -90,9 +83,7 @@ export const getHealthCheckQueryOptions = <
   > & { queryKey: QueryKey };
 };
 
-export type HealthCheckQueryResult = NonNullable<
-  Awaited<ReturnType<typeof healthCheck>>
->;
+export type HealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthCheck>>>;
 export type HealthCheckQueryError = ErrorType<unknown>;
 
 /**
@@ -103,11 +94,7 @@ export function useHealthCheck<
   TData = Awaited<ReturnType<typeof healthCheck>>,
   TError = ErrorType<unknown>,
 >(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof healthCheck>>,
-    TError,
-    TData
-  >;
+  query?: UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>;
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
@@ -128,7 +115,7 @@ export const getCreateUserUrl = () => {
 
 export const createUser = async (
   createUserRequest: CreateUserRequest,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<User> => {
   return customFetch<User>(getCreateUserUrl(), {
     ...options,
@@ -157,9 +144,7 @@ export const getCreateUserMutationOptions = <
 > => {
   const mutationKey = ["createUser"];
   const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
     : { mutation: { mutationKey }, request: undefined };
@@ -176,19 +161,14 @@ export const getCreateUserMutationOptions = <
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateUserMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createUser>>
->;
+export type CreateUserMutationResult = NonNullable<Awaited<ReturnType<typeof createUser>>>;
 export type CreateUserMutationBody = BodyType<CreateUserRequest>;
 export type CreateUserMutationError = ErrorType<unknown>;
 
 /**
  * @summary Create or get user
  */
-export const useCreateUser = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
+export const useCreateUser = <TError = ErrorType<unknown>, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof createUser>>,
     TError,
@@ -209,10 +189,7 @@ export const getGetUserUrl = (userId: string) => {
   return `/api/users/${userId}`;
 };
 
-export const getUser = async (
-  userId: string,
-  options?: RequestInit,
-): Promise<User> => {
+export const getUser = async (userId: string, options?: RequestInit): Promise<User> => {
   return customFetch<User>(getGetUserUrl(userId), {
     ...options,
     method: "GET",
@@ -231,15 +208,14 @@ export const getGetUserQueryOptions = <
   options?: {
     query?: UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetUserQueryKey(userId);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUser>>> = ({
-    signal,
-  }) => getUser(userId, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUser>>> = ({ signal }) =>
+    getUser(userId, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -251,9 +227,7 @@ export const getGetUserQueryOptions = <
   };
 };
 
-export type GetUserQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getUser>>
->;
+export type GetUserQueryResult = NonNullable<Awaited<ReturnType<typeof getUser>>>;
 export type GetUserQueryError = ErrorType<unknown>;
 
 export function useGetUser<
@@ -264,7 +238,7 @@ export function useGetUser<
   options?: {
     query?: UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetUserQueryOptions(userId, options);
 
@@ -286,14 +260,12 @@ export const getListEventsUrl = (params?: ListEventsParams) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/events?${stringifiedParams}`
-    : `/api/events`;
+  return stringifiedParams.length > 0 ? `/api/events?${stringifiedParams}` : `/api/events`;
 };
 
 export const listEvents = async (
   params?: ListEventsParams,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<Event[]> => {
   return customFetch<Event[]>(getListEventsUrl(params), {
     ...options,
@@ -311,21 +283,16 @@ export const getListEventsQueryOptions = <
 >(
   params?: ListEventsParams,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listEvents>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof listEvents>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getListEventsQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof listEvents>>> = ({
-    signal,
-  }) => listEvents(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listEvents>>> = ({ signal }) =>
+    listEvents(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof listEvents>>,
@@ -334,9 +301,7 @@ export const getListEventsQueryOptions = <
   > & { queryKey: QueryKey };
 };
 
-export type ListEventsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof listEvents>>
->;
+export type ListEventsQueryResult = NonNullable<Awaited<ReturnType<typeof listEvents>>>;
 export type ListEventsQueryError = ErrorType<unknown>;
 
 export function useListEvents<
@@ -345,13 +310,9 @@ export function useListEvents<
 >(
   params?: ListEventsParams,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listEvents>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof listEvents>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getListEventsQueryOptions(params, options);
 
@@ -368,7 +329,7 @@ export const getCreateEventUrl = () => {
 
 export const createEvent = async (
   createEventRequest: CreateEventRequest,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<Event> => {
   return customFetch<Event>(getCreateEventUrl(), {
     ...options,
@@ -397,9 +358,7 @@ export const getCreateEventMutationOptions = <
 > => {
   const mutationKey = ["createEvent"];
   const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
     : { mutation: { mutationKey }, request: undefined };
@@ -416,16 +375,11 @@ export const getCreateEventMutationOptions = <
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateEventMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createEvent>>
->;
+export type CreateEventMutationResult = NonNullable<Awaited<ReturnType<typeof createEvent>>>;
 export type CreateEventMutationBody = BodyType<CreateEventRequest>;
 export type CreateEventMutationError = ErrorType<unknown>;
 
-export const useCreateEvent = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
+export const useCreateEvent = <TError = ErrorType<unknown>, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof createEvent>>,
     TError,
@@ -446,10 +400,7 @@ export const getGetEventUrl = (eventId: string) => {
   return `/api/events/${eventId}`;
 };
 
-export const getEvent = async (
-  eventId: string,
-  options?: RequestInit,
-): Promise<EventDetail> => {
+export const getEvent = async (eventId: string, options?: RequestInit): Promise<EventDetail> => {
   return customFetch<EventDetail>(getGetEventUrl(eventId), {
     ...options,
     method: "GET",
@@ -466,21 +417,16 @@ export const getGetEventQueryOptions = <
 >(
   eventId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getEvent>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getEvent>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetEventQueryKey(eventId);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getEvent>>> = ({
-    signal,
-  }) => getEvent(eventId, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getEvent>>> = ({ signal }) =>
+    getEvent(eventId, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -492,9 +438,7 @@ export const getGetEventQueryOptions = <
   };
 };
 
-export type GetEventQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getEvent>>
->;
+export type GetEventQueryResult = NonNullable<Awaited<ReturnType<typeof getEvent>>>;
 export type GetEventQueryError = ErrorType<unknown>;
 
 export function useGetEvent<
@@ -503,13 +447,9 @@ export function useGetEvent<
 >(
   eventId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getEvent>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getEvent>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetEventQueryOptions(eventId, options);
 
@@ -524,10 +464,7 @@ export const getJoinEventUrl = (eventId: string) => {
   return `/api/events/${eventId}/join`;
 };
 
-export const joinEvent = async (
-  eventId: string,
-  options?: RequestInit,
-): Promise<Event> => {
+export const joinEvent = async (eventId: string, options?: RequestInit): Promise<Event> => {
   return customFetch<Event>(getJoinEventUrl(eventId), {
     ...options,
     method: "POST",
@@ -553,17 +490,14 @@ export const getJoinEventMutationOptions = <
 > => {
   const mutationKey = ["joinEvent"];
   const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
     : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof joinEvent>>,
-    { eventId: string }
-  > = (props) => {
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof joinEvent>>, { eventId: string }> = (
+    props
+  ) => {
     const { eventId } = props ?? {};
 
     return joinEvent(eventId, requestOptions);
@@ -572,16 +506,11 @@ export const getJoinEventMutationOptions = <
   return { mutationFn, ...mutationOptions };
 };
 
-export type JoinEventMutationResult = NonNullable<
-  Awaited<ReturnType<typeof joinEvent>>
->;
+export type JoinEventMutationResult = NonNullable<Awaited<ReturnType<typeof joinEvent>>>;
 
 export type JoinEventMutationError = ErrorType<unknown>;
 
-export const useJoinEvent = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
+export const useJoinEvent = <TError = ErrorType<unknown>, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof joinEvent>>,
     TError,
@@ -604,7 +533,7 @@ export const getSendShagunUrl = () => {
 
 export const sendShagun = async (
   sendShagunRequest: SendShagunRequest,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<Transaction> => {
   return customFetch<Transaction>(getSendShagunUrl(), {
     ...options,
@@ -633,9 +562,7 @@ export const getSendShagunMutationOptions = <
 > => {
   const mutationKey = ["sendShagun"];
   const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
     : { mutation: { mutationKey }, request: undefined };
@@ -652,16 +579,11 @@ export const getSendShagunMutationOptions = <
   return { mutationFn, ...mutationOptions };
 };
 
-export type SendShagunMutationResult = NonNullable<
-  Awaited<ReturnType<typeof sendShagun>>
->;
+export type SendShagunMutationResult = NonNullable<Awaited<ReturnType<typeof sendShagun>>>;
 export type SendShagunMutationBody = BodyType<SendShagunRequest>;
 export type SendShagunMutationError = ErrorType<unknown>;
 
-export const useSendShagun = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
+export const useSendShagun = <TError = ErrorType<unknown>, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof sendShagun>>,
     TError,
@@ -684,7 +606,7 @@ export const getGetShagunByEventUrl = (eventId: string) => {
 
 export const getShagunByEvent = async (
   eventId: string,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<Transaction[]> => {
   return customFetch<Transaction[]>(getGetShagunByEventUrl(eventId), {
     ...options,
@@ -702,38 +624,28 @@ export const getGetShagunByEventQueryOptions = <
 >(
   eventId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getShagunByEvent>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getShagunByEvent>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getGetShagunByEventQueryKey(eventId);
+  const queryKey = queryOptions?.queryKey ?? getGetShagunByEventQueryKey(eventId);
 
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getShagunByEvent>>
-  > = ({ signal }) => getShagunByEvent(eventId, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getShagunByEvent>>> = ({ signal }) =>
+    getShagunByEvent(eventId, { signal, ...requestOptions });
 
   return {
     queryKey,
     queryFn,
     enabled: !!eventId,
     ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getShagunByEvent>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
+  } as UseQueryOptions<Awaited<ReturnType<typeof getShagunByEvent>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
 };
 
-export type GetShagunByEventQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getShagunByEvent>>
->;
+export type GetShagunByEventQueryResult = NonNullable<Awaited<ReturnType<typeof getShagunByEvent>>>;
 export type GetShagunByEventQueryError = ErrorType<unknown>;
 
 export function useGetShagunByEvent<
@@ -742,13 +654,9 @@ export function useGetShagunByEvent<
 >(
   eventId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getShagunByEvent>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getShagunByEvent>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetShagunByEventQueryOptions(eventId, options);
 
@@ -765,7 +673,7 @@ export const getRevealShagunUrl = (transactionId: string) => {
 
 export const revealShagun = async (
   transactionId: string,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<RevealStatus> => {
   return customFetch<RevealStatus>(getRevealShagunUrl(transactionId), {
     ...options,
@@ -783,38 +691,28 @@ export const getRevealShagunQueryOptions = <
 >(
   transactionId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof revealShagun>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof revealShagun>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getRevealShagunQueryKey(transactionId);
+  const queryKey = queryOptions?.queryKey ?? getRevealShagunQueryKey(transactionId);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof revealShagun>>> = ({
-    signal,
-  }) => revealShagun(transactionId, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof revealShagun>>> = ({ signal }) =>
+    revealShagun(transactionId, { signal, ...requestOptions });
 
   return {
     queryKey,
     queryFn,
     enabled: !!transactionId,
     ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof revealShagun>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
+  } as UseQueryOptions<Awaited<ReturnType<typeof revealShagun>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
 };
 
-export type RevealShagunQueryResult = NonNullable<
-  Awaited<ReturnType<typeof revealShagun>>
->;
+export type RevealShagunQueryResult = NonNullable<Awaited<ReturnType<typeof revealShagun>>>;
 export type RevealShagunQueryError = ErrorType<unknown>;
 
 export function useRevealShagun<
@@ -823,13 +721,9 @@ export function useRevealShagun<
 >(
   transactionId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof revealShagun>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof revealShagun>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getRevealShagunQueryOptions(transactionId, options);
 
@@ -846,7 +740,7 @@ export const getGetEventGiftsUrl = (eventId: string) => {
 
 export const getEventGifts = async (
   eventId: string,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<EventGift[]> => {
   return customFetch<EventGift[]>(getGetEventGiftsUrl(eventId), {
     ...options,
@@ -864,37 +758,28 @@ export const getGetEventGiftsQueryOptions = <
 >(
   eventId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getEventGifts>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getEventGifts>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetEventGiftsQueryKey(eventId);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getEventGifts>>> = ({
-    signal,
-  }) => getEventGifts(eventId, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getEventGifts>>> = ({ signal }) =>
+    getEventGifts(eventId, { signal, ...requestOptions });
 
   return {
     queryKey,
     queryFn,
     enabled: !!eventId,
     ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getEventGifts>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
+  } as UseQueryOptions<Awaited<ReturnType<typeof getEventGifts>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
 };
 
-export type GetEventGiftsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getEventGifts>>
->;
+export type GetEventGiftsQueryResult = NonNullable<Awaited<ReturnType<typeof getEventGifts>>>;
 export type GetEventGiftsQueryError = ErrorType<unknown>;
 
 export function useGetEventGifts<
@@ -903,13 +788,9 @@ export function useGetEventGifts<
 >(
   eventId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getEventGifts>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getEventGifts>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetEventGiftsQueryOptions(eventId, options);
 
@@ -927,7 +808,7 @@ export const getAddGiftToRegistryUrl = (eventId: string) => {
 export const addGiftToRegistry = async (
   eventId: string,
   addGiftRequest: AddGiftRequest,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<EventGift> => {
   return customFetch<EventGift>(getAddGiftToRegistryUrl(eventId), {
     ...options,
@@ -956,9 +837,7 @@ export const getAddGiftToRegistryMutationOptions = <
 > => {
   const mutationKey = ["addGiftToRegistry"];
   const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
     : { mutation: { mutationKey }, request: undefined };
@@ -981,10 +860,7 @@ export type AddGiftToRegistryMutationResult = NonNullable<
 export type AddGiftToRegistryMutationBody = BodyType<AddGiftRequest>;
 export type AddGiftToRegistryMutationError = ErrorType<unknown>;
 
-export const useAddGiftToRegistry = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
+export const useAddGiftToRegistry = <TError = ErrorType<unknown>, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof addGiftToRegistry>>,
     TError,
@@ -1007,7 +883,7 @@ export const getContributeToGiftUrl = () => {
 
 export const contributeToGift = async (
   contributeGiftRequest: ContributeGiftRequest,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<GiftContribution> => {
   return customFetch<GiftContribution>(getContributeToGiftUrl(), {
     ...options,
@@ -1036,9 +912,7 @@ export const getContributeToGiftMutationOptions = <
 > => {
   const mutationKey = ["contributeToGift"];
   const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
     : { mutation: { mutationKey }, request: undefined };
@@ -1061,10 +935,7 @@ export type ContributeToGiftMutationResult = NonNullable<
 export type ContributeToGiftMutationBody = BodyType<ContributeGiftRequest>;
 export type ContributeToGiftMutationError = ErrorType<unknown>;
 
-export const useContributeToGift = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
+export const useContributeToGift = <TError = ErrorType<unknown>, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof contributeToGift>>,
     TError,
@@ -1085,10 +956,7 @@ export const getGetLedgerUrl = (userId: string) => {
   return `/api/ledger/${userId}`;
 };
 
-export const getLedger = async (
-  userId: string,
-  options?: RequestInit,
-): Promise<LedgerEntry[]> => {
+export const getLedger = async (userId: string, options?: RequestInit): Promise<LedgerEntry[]> => {
   return customFetch<LedgerEntry[]>(getGetLedgerUrl(userId), {
     ...options,
     method: "GET",
@@ -1105,21 +973,16 @@ export const getGetLedgerQueryOptions = <
 >(
   userId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getLedger>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getLedger>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetLedgerQueryKey(userId);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLedger>>> = ({
-    signal,
-  }) => getLedger(userId, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLedger>>> = ({ signal }) =>
+    getLedger(userId, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -1131,9 +994,7 @@ export const getGetLedgerQueryOptions = <
   };
 };
 
-export type GetLedgerQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getLedger>>
->;
+export type GetLedgerQueryResult = NonNullable<Awaited<ReturnType<typeof getLedger>>>;
 export type GetLedgerQueryError = ErrorType<unknown>;
 
 export function useGetLedger<
@@ -1142,13 +1003,9 @@ export function useGetLedger<
 >(
   userId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getLedger>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getLedger>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetLedgerQueryOptions(userId, options);
 
@@ -1166,7 +1023,7 @@ export const getGetLedgerDetailUrl = (userId: string, contactId: string) => {
 export const getLedgerDetail = async (
   userId: string,
   contactId: string,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<LedgerDetail> => {
   return customFetch<LedgerDetail>(getGetLedgerDetailUrl(userId, contactId), {
     ...options,
@@ -1174,10 +1031,7 @@ export const getLedgerDetail = async (
   });
 };
 
-export const getGetLedgerDetailQueryKey = (
-  userId: string,
-  contactId: string,
-) => {
+export const getGetLedgerDetailQueryKey = (userId: string, contactId: string) => {
   return [`/api/ledger/${userId}/${contactId}`] as const;
 };
 
@@ -1188,38 +1042,28 @@ export const getGetLedgerDetailQueryOptions = <
   userId: string,
   contactId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getLedgerDetail>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getLedgerDetail>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getGetLedgerDetailQueryKey(userId, contactId);
+  const queryKey = queryOptions?.queryKey ?? getGetLedgerDetailQueryKey(userId, contactId);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLedgerDetail>>> = ({
-    signal,
-  }) => getLedgerDetail(userId, contactId, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLedgerDetail>>> = ({ signal }) =>
+    getLedgerDetail(userId, contactId, { signal, ...requestOptions });
 
   return {
     queryKey,
     queryFn,
     enabled: !!(userId && contactId),
     ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getLedgerDetail>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
+  } as UseQueryOptions<Awaited<ReturnType<typeof getLedgerDetail>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
 };
 
-export type GetLedgerDetailQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getLedgerDetail>>
->;
+export type GetLedgerDetailQueryResult = NonNullable<Awaited<ReturnType<typeof getLedgerDetail>>>;
 export type GetLedgerDetailQueryError = ErrorType<unknown>;
 
 export function useGetLedgerDetail<
@@ -1229,19 +1073,11 @@ export function useGetLedgerDetail<
   userId: string,
   contactId: string,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getLedgerDetail>>,
-      TError,
-      TData
-    >;
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getLedgerDetail>>, TError, TData>;
     request?: SecondParameter<typeof customFetch>;
-  },
+  }
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetLedgerDetailQueryOptions(
-    userId,
-    contactId,
-    options,
-  );
+  const queryOptions = getGetLedgerDetailQueryOptions(userId, contactId, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

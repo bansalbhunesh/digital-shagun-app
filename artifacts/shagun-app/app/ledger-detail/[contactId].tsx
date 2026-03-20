@@ -1,7 +1,12 @@
 import React from "react";
 import {
-  View, Text, StyleSheet, Pressable, ScrollView,
-  ActivityIndicator, Platform,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+  Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -41,7 +46,7 @@ export default function LedgerDetailScreen() {
   const { contactId, name } = useLocalSearchParams<{ contactId: string; name: string }>();
   const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
-  
+
   const { data: detail, isLoading: loading } = useQuery<LedgerDetail>({
     queryKey: ["ledgerDetail", currentUser.id, contactId],
     queryFn: () => customFetch<LedgerDetail>(`/api/ledger/${currentUser.id}/${contactId}`),
@@ -50,7 +55,12 @@ export default function LedgerDetailScreen() {
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  const initials = (name ?? "?").split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase();
+  const initials = (name ?? "?")
+    .split(" ")
+    .map((n: string) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
@@ -108,8 +118,10 @@ export default function LedgerDetailScreen() {
                 <Text style={styles.suggestTitle}>Smart Suggestion</Text>
                 <Text style={styles.suggestText}>
                   Next time you attend their event, consider giving{" "}
-                  <Text style={styles.suggestHighlight}>₹{detail.suggestedAmount.toLocaleString("en-IN")}</Text>
-                  {" "}to keep the relationship balanced
+                  <Text style={styles.suggestHighlight}>
+                    ₹{detail.suggestedAmount.toLocaleString("en-IN")}
+                  </Text>{" "}
+                  to keep the relationship balanced
                 </Text>
               </View>
             </View>
@@ -122,20 +134,43 @@ export default function LedgerDetailScreen() {
             ) : (
               detail?.transactions.map((tx) => (
                 <View key={tx.id} style={styles.txRow}>
-                  <View style={[styles.txIndicator, { backgroundColor: tx.direction === "given" ? Colors.success : Colors.primary }]} />
+                  <View
+                    style={[
+                      styles.txIndicator,
+                      {
+                        backgroundColor: tx.direction === "given" ? Colors.success : Colors.primary,
+                      },
+                    ]}
+                  />
                   <View style={styles.txEmoji}>
                     <Text>{EVENT_TYPE_EMOJI[tx.eventType] ?? "🎉"}</Text>
                   </View>
                   <View style={styles.txBody}>
                     <Text style={styles.txEventName}>{tx.eventName}</Text>
-                    <Text style={styles.txDate}>{new Date(tx.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</Text>
+                    <Text style={styles.txDate}>
+                      {new Date(tx.date).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </Text>
                     {tx.message && <Text style={styles.txMessage}>{tx.message}</Text>}
                   </View>
                   <View style={styles.txRight}>
-                    <Text style={[styles.txDirection, { color: tx.direction === "given" ? Colors.success : Colors.primary }]}>
+                    <Text
+                      style={[
+                        styles.txDirection,
+                        { color: tx.direction === "given" ? Colors.success : Colors.primary },
+                      ]}
+                    >
                       {tx.direction === "given" ? "You gave" : "You received"}
                     </Text>
-                    <Text style={[styles.txAmount, { color: tx.direction === "given" ? Colors.success : Colors.primary }]}>
+                    <Text
+                      style={[
+                        styles.txAmount,
+                        { color: tx.direction === "given" ? Colors.success : Colors.primary },
+                      ]}
+                    >
                       ₹{tx.amount.toLocaleString("en-IN")}
                     </Text>
                   </View>

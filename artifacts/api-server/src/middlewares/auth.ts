@@ -27,23 +27,30 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
   try {
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data?.user) {
-      logger.warn({ error, token: token.substring(0, 8) + "..." }, "Auth failed: Invalid or expired token");
+      logger.warn(
+        { error, token: token.substring(0, 8) + "..." },
+        "Auth failed: Invalid or expired token"
+      );
       res.status(401).json({ error: "Invalid or expired token" });
       return;
     }
-    
+
     const cached = profileCache.get(data.user.id);
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       req.user = { id: data.user.id, name: cached.name };
       return next();
     }
 
-    const [userProfile] = await db.select().from(usersTable).where(eq(usersTable.id, data.user.id)).limit(1);
+    const [userProfile] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, data.user.id))
+      .limit(1);
     if (!userProfile) {
       res.status(401).json({ error: "User profile not found" });
       return;
     }
-    
+
     // Update cache
     profileCache.set(data.user.id, { name: userProfile.name, timestamp: Date.now() });
 

@@ -1,7 +1,13 @@
 import React, { useCallback } from "react";
 import {
-  View, Text, StyleSheet, Pressable, ScrollView,
-  ActivityIndicator, Share, Platform,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+  Share,
+  Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -54,7 +60,15 @@ function GiftProgressCard({ gift, onContribute }: { gift: EventGift; onContribut
 
       <View style={styles.progressContainer}>
         <View style={styles.progressBg}>
-          <View style={[styles.progressFill, { width: `${progressPct}%` as any, backgroundColor: gift.isFullyFunded ? Colors.success : Colors.gold }]} />
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${progressPct}%` as any,
+                backgroundColor: gift.isFullyFunded ? Colors.success : Colors.gold,
+              },
+            ]}
+          />
         </View>
         <Text style={styles.progressText}>
           ₹{formatINR(gift.currentAmount)} / ₹{formatINR(gift.targetAmount)}
@@ -83,7 +97,11 @@ function ShagunItem({ tx }: { tx: Transaction }) {
       </View>
       <View style={styles.shagunBody}>
         <Text style={styles.shagunSender}>{tx.senderName}</Text>
-        {tx.message ? <Text style={styles.shagunMessage} numberOfLines={1}>{tx.message}</Text> : null}
+        {tx.message ? (
+          <Text style={styles.shagunMessage} numberOfLines={1}>
+            {tx.message}
+          </Text>
+        ) : null}
       </View>
       <View style={styles.shagunRight}>
         {isRevealed ? (
@@ -104,7 +122,11 @@ export default function EventDetailScreen() {
   const currentUser = useCurrentUser();
   const insets = useSafeAreaInsets();
 
-  const { data, isLoading: loading, refetch } = useQuery<{ event: Event; shagunList: Transaction[]; gifts: EventGift[] }>({
+  const {
+    data,
+    isLoading: loading,
+    refetch,
+  } = useQuery<{ event: Event; shagunList: Transaction[]; gifts: EventGift[] }>({
     queryKey: ["eventDetail", id, currentUser.id],
     queryFn: () => customFetch(`/api/events/${id}`),
     enabled: !!id && !!currentUser.id,
@@ -116,7 +138,11 @@ export default function EventDetailScreen() {
 
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  useFocusEffect(useCallback(() => { if (id) refetch(); }, [id, refetch]));
+  useFocusEffect(
+    useCallback(() => {
+      if (id) refetch();
+    }, [id, refetch])
+  );
 
   const handleShare = async () => {
     if (!event) return;
@@ -128,7 +154,15 @@ export default function EventDetailScreen() {
 
   const handleSendShagun = () => {
     if (!event) return;
-    router.push({ pathname: "/send-shagun", params: { eventId: event.id, receiverId: event.hostId, receiverName: event.hostName, eventType: event.type } });
+    router.push({
+      pathname: "/send-shagun",
+      params: {
+        eventId: event.id,
+        receiverId: event.hostId,
+        receiverName: event.hostName,
+        eventType: event.type,
+      },
+    });
   };
 
   const isHost = event?.hostId === currentUser.id;
@@ -216,7 +250,10 @@ export default function EventDetailScreen() {
         {!isHost && (
           <Pressable
             style={({ pressed }) => [styles.sendShagunBtn, pressed && styles.btnPressed]}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); handleSendShagun(); }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              handleSendShagun();
+            }}
           >
             <Text style={styles.sendShagunEmoji}>🙏</Text>
             <Text style={styles.sendShagunText}>Give Shagun</Text>
@@ -229,7 +266,12 @@ export default function EventDetailScreen() {
             <View style={styles.hostActions}>
               <Pressable
                 style={({ pressed }) => [styles.hostActionBtn, pressed && styles.btnPressed]}
-                onPress={() => router.push({ pathname: "/gift-registry/[eventId]", params: { eventId: event.id } })}
+                onPress={() =>
+                  router.push({
+                    pathname: "/gift-registry/[eventId]",
+                    params: { eventId: event.id },
+                  })
+                }
               >
                 <Feather name="gift" size={16} color={Colors.primary} />
                 <Text style={styles.hostActionText}>Gift Registry</Text>
@@ -238,7 +280,10 @@ export default function EventDetailScreen() {
                 style={({ pressed }) => [styles.hostActionBtn, pressed && styles.btnPressed]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push({ pathname: "/kits/[eventId]", params: { eventId: event.id, eventType: event.type } });
+                  router.push({
+                    pathname: "/kits/[eventId]",
+                    params: { eventId: event.id, eventType: event.type },
+                  });
                 }}
               >
                 <Feather name="box" size={16} color={Colors.primary} />
@@ -268,20 +313,23 @@ export default function EventDetailScreen() {
         {gifts.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Gift Registry</Text>
-            {gifts.map(g => (
+            {gifts.map((g) => (
               <GiftProgressCard
                 key={g.id}
                 gift={g}
                 onContribute={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push({ pathname: "/contribute-gift", params: { 
-                    giftId: g.id, 
-                    giftName: g.name, 
-                    giftEmoji: g.imageEmoji, 
-                    remaining: (g.targetAmount - g.currentAmount).toString(),
-                    hostId: event.hostId,
-                    hostName: event.hostName
-                  } });
+                  router.push({
+                    pathname: "/contribute-gift",
+                    params: {
+                      giftId: g.id,
+                      giftName: g.name,
+                      giftEmoji: g.imageEmoji,
+                      remaining: (g.targetAmount - g.currentAmount).toString(),
+                      hostId: event.hostId,
+                      hostName: event.hostName,
+                    },
+                  });
                 }}
               />
             ))}
@@ -295,7 +343,7 @@ export default function EventDetailScreen() {
               <Text style={styles.emptyBlessingsText}>Be the first to give a blessing</Text>
             </View>
           ) : (
-            shagunList.map(tx => <ShagunItem key={tx.id} tx={tx} />)
+            shagunList.map((tx) => <ShagunItem key={tx.id} tx={tx} />)
           )}
         </View>
 

@@ -36,14 +36,19 @@ const EVENT_MESSAGES: Record<string, string[]> = {
   ],
 };
 
-const SHAGUN_AMOUNTS = [101, 151, 201, 251, 301, 401, 501, 701, 1001, 1100, 1501, 2100, 3001, 5001, 7001, 11000];
+const SHAGUN_AMOUNTS = [
+  101, 151, 201, 251, 301, 401, 501, 701, 1001, 1100, 1501, 2100, 3001, 5001, 7001, 11000,
+];
 
 function getAuspiciousAmount(base: number): number {
-  const higher = SHAGUN_AMOUNTS.filter(a => a >= base);
+  const higher = SHAGUN_AMOUNTS.filter((a) => a >= base);
   return higher[0] ?? SHAGUN_AMOUNTS[SHAGUN_AMOUNTS.length - 1];
 }
 
-function suggestAmountForEvent(eventType: string, relationshipHistory: { totalGiven: number; totalReceived: number } | null): {
+function suggestAmountForEvent(
+  eventType: string,
+  relationshipHistory: { totalGiven: number; totalReceived: number } | null
+): {
   primary: number;
   secondary: number;
   reasoning: string;
@@ -102,17 +107,23 @@ function suggestAmountForEvent(eventType: string, relationshipHistory: { totalGi
 router.get("/suggest", requireAuth, async (req, res) => {
   const viewerId = req.user!.id;
   const { eventType, receiverId } = req.query as {
-    eventType: string; receiverId: string;
+    eventType: string;
+    receiverId: string;
   };
 
   if (!receiverId) return res.status(400).json({ error: "receiverId required" });
 
   let history = null;
-  const [ledger] = await db.select().from(relationshipLedgerTable)
-    .where(and(
-      eq(relationshipLedgerTable.userId, viewerId),
-      eq(relationshipLedgerTable.contactId, receiverId)
-    )).limit(1);
+  const [ledger] = await db
+    .select()
+    .from(relationshipLedgerTable)
+    .where(
+      and(
+        eq(relationshipLedgerTable.userId, viewerId),
+        eq(relationshipLedgerTable.contactId, receiverId)
+      )
+    )
+    .limit(1);
 
   if (ledger) {
     history = {

@@ -17,6 +17,7 @@ If you discover a security vulnerability within this project, please do not disc
 - **GitHub Issues**: Please use the "Private Vulnerability Reporting" feature if available on this repository.
 
 Please include the following details in your report:
+
 - A description of the vulnerability.
 - Steps to reproduce the issue.
 - Potential impact of the vulnerability.

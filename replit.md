@@ -9,6 +9,7 @@
 **Target users:** Indian families age 25–65, elder-friendly UX.
 
 **Core differentiators:**
+
 1. **Event-based context** — gifting tied to celebrations with full social layer
 2. **Gift Kits / Bundles** — 5 pre-built culturally-appropriate gift bundles
 3. **AI Suggestions** — rule-based, history-aware amount + message recommendations
@@ -21,17 +22,17 @@
 
 ## Tech Stack
 
-| Layer | Tech |
-|-------|------|
-| Monorepo | pnpm workspaces |
-| Mobile/Web App | Expo 54 + React Native 0.81 + Expo Router 6 |
-| API Server | Express 5 + TypeScript (tsx runtime) |
-| Database | PostgreSQL (Drizzle ORM, raw SQL for most queries) |
-| Fonts | Poppins (Regular, Medium, SemiBold, Bold via @expo-google-fonts) |
-| Icons | @expo/vector-icons (Feather set) |
-| QR Code | react-native-qrcode-svg + react-native-svg |
-| Haptics | expo-haptics |
-| Storage | @react-native-async-storage/async-storage |
+| Layer          | Tech                                                             |
+| -------------- | ---------------------------------------------------------------- |
+| Monorepo       | pnpm workspaces                                                  |
+| Mobile/Web App | Expo 54 + React Native 0.81 + Expo Router 6                      |
+| API Server     | Express 5 + TypeScript (tsx runtime)                             |
+| Database       | PostgreSQL (Drizzle ORM, raw SQL for most queries)               |
+| Fonts          | Poppins (Regular, Medium, SemiBold, Bold via @expo-google-fonts) |
+| Icons          | @expo/vector-icons (Feather set)                                 |
+| QR Code        | react-native-qrcode-svg + react-native-svg                       |
+| Haptics        | expo-haptics                                                     |
+| Storage        | @react-native-async-storage/async-storage                        |
 
 ## Design System
 
@@ -100,11 +101,11 @@ scripts/                 # Utility scripts
 
 ## Running Workflows
 
-| Workflow | Command | Port |
-|----------|---------|------|
-| `artifacts/api-server: API Server` | `pnpm --filter @workspace/api-server run dev` | 8080 |
-| `artifacts/shagun-app: expo` | `pnpm --filter @workspace/shagun-app run dev` | 21007 |
-| `artifacts/mockup-sandbox: Component Preview Server` | `pnpm --filter @workspace/mockup-sandbox run dev` | 8081 |
+| Workflow                                             | Command                                           | Port  |
+| ---------------------------------------------------- | ------------------------------------------------- | ----- |
+| `artifacts/api-server: API Server`                   | `pnpm --filter @workspace/api-server run dev`     | 8080  |
+| `artifacts/shagun-app: expo`                         | `pnpm --filter @workspace/shagun-app run dev`     | 21007 |
+| `artifacts/mockup-sandbox: Component Preview Server` | `pnpm --filter @workspace/mockup-sandbox run dev` | 8081  |
 
 ---
 
@@ -173,25 +174,25 @@ CREATE TABLE event_gifts (
 
 ## Key API Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/api/users` | Create/update user profile |
-| GET | `/api/events` | List all events (query: `userId`) |
-| POST | `/api/events` | Create new event |
-| GET | `/api/events/:id` | Get event + transactions + gifts |
-| GET | `/api/events/by-code/:code` | Find event by share code (for join) |
-| POST | `/api/events/:id/join` | Join event as guest |
-| POST | `/api/shagun` | Send shagun transaction |
-| GET | `/api/shagun/event/:id` | Get all shagun for event |
-| GET | `/api/shagun/user/:id` | Get user's received shagun (for reveal) |
-| POST | `/api/gifts/contribute` | Mark gift as fulfilled (**MUST BE BEFORE** `/:eventId` route) |
-| GET | `/api/gifts/:eventId` | Get registry items for event |
-| POST | `/api/gifts/:eventId` | Add registry item |
-| GET | `/api/kits` | List all gift bundles (5 pre-built) |
-| POST | `/api/kits/add-to-event` | Add kit items to event registry |
-| GET | `/api/ledger/:userId` | Get relationship ledger |
-| GET | `/api/ai/suggest` | AI amount + message suggestion |
-| GET | `/api/health` | Health check |
+| Method | Path                        | Description                                                   |
+| ------ | --------------------------- | ------------------------------------------------------------- |
+| POST   | `/api/users`                | Create/update user profile                                    |
+| GET    | `/api/events`               | List all events (query: `userId`)                             |
+| POST   | `/api/events`               | Create new event                                              |
+| GET    | `/api/events/:id`           | Get event + transactions + gifts                              |
+| GET    | `/api/events/by-code/:code` | Find event by share code (for join)                           |
+| POST   | `/api/events/:id/join`      | Join event as guest                                           |
+| POST   | `/api/shagun`               | Send shagun transaction                                       |
+| GET    | `/api/shagun/event/:id`     | Get all shagun for event                                      |
+| GET    | `/api/shagun/user/:id`      | Get user's received shagun (for reveal)                       |
+| POST   | `/api/gifts/contribute`     | Mark gift as fulfilled (**MUST BE BEFORE** `/:eventId` route) |
+| GET    | `/api/gifts/:eventId`       | Get registry items for event                                  |
+| POST   | `/api/gifts/:eventId`       | Add registry item                                             |
+| GET    | `/api/kits`                 | List all gift bundles (5 pre-built)                           |
+| POST   | `/api/kits/add-to-event`    | Add kit items to event registry                               |
+| GET    | `/api/ledger/:userId`       | Get relationship ledger                                       |
+| GET    | `/api/ai/suggest`           | AI amount + message suggestion                                |
+| GET    | `/api/health`               | Health check                                                  |
 
 ---
 
@@ -227,27 +228,35 @@ getAISuggestion(eventType, senderId, receiverId): Promise<AISuggestion>
 ## User Flows
 
 ### Onboarding
+
 Enter name + phone → POST /api/users → save to AsyncStorage → Home
 
 ### Send Shagun
+
 Home "Give Shagun" → Select event → AI suggestion panel (auspicious amount + message) → Pick amount (₹101/₹251/₹501/₹1100 + custom) → Type blessing message → POST /api/shagun → Envelope animation (/reveal)
 
 ### Create Event
+
 Events tab "+" → Choose type (5 types) → Fill title/date/venue/message → POST /api/events → Success screen with 6-char share code → View Event detail
 
 ### Join Event
+
 Home "Join Event" → Enter 6-char code → GET /api/events/by-code/:code → POST /api/events/:id/join → Event detail
 
 ### Gift Registry
+
 Event detail "Gift Registry" → List items with progress → Add items → Contribute with "Fulfil"
 
 ### Gift Kits
+
 Event detail "Gift Kits" → Choose bundle (5 bundles: Home ₹95k, Baby ₹42k, Wedding ₹1.3L, Birthday ₹22k, Festival ₹25k) → Preview items → POST /api/kits/add-to-event → Items added to registry
 
 ### QR Sharing (host only)
+
 Event detail QR icon → QR code screen shows QR + 6-char code → Share via WhatsApp
 
 ### Reveal
+
 Home "Blessings Received" → See "A blessing arrived" card → Tap to reveal → Envelope unwrap animation → Amount + message shown
 
 ---

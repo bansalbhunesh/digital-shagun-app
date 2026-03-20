@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, Pressable, ScrollView,
-  TextInput, ActivityIndicator, Platform, Alert,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
+  Platform,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -35,8 +42,14 @@ export default function CreateEventScreen() {
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   const handleCreate = async () => {
-    if (!title.trim()) { setError("Please enter event title"); return; }
-    if (!date.trim()) { setError("Please enter event date"); return; }
+    if (!title.trim()) {
+      setError("Please enter event title");
+      return;
+    }
+    if (!date.trim()) {
+      setError("Please enter event date");
+      return;
+    }
     setError("");
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -48,7 +61,7 @@ export default function CreateEventScreen() {
           date: date.trim(),
           venue: venue.trim() || undefined,
           description: description.trim() || undefined,
-        }
+        },
       });
       queryClient.invalidateQueries({ queryKey: ["events"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -111,10 +124,14 @@ export default function CreateEventScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.sectionLabel}>Celebration Type</Text>
         <View style={styles.typeGrid}>
-          {EVENT_TYPES.map(t => (
+          {EVENT_TYPES.map((t) => (
             <Pressable
               key={t.key}
               style={({ pressed }) => [
@@ -122,11 +139,18 @@ export default function CreateEventScreen() {
                 selectedType === t.key && styles.typeCardSelected,
                 pressed && styles.typeCardPressed,
               ]}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedType(t.key); }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedType(t.key);
+              }}
             >
               <Text style={styles.typeEmoji}>{t.emoji}</Text>
-              <Text style={[styles.typeLabel, selectedType === t.key && styles.typeLabelSelected]}>{t.label}</Text>
-              <Text style={[styles.typeDesc, selectedType === t.key && styles.typeDescSelected]}>{t.desc}</Text>
+              <Text style={[styles.typeLabel, selectedType === t.key && styles.typeLabelSelected]}>
+                {t.label}
+              </Text>
+              <Text style={[styles.typeDesc, selectedType === t.key && styles.typeDescSelected]}>
+                {t.desc}
+              </Text>
             </Pressable>
           ))}
         </View>

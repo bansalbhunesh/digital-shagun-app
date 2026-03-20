@@ -1,7 +1,13 @@
 import React from "react";
 import {
-  View, Text, StyleSheet, Pressable, FlatList,
-  RefreshControl, ActivityIndicator, Platform,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  FlatList,
+  RefreshControl,
+  ActivityIndicator,
+  Platform,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,7 +26,11 @@ const EVENT_TYPE_INFO: Record<string, { emoji: string; label: string; color: str
 };
 
 function EventCard({ event, onPress }: { event: Event; onPress: () => void }) {
-  const typeInfo = EVENT_TYPE_INFO[event.type] ?? { emoji: "🎉", label: event.type, color: Colors.primary };
+  const typeInfo = EVENT_TYPE_INFO[event.type] ?? {
+    emoji: "🎉",
+    label: event.type,
+    color: Colors.primary,
+  };
 
   return (
     <Pressable
@@ -34,7 +44,9 @@ function EventCard({ event, onPress }: { event: Event; onPress: () => void }) {
             <Text style={styles.eventEmoji}>{typeInfo.emoji}</Text>
           </View>
           <View style={styles.cardInfo}>
-            <Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text>
+            <Text style={styles.eventTitle} numberOfLines={1}>
+              {event.title}
+            </Text>
             <Text style={styles.eventSubtitle}>{typeInfo.label}</Text>
           </View>
           <Feather name="chevron-right" size={20} color={Colors.textLight} />
@@ -48,7 +60,9 @@ function EventCard({ event, onPress }: { event: Event; onPress: () => void }) {
           {event.venue ? (
             <View style={styles.metaItem}>
               <Feather name="map-pin" size={13} color={Colors.textLight} />
-              <Text style={styles.metaText} numberOfLines={1}>{event.venue}</Text>
+              <Text style={styles.metaText} numberOfLines={1}>
+                {event.venue}
+              </Text>
             </View>
           ) : null}
         </View>
@@ -103,7 +117,10 @@ export default function EventsScreen() {
         </View>
         <Pressable
           style={({ pressed }) => [styles.createBtn, pressed && styles.createBtnPressed]}
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/create-event"); }}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push("/create-event");
+          }}
         >
           <Feather name="plus" size={20} color={Colors.cream} />
         </Pressable>
@@ -116,10 +133,16 @@ export default function EventsScreen() {
       ) : (
         <FlatList
           data={events}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.primary}
+            />
+          }
           renderItem={({ item }) => (
             <EventCard
               event={item}
@@ -135,7 +158,9 @@ export default function EventsScreen() {
                 <Feather name="calendar" size={32} color={Colors.gold} />
               </View>
               <Text style={styles.emptyTitle}>No events yet</Text>
-              <Text style={styles.emptyText}>Create your first celebration and share it with family & friends</Text>
+              <Text style={styles.emptyText}>
+                Create your first celebration and share it with family & friends
+              </Text>
               <Pressable
                 style={({ pressed }) => [styles.emptyBtn, pressed && styles.emptyBtnPressed]}
                 onPress={() => router.push("/create-event")}

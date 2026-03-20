@@ -68,7 +68,7 @@ function getDeploymentDomain() {
   }
 
   console.error(
-    "ERROR: No deployment domain found. Set REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN",
+    "ERROR: No deployment domain found. Set REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN"
   );
   process.exit(1);
 }
@@ -146,23 +146,12 @@ async function startMetro(expoPublicDomain, expoPublicReplId) {
     console.log(`Setting EXPO_PUBLIC_REPL_ID=${expoPublicReplId}`);
   }
 
-  metroProcess = spawn(
-    "pnpm",
-    [
-      "exec",
-      "expo",
-      "start",
-      "--no-dev",
-      "--minify",
-      "--localhost",
-    ],
-    {
-      stdio: ["ignore", "pipe", "pipe"],
-      detached: false,
-      cwd: projectRoot,
-      env,
-    },
-  );
+  metroProcess = spawn("pnpm", ["exec", "expo", "start", "--no-dev", "--minify", "--localhost"], {
+    stdio: ["ignore", "pipe", "pipe"],
+    detached: false,
+    cwd: projectRoot,
+    env,
+  });
 
   if (metroProcess.stdout) {
     metroProcess.stdout.on("data", (data) => {
@@ -244,7 +233,7 @@ async function downloadBundle(platform, timestamp) {
     "static",
     "js",
     platform,
-    "bundle.js",
+    "bundle.js"
   );
 
   console.log(`Fetching ${platform} bundle...`);
@@ -272,9 +261,7 @@ async function downloadManifest(platform) {
     return manifest;
   } catch (error) {
     if (error.name === "AbortError") {
-      throw new Error(
-        `Manifest download timeout after 5m for platform: ${platform}`,
-      );
+      throw new Error(`Manifest download timeout after 5m for platform: ${platform}`);
     }
     throw error;
   } finally {
@@ -309,11 +296,11 @@ function extractAssets(timestamp) {
   const bundles = {
     ios: fs.readFileSync(
       path.join(staticBuild, timestamp, "_expo", "static", "js", "ios", "bundle.js"),
-      "utf-8",
+      "utf-8"
     ),
     android: fs.readFileSync(
       path.join(staticBuild, timestamp, "_expo", "static", "js", "android", "bundle.js"),
-      "utf-8",
+      "utf-8"
     ),
   };
 
@@ -384,7 +371,7 @@ async function downloadAssets(assets, timestamp) {
       "_expo",
       "static",
       "js",
-      asset.relativePath,
+      asset.relativePath
     );
     fs.mkdirSync(outputDir, { recursive: true });
     const output = path.join(outputDir, asset.filename);
@@ -414,9 +401,7 @@ async function downloadAssets(assets, timestamp) {
   if (failures.length > 0) {
     const errorMsg =
       `Failed to download ${failures.length} asset(s):\n` +
-      failures
-        .map((f) => `  - ${f.filename}: ${f.error} (${f.url})`)
-        .join("\n");
+      failures.map((f) => `  - ${f.filename}: ${f.error} (${f.url})`).join("\n");
     exitWithError(errorMsg);
   }
 
@@ -434,26 +419,21 @@ function updateBundleUrls(timestamp, baseUrl) {
       "static",
       "js",
       platform,
-      "bundle.js",
+      "bundle.js"
     );
     let bundle = fs.readFileSync(bundlePath, "utf-8");
 
-    bundle = bundle.replace(
-      /httpServerLocation:"(\/[^"]+)"/g,
-      (_match, capturedPath) => {
-        const tempUrl = new URL(`http://localhost:8081${capturedPath}`);
-        const unstablePath = tempUrl.searchParams.get("unstable_path");
+    bundle = bundle.replace(/httpServerLocation:"(\/[^"]+)"/g, (_match, capturedPath) => {
+      const tempUrl = new URL(`http://localhost:8081${capturedPath}`);
+      const unstablePath = tempUrl.searchParams.get("unstable_path");
 
-        if (!unstablePath) {
-          throw new Error(
-            `Asset missing unstable_path in bundle: ${capturedPath}`,
-          );
-        }
+      if (!unstablePath) {
+        throw new Error(`Asset missing unstable_path in bundle: ${capturedPath}`);
+      }
 
-        const decodedPath = decodeURIComponent(unstablePath);
-        return `httpServerLocation:"${baseUrl}${basePath}/${timestamp}/_expo/static/js/${decodedPath}"`;
-      },
-    );
+      const decodedPath = decodeURIComponent(unstablePath);
+      return `httpServerLocation:"${baseUrl}${basePath}/${timestamp}/_expo/static/js/${decodedPath}"`;
+    });
 
     fs.writeFileSync(bundlePath, bundle);
   };
@@ -471,13 +451,9 @@ function updateManifests(manifests, timestamp, baseUrl, assetsByHash) {
 
     manifest.launchAsset.url = `${baseUrl}${basePath}/${timestamp}/_expo/static/js/${platform}/bundle.js`;
     manifest.launchAsset.key = `bundle-${timestamp}`;
-    manifest.createdAt = new Date(
-      Number(timestamp.split("-")[0]),
-    ).toISOString();
-    manifest.extra.expoClient.hostUri =
-      baseUrl.replace("https://", "") + "/" + platform;
-    manifest.extra.expoGo.debuggerHost =
-      baseUrl.replace("https://", "") + "/" + platform;
+    manifest.createdAt = new Date(Number(timestamp.split("-")[0])).toISOString();
+    manifest.extra.expoClient.hostUri = baseUrl.replace("https://", "") + "/" + platform;
+    manifest.extra.expoGo.debuggerHost = baseUrl.replace("https://", "") + "/" + platform;
     manifest.extra.expoGo.packagerOpts.dev = false;
 
     if (manifest.assets && manifest.assets.length > 0) {
@@ -496,7 +472,7 @@ function updateManifests(manifests, timestamp, baseUrl, assetsByHash) {
 
     fs.writeFileSync(
       path.join(projectRoot, "static-build", platform, "manifest.json"),
-      JSON.stringify(manifest, null, 2),
+      JSON.stringify(manifest, null, 2)
     );
   };
 
@@ -527,8 +503,8 @@ async function main() {
       reject(
         new Error(
           `Overall download timeout after ${downloadTimeout / 1000} seconds. ` +
-            "Metro may be struggling to generate bundles. Check Metro logs above.",
-        ),
+            "Metro may be struggling to generate bundles. Check Metro logs above."
+        )
       );
     }, downloadTimeout);
   });

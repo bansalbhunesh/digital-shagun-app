@@ -20,11 +20,13 @@ vi.mock("@workspace/db", () => ({
     insert: vi.fn().mockReturnThis(),
     values: vi.fn().mockReturnThis(),
     returning: vi.fn().mockResolvedValue([{ id: "txn_123", amount: 1000 }]),
-    transaction: vi.fn((cb) => cb({
-      insert: vi.fn().mockReturnThis(),
-      values: vi.fn().mockReturnThis(),
-      returning: vi.fn().mockResolvedValue([{ id: "txn_123", amount: 1000 }]),
-    })),
+    transaction: vi.fn((cb) =>
+      cb({
+        insert: vi.fn().mockReturnThis(),
+        values: vi.fn().mockReturnThis(),
+        returning: vi.fn().mockResolvedValue([{ id: "txn_123", amount: 1000 }]),
+      })
+    ),
   },
   eventsTable: { id: "id", hostId: "hostId" },
   shagunTransactionsTable: { id: "id" },
@@ -34,9 +36,7 @@ vi.mock("@workspace/db", () => ({
 
 describe("Shagun Routes", () => {
   it("should return 400 for invalid send-shagun body", async () => {
-    const res = await request(app)
-      .post("/api/shagun/send")
-      .send({ amount: -100 }); // Missing eventId
+    const res = await request(app).post("/api/shagun/send").send({ amount: -100 }); // Missing eventId
     expect(res.status).toBe(400);
   });
 

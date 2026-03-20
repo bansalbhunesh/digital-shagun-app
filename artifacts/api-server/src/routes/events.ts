@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { db, eventsTable, eventGuestsTable, transactionsTable, eventGiftsTable } from "@workspace/db";
+import {
+  db,
+  eventsTable,
+  eventGuestsTable,
+  transactionsTable,
+  eventGiftsTable,
+} from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
@@ -35,7 +41,7 @@ function formatEvent(e: any) {
 router.get("/", requireAuth, async (req, res) => {
   const { hostId } = req.query;
   let events;
-  
+
   // Enforce privacy: if hostId is provided, it must match the current user.
   const targetHostId = hostId as string;
   if (targetHostId && targetHostId !== req.user!.id) {
@@ -45,12 +51,18 @@ router.get("/", requireAuth, async (req, res) => {
 
   events = await db.select().from(eventsTable).where(eq(eventsTable.hostId, hostIdToQuery));
 
-  const result = await Promise.all(events.map(async (e) => {
-    const txResult = await db.select({ total: sql<string>`COALESCE(SUM(CAST(${transactionsTable.amount} AS NUMERIC)), 0)` })
-      .from(transactionsTable).where(eq(transactionsTable.eventId, e.id));
-    const totalReceived = parseFloat(txResult[0]?.total ?? "0");
-    return formatEvent({ ...e, totalReceived, hostId: e.hostId });
-  }));
+  const result = await Promise.all(
+    events.map(async (e) => {
+      const txResult = await db
+        .select({
+          total: sql<string>`COALESCE(SUM(CAST(${transactionsTable.amount} AS NUMERIC)), 0)`,
+        })
+        .from(transactionsTable)
+        .where(eq(transactionsTable.eventId, e.id));
+      const totalReceived = parseFloat(txResult[0]?.total ?? "0");
+      return formatEvent({ ...e, totalReceived, hostId: e.hostId });
+    })
+  );
 
   return res.json(result);
 });
@@ -59,20 +71,33 @@ router.post("/", requireAuth, async (req, res) => {
   const { title, type, date, venue, description } = req.body;
   const hostId = req.user!.id;
   const hostName = req.user!.name; // Injected by requireAuth from JWT/DB
-  
+
   const id = generateId();
   let shareCode = generateShareCode();
 
-  const existing = await db.select().from(eventsTable).where(eq(eventsTable.shareCode, shareCode)).limit(1);
-  if (existing.length > 0) shareCode = generateShareCode() + Math.random().toString(36).substr(2, 2).toUpperCase();
+  const existing = await db
+    .select()
+    .from(eventsTable)
+    .where(eq(eventsTable.shareCode, shareCode))
+    .limit(1);
+  if (existing.length > 0)
+    shareCode = generateShareCode() + Math.random().toString(36).substr(2, 2).toUpperCase();
 
-  const [event] = await db.insert(eventsTable).values({
-    id, title, type, hostId, hostName, date,
-    venue: venue ?? null,
-    description: description ?? null,
-    shareCode,
-    guestCount: 0,
-  }).returning();
+  const [event] = await db
+    .insert(eventsTable)
+    .values({
+      id,
+      title,
+      type,
+      hostId,
+      hostName,
+      date,
+      venue: venue ?? null,
+      description: description ?? null,
+      shareCode,
+      guestCount: 0,
+    })
+    .returning();
 
   return res.status(201).json(formatEvent({ ...event, totalReceived: 0 }));
 });
@@ -80,9 +105,17 @@ router.post("/", requireAuth, async (req, res) => {
 router.get("/:eventId", requireAuth, async (req, res) => {
   const { eventId } = req.params;
 
-  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId as string)).limit(1);
+  const [event] = await db
+    .select()
+    .from(eventsTable)
+    .where(eq(eventsTable.id, eventId as string))
+    .limit(1);
   if (!event) {
-    const [byCode] = await db.select().from(eventsTable).where(eq(eventsTable.shareCode, eventId as string)).limit(1);
+    const [byCode] = await db
+      .select()
+      .from(eventsTable)
+      .where(eq(eventsTable.shareCode, eventId as string))
+      .limit(1);
     if (!byCode) return res.status(404).json({ error: "Event not found" });
     return processEventDetail(byCode, req.user!.id, res);
   }
@@ -92,25 +125,37 @@ router.get("/:eventId", requireAuth, async (req, res) => {
 async function processEventDetail(event: any, currentUserId: string, res: any) {
   // Authorization check: Only host or verified guests/participants should see shagun details
   const isHost = event.hostId === currentUserId;
-  const guests = await db.select().from(eventGuestsTable)
+  const guests = await db
+    .select()
+    .from(eventGuestsTable)
     .where(and(eq(eventGuestsTable.eventId, event.id), eq(eventGuestsTable.userId, currentUserId)))
     .limit(1);
   const isGuest = guests.length > 0;
 
   if (!isHost && !isGuest) {
-     return res.status(403).json({ error: "Unauthorized: You must join this event to view details" });
+    return res
+      .status(403)
+      .json({ error: "Unauthorized: You must join this event to view details" });
   }
 
-  const txResult = await db.select({ total: sql<string>`COALESCE(SUM(CAST(${transactionsTable.amount} AS NUMERIC)), 0)` })
-    .from(transactionsTable).where(eq(transactionsTable.eventId, event.id));
+  const txResult = await db
+    .select({ total: sql<string>`COALESCE(SUM(CAST(${transactionsTable.amount} AS NUMERIC)), 0)` })
+    .from(transactionsTable)
+    .where(eq(transactionsTable.eventId, event.id));
   const totalReceived = parseFloat(txResult[0]?.total ?? "0");
 
-  const shagunList = await db.select().from(transactionsTable).where(eq(transactionsTable.eventId, event.id));
-  const gifts = await db.select().from(eventGiftsTable).where(eq(eventGiftsTable.eventId, event.id));
+  const shagunList = await db
+    .select()
+    .from(transactionsTable)
+    .where(eq(transactionsTable.eventId, event.id));
+  const gifts = await db
+    .select()
+    .from(eventGiftsTable)
+    .where(eq(eventGiftsTable.eventId, event.id));
 
   return res.json({
     event: formatEvent({ ...event, totalReceived }),
-    shagunList: shagunList.map(t => ({
+    shagunList: shagunList.map((t) => ({
       id: t.id,
       eventId: t.eventId,
       senderId: t.senderId,
@@ -122,7 +167,7 @@ async function processEventDetail(event: any, currentUserId: string, res: any) {
       revealAt: t.revealAt instanceof Date ? t.revealAt.toISOString() : t.revealAt,
       createdAt: t.createdAt instanceof Date ? t.createdAt.toISOString() : t.createdAt,
     })),
-    gifts: gifts.map(g => ({
+    gifts: gifts.map((g) => ({
       id: g.id,
       eventId: g.eventId,
       name: g.name,
@@ -142,23 +187,40 @@ router.post("/:eventId/join", requireAuth, async (req, res) => {
   const eventIdStr = eventId as string;
   const userIdStr = userId as string;
 
-  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventIdStr)).limit(1);
+  const [event] = await db
+    .select()
+    .from(eventsTable)
+    .where(eq(eventsTable.id, eventIdStr))
+    .limit(1);
   if (!event) return res.status(404).json({ error: "Event not found" });
 
   await db.transaction(async (tx) => {
-    const existingGuest = await tx.select().from(eventGuestsTable)
+    const existingGuest = await tx
+      .select()
+      .from(eventGuestsTable)
       .where(and(eq(eventGuestsTable.eventId, eventIdStr), eq(eventGuestsTable.userId, userIdStr)))
       .limit(1);
 
     if (existingGuest.length === 0) {
-      await tx.insert(eventGuestsTable).values({ id: generateId(), eventId: eventIdStr, userId: userIdStr });
-      await tx.update(eventsTable).set({ guestCount: sql`${eventsTable.guestCount} + 1` }).where(eq(eventsTable.id, eventIdStr));
+      await tx
+        .insert(eventGuestsTable)
+        .values({ id: generateId(), eventId: eventIdStr, userId: userIdStr });
+      await tx
+        .update(eventsTable)
+        .set({ guestCount: sql`${eventsTable.guestCount} + 1` })
+        .where(eq(eventsTable.id, eventIdStr));
     }
   });
 
-  const [updated] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventIdStr)).limit(1);
-  const txResult = await db.select({ total: sql<string>`COALESCE(SUM(CAST(${transactionsTable.amount} AS NUMERIC)), 0)` })
-    .from(transactionsTable).where(eq(transactionsTable.eventId, eventIdStr));
+  const [updated] = await db
+    .select()
+    .from(eventsTable)
+    .where(eq(eventsTable.id, eventIdStr))
+    .limit(1);
+  const txResult = await db
+    .select({ total: sql<string>`COALESCE(SUM(CAST(${transactionsTable.amount} AS NUMERIC)), 0)` })
+    .from(transactionsTable)
+    .where(eq(transactionsTable.eventId, eventIdStr));
   const totalReceived = parseFloat(txResult[0]?.total ?? "0");
 
   return res.json(formatEvent({ ...updated, totalReceived }));

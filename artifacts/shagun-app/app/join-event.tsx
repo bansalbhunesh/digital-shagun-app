@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
-  View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Platform, Alert,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  ActivityIndicator,
+  Platform,
+  Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,7 +27,7 @@ export default function JoinEventScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
-  
+
   useEffect(() => {
     if (qrCode) {
       setCode(qrCode.toUpperCase());
@@ -37,9 +43,11 @@ export default function JoinEventScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      const detail = await customFetch<{ event: { id: string } }>(`/api/events/${code.trim().toUpperCase()}`);
+      const detail = await customFetch<{ event: { id: string } }>(
+        `/api/events/${code.trim().toUpperCase()}`
+      );
       await joinEvent({
-        eventId: detail.event.id
+        eventId: detail.event.id,
       });
       queryClient.invalidateQueries({ queryKey: ["events"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -80,7 +88,7 @@ export default function JoinEventScreen() {
             placeholder="ABC123"
             placeholderTextColor={Colors.textLight}
             value={code}
-            onChangeText={t => setCode(t.toUpperCase())}
+            onChangeText={(t) => setCode(t.toUpperCase())}
             autoCapitalize="characters"
             autoCorrect={false}
             maxLength={8}
@@ -113,7 +121,9 @@ export default function JoinEventScreen() {
 
         <Pressable
           style={({ pressed }) => [styles.qrBtn, pressed && styles.btnPressed]}
-          onPress={() => Alert.alert("QR Scanner", "Scan the QR code from the event host to join automatically.")}
+          onPress={() =>
+            Alert.alert("QR Scanner", "Scan the QR code from the event host to join automatically.")
+          }
         >
           <Feather name="camera" size={20} color={Colors.primary} />
           <Text style={styles.qrBtnText}>Scan QR Code</Text>

@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { db, transactionsTable, eventsTable, relationshipLedgerTable, eventGuestsTable } from "@workspace/db";
+import {
+  db,
+  transactionsTable,
+  eventsTable,
+  relationshipLedgerTable,
+  eventGuestsTable,
+} from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { validateRequest } from "../middlewares/validate";
@@ -22,51 +28,75 @@ router.post("/", requireAuth, validateRequest(SendShagunBody), async (req, res) 
   const revealAt = new Date(Date.now() + REVEAL_DELAY_MINUTES * 60 * 1000);
 
   const tx = await db.transaction(async (tx) => {
-    const [transaction] = await tx.insert(transactionsTable).values({
-      id,
-      eventId: resolvedEventId,
+    const [transaction] = await tx
+      .insert(transactionsTable)
+      .values({
+        id,
+        eventId: resolvedEventId,
+        senderId,
+        senderName,
+        receiverId,
+        amount: amount.toString(),
+        message: message ?? null,
+        isRevealed: "false",
+        revealAt,
+      })
+      .returning();
+
+    // Update relationship ledger — pass receiverName so it shows in ledger
+    await updateLedgerInTransaction(
+      tx,
       senderId,
       senderName,
       receiverId,
-      amount: amount.toString(),
-      message: message ?? null,
-      isRevealed: "false",
-      revealAt,
-    }).returning();
-
-    // Update relationship ledger — pass receiverName so it shows in ledger
-    await updateLedgerInTransaction(tx, senderId, senderName, receiverId, "sent", amount, receiverName);
+      "sent",
+      amount,
+      receiverName
+    );
     await updateLedgerInTransaction(tx, receiverId, "", senderId, "received", amount, senderName);
 
     // For non-direct sends, update ledger with event name
     if (resolvedEventId !== "direct") {
-      const [event] = await tx.select().from(eventsTable).where(eq(eventsTable.id, resolvedEventId)).limit(1);
+      const [event] = await tx
+        .select()
+        .from(eventsTable)
+        .where(eq(eventsTable.id, resolvedEventId))
+        .limit(1);
       if (event) {
-        await tx.update(relationshipLedgerTable)
+        await tx
+          .update(relationshipLedgerTable)
           .set({ lastEventName: event.title, lastEventDate: event.date })
-          .where(and(
-            eq(relationshipLedgerTable.userId, senderId),
-            eq(relationshipLedgerTable.contactId, receiverId)
-          ));
+          .where(
+            and(
+              eq(relationshipLedgerTable.userId, senderId),
+              eq(relationshipLedgerTable.contactId, receiverId)
+            )
+          );
       }
     } else {
       // For direct sends, mark the occasion in ledger
-      await tx.update(relationshipLedgerTable)
+      await tx
+        .update(relationshipLedgerTable)
         .set({ lastEventName: "Direct Shagun" })
-        .where(and(
-          eq(relationshipLedgerTable.userId, senderId),
-          eq(relationshipLedgerTable.contactId, receiverId)
-        ));
+        .where(
+          and(
+            eq(relationshipLedgerTable.userId, senderId),
+            eq(relationshipLedgerTable.contactId, receiverId)
+          )
+        );
     }
 
-    logger.info({
-      type: "SHAGUN_TRANSACTION",
-      transactionId: transaction.id,
-      senderId: transaction.senderId,
-      receiverId: transaction.receiverId,
-      amount: transaction.amount,
-      eventId: transaction.eventId,
-    }, "Shagun transaction created");
+    logger.info(
+      {
+        type: "SHAGUN_TRANSACTION",
+        transactionId: transaction.id,
+        senderId: transaction.senderId,
+        receiverId: transaction.receiverId,
+        amount: transaction.amount,
+        eventId: transaction.eventId,
+      },
+      "Shagun transaction created"
+    );
 
     return transaction;
   });
@@ -85,12 +115,25 @@ router.post("/", requireAuth, validateRequest(SendShagunBody), async (req, res) 
   });
 });
 
-export async function updateLedgerInTransaction(tx: any, userId: string, userName: string, contactId: string, direction: "sent" | "received", amount: number, contactName?: string) {
-  const existing = await tx.select().from(relationshipLedgerTable)
-    .where(and(
-      eq(relationshipLedgerTable.userId, userId),
-      eq(relationshipLedgerTable.contactId, contactId)
-    )).limit(1);
+export async function updateLedgerInTransaction(
+  tx: any,
+  userId: string,
+  userName: string,
+  contactId: string,
+  direction: "sent" | "received",
+  amount: number,
+  contactName?: string
+) {
+  const existing = await tx
+    .select()
+    .from(relationshipLedgerTable)
+    .where(
+      and(
+        eq(relationshipLedgerTable.userId, userId),
+        eq(relationshipLedgerTable.contactId, contactId)
+      )
+    )
+    .limit(1);
 
   if (existing.length > 0) {
     const curr = existing[0];
@@ -104,7 +147,10 @@ export async function updateLedgerInTransaction(tx: any, userId: string, userNam
     if (contactName && (!curr.contactName || curr.contactName === "")) {
       updates.contactName = contactName;
     }
-    await tx.update(relationshipLedgerTable).set(updates).where(eq(relationshipLedgerTable.id, curr.id));
+    await tx
+      .update(relationshipLedgerTable)
+      .set(updates)
+      .where(eq(relationshipLedgerTable.id, curr.id));
   } else {
     const id = generateId();
     const resolvedName = contactName || (direction === "received" ? userName : "");
@@ -124,27 +170,43 @@ router.get("/:eventId", requireAuth, async (req, res) => {
   const currentUserId = req.user!.id;
 
   // Authorization check: Only host or guest should see event-specific shagun history
-  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId as string)).limit(1);
+  const [event] = await db
+    .select()
+    .from(eventsTable)
+    .where(eq(eventsTable.id, eventId as string))
+    .limit(1);
   if (!event) return res.status(404).json({ error: "Event not found" });
 
   const isHost = event.hostId === currentUserId;
   // Correct check for guest: eventGuestsTable
-  const guests = await db.select().from(eventGuestsTable)
-    .where(and(eq(eventGuestsTable.eventId, eventId as string), eq(eventGuestsTable.userId, currentUserId)))
+  const guests = await db
+    .select()
+    .from(eventGuestsTable)
+    .where(
+      and(
+        eq(eventGuestsTable.eventId, eventId as string),
+        eq(eventGuestsTable.userId, currentUserId)
+      )
+    )
     .limit(1);
   const isGuest = guests.length > 0;
 
   if (!isHost && !isGuest) {
-    return res.status(403).json({ error: "Unauthorized: You must be the host or a guest of this event to view shagun history" });
+    return res.status(403).json({
+      error: "Unauthorized: You must be the host or a guest of this event to view shagun history",
+    });
   }
 
-  const txs = await db.select().from(transactionsTable).where(eq(transactionsTable.eventId, eventId as string));
+  const txs = await db
+    .select()
+    .from(transactionsTable)
+    .where(eq(transactionsTable.eventId, eventId as string));
 
   const now = new Date();
   const result = [];
   for (const t of txs) {
     const shouldReveal = t.revealAt <= now;
-    // NOTE: Keep side effects for now as requested to fix primary issues first, 
+    // NOTE: Keep side effects for now as requested to fix primary issues first,
     // but moved to background job consideration in plan.
     result.push({
       id: t.id,
@@ -166,12 +228,19 @@ router.get("/:eventId", requireAuth, async (req, res) => {
 router.get("/reveal/:transactionId", requireAuth, async (req, res) => {
   const viewerId = req.user!.id;
   const { transactionId } = req.params;
-  const [t] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, transactionId as string)).limit(1);
-  
+  const [t] = await db
+    .select()
+    .from(transactionsTable)
+    .where(eq(transactionsTable.id, transactionId as string))
+    .limit(1);
+
   if (!t) return res.status(404).json({ error: "Transaction not found" });
 
   const isParticipant = t.senderId === viewerId || t.receiverId === viewerId;
-  if (!isParticipant) return res.status(403).json({ error: "Forbidden: You are not a participant in this transaction." });
+  if (!isParticipant)
+    return res
+      .status(403)
+      .json({ error: "Forbidden: You are not a participant in this transaction." });
 
   const now = new Date();
   const revealAt = t.revealAt instanceof Date ? t.revealAt : new Date(t.revealAt);

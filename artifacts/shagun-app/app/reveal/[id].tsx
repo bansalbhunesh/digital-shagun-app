@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  View, Text, StyleSheet, Pressable, Animated,
-  Easing, ActivityIndicator, Platform, Alert,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Animated,
+  Easing,
+  ActivityIndicator,
+  Platform,
+  Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -64,13 +71,16 @@ export default function RevealScreen() {
     let secs = initialSeconds;
     countdownRef.current = setInterval(async () => {
       secs -= 1;
-      if (!mountedRef.current) { clearInterval(countdownRef.current!); return; }
+      if (!mountedRef.current) {
+        clearInterval(countdownRef.current!);
+        return;
+      }
       if (secs <= 0) {
         if (countdownRef.current) clearInterval(countdownRef.current);
         const data = await customFetch<RevealStatus>(`/api/shagun/reveal/${id}`);
         if (mountedRef.current) setStatus(data);
       } else {
-        setStatus(prev => prev ? { ...prev, secondsRemaining: secs } : prev);
+        setStatus((prev) => (prev ? { ...prev, secondsRemaining: secs } : prev));
       }
     }, 1000);
   };
@@ -80,10 +90,30 @@ export default function RevealScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true, easing: Easing.linear }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true, easing: Easing.linear }),
-      Animated.timing(shakeAnim, { toValue: 6, duration: 50, useNativeDriver: true, easing: Easing.linear }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true, easing: Easing.linear }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+        easing: Easing.linear,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+        easing: Easing.linear,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 6,
+        duration: 50,
+        useNativeDriver: true,
+        easing: Easing.linear,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+        easing: Easing.linear,
+      }),
     ]).start(() => {
       Animated.parallel([
         Animated.spring(scaleAnim, { toValue: 1.15, useNativeDriver: true }),
@@ -121,14 +151,16 @@ export default function RevealScreen() {
             <View style={styles.waitingContainer}>
               <Text style={styles.waitingEmoji}>⏳</Text>
               <Text style={styles.waitingTitle}>Your Blessing is on its way</Text>
-              <Text style={styles.waitingText}>Someone sent you a blessing. The amount will be revealed in...</Text>
+              <Text style={styles.waitingText}>
+                Someone sent you a blessing. The amount will be revealed in...
+              </Text>
               <View style={styles.countdownBox}>
-                <Text style={styles.countdownNumber}>{formatTime(status?.secondsRemaining ?? 0)}</Text>
+                <Text style={styles.countdownNumber}>
+                  {formatTime(status?.secondsRemaining ?? 0)}
+                </Text>
                 <Text style={styles.countdownLabel}>minutes remaining</Text>
               </View>
-              <Text style={styles.guessText}>
-                "Someone sent you Shagun with love 🙏"
-              </Text>
+              <Text style={styles.guessText}>"Someone sent you Shagun with love 🙏"</Text>
             </View>
           </>
         ) : !opened ? (
@@ -139,10 +171,7 @@ export default function RevealScreen() {
                 { transform: [{ translateX: shakeAnim }, { scale: scaleAnim }] },
               ]}
             >
-              <Pressable
-                style={styles.envelope}
-                onPress={handleOpenEnvelope}
-              >
+              <Pressable style={styles.envelope} onPress={handleOpenEnvelope}>
                 <Text style={styles.envelopeLargeEmoji}>💌</Text>
               </Pressable>
             </Animated.View>

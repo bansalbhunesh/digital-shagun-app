@@ -1,24 +1,29 @@
 # 🎁 ShagunX — Social Gifting Platform for Indian Events
 
 ## 🚀 Overview
-ShagunX is a modern, event-driven social gifting platform designed to digitize and enhance the traditional Indian practice of *shagun* (monetary gifting). Instead of awkward envelope exchanges and unstructured gifting, ShagunX creates a seamless, transparent, and meaningful digital experience for both hosts and guests.
+
+ShagunX is a modern, event-driven social gifting platform designed to digitize and enhance the traditional Indian practice of _shagun_ (monetary gifting). Instead of awkward envelope exchanges and unstructured gifting, ShagunX creates a seamless, transparent, and meaningful digital experience for both hosts and guests.
 
 ---
 
 ## ❗ Problem
+
 In India, social gifting during events like weddings, baby showers, and housewarmings is deeply rooted in culture. However, the current system has several challenges:
+
 - ❌ **Lack of transparency** — gifts and contributions are not tracked
 - ❌ **Social awkwardness** — uncertainty around “how much to give”
 - ❌ **Inefficient gifting** — duplicate or irrelevant gifts
 - ❌ **No long-term memory** — relationships and past exchanges are forgotten
-- ❌ **Manual handling** — physical envelopes (*lifafa*) are inconvenient and error-prone
+- ❌ **Manual handling** — physical envelopes (_lifafa_) are inconvenient and error-prone
 
 Despite widespread digital payments (UPI), there is no solution that addresses the social and emotional layer of gifting.
 
 ---
 
 ## 💡 Solution
+
 ShagunX transforms traditional gifting into a structured, intelligent, and interactive experience:
+
 - 🎉 **Event-Based Gifting** — Create events and invite guests via QR or link.
 - 💸 **Instant Shagun Payments** — Fast, preset or custom contributions.
 - 🎁 **Curated Gift Registry** — Select meaningful gifts instead of random items.
@@ -30,7 +35,9 @@ ShagunX transforms traditional gifting into a structured, intelligent, and inter
 ---
 
 ## 🧠 Why This Matters
+
 ShagunX is not just a payment tool — it builds a social gifting infrastructure:
+
 - Reduces friction in cultural practices.
 - Brings structure to informal economies.
 - Strengthens social relationships through data.
@@ -39,6 +46,7 @@ ShagunX is not just a payment tool — it builds a social gifting infrastructure
 ---
 
 ## 🌍 Impact
+
 - 🇮🇳 Designed for Indian cultural use cases at scale.
 - 📈 Applicable to millions of events annually.
 - 🤝 Encourages financial transparency and social harmony.
@@ -50,14 +58,14 @@ ShagunX is not just a payment tool — it builds a social gifting infrastructure
 
 This project is built as a highly scalable **pnpm workspace monorepo**, ensuring a robust separation of concerns between the mobile client and backend services.
 
-| Layer | Technology |
-|-------|------------|
-| **Frontend** | Expo, React Native, Expo Router. |
-| **Backend** | Node.js, Express, TypeScript |
-| **Database** | PostgreSQL, Drizzle ORM |
-| **Authentication** | Supabase (OTP & Session Management) |
-| **Validation** | Zod (End-to-end type safety) |
-| **API Client** | Orval (Auto-generated Axios hooks from OpenAPI) |
+| Layer              | Technology                                      |
+| ------------------ | ----------------------------------------------- |
+| **Frontend**       | Expo, React Native, Expo Router.                |
+| **Backend**        | Node.js, Express, TypeScript                    |
+| **Database**       | PostgreSQL, Drizzle ORM                         |
+| **Authentication** | Supabase (OTP & Session Management)             |
+| **Validation**     | Zod (End-to-end type safety)                    |
+| **API Client**     | Orval (Auto-generated Axios hooks from OpenAPI) |
 
 ### Architecture Overview
 
@@ -68,7 +76,7 @@ graph TD
     API <--> Auth[(Supabase Auth)]
     API <--> DB[(PostgreSQL / Drizzle)]
     API <--> Payments[Razorpay Payments]
-    
+
     subgraph "Monorepo (pnpm)"
         API
         App
@@ -80,6 +88,7 @@ graph TD
 ```
 
 ### Workspace Breakdown
+
 - **[api-server](artifacts/api-server)**: The Express REST API backend.
 - **[shagun-app](artifacts/shagun-app)**: The Expo React Native frontend application.
 - **[lib/db](lib/db)**: Drizzle schema, DB connections, and migrations.
@@ -90,6 +99,7 @@ graph TD
 ---
 
 ## 📚 Documentation
+
 - 🚀 **[Deployment Guide](DEPLOYMENT.md)** — Steps for production setup.
 - 🔧 **[Troubleshooting Guide](TROUBLESHOOTING.md)** — Common issues and fixes.
 - 🤝 **[Contributing Guidelines](CONTRIBUTING.md)** — Code standards and PR process.
@@ -100,6 +110,7 @@ graph TD
 ---
 
 ## 🛠️ Monitoring & Observability
+
 - **Logging**: All logs are emitted as structured JSON via [Pino](LOGGING.md).
 - **Error Tracking**: Integrated with **Sentry** for production crash reporting and profiling.
 - **Health Checks**: API exposes a `/health` endpoint for uptime monitoring. (e.g., `GET /health`)
@@ -108,6 +119,7 @@ graph TD
 ---
 
 ## 🔐 Key Design Principles
+
 - **Simplicity-first UX** — usable by all age groups.
 - **Privacy-first** — no public exposure of financial data.
 - **AI-assisted, not AI-dependent** — suggestions act as guides, not enforcers.
@@ -118,6 +130,7 @@ graph TD
 ## 🚀 Getting Started Locally
 
 ### Prerequisites
+
 - Node.js 18+
 - pnpm (`npm install -g pnpm`)
 - A [Supabase](https://supabase.com) project for Authentication
@@ -145,6 +158,7 @@ Each workspace has its own `.env.example` file. Copy these to `.env` and fill in
 ### 3. Database Migration
 
 Push the Drizzle schemas to your local or remote PostgreSQL database:
+
 ```bash
 pnpm --filter @workspace/db run push
 ```
@@ -170,23 +184,30 @@ Scan the QR code printed in the terminal with **Expo Go** on your Android/iOS de
 We use EAS (Expo Application Services) to easily compile the application into a standalone `.apk` or `.ipa`.
 
 ### Step 1 — Setup EAS
+
 1. Create a free account at [expo.dev](https://expo.dev).
 2. Install the CLI and log in:
+
 ```bash
 npm install -g eas-cli
 eas login
 ```
 
 ### Step 2 — Build for Android
+
 This is the easiest way to test the production app on your own device.
+
 ```bash
 cd artifacts/shagun-app
 eas build --platform android --profile preview
 ```
+
 This triggers a cloud build. After ~10 minutes, you will receive a link to download the `.apk` file directly to your phone.
 
 ### Step 3 — Build for iOS
-*(Requires a $99/year Apple Developer account)*
+
+_(Requires a $99/year Apple Developer account)_
+
 ```bash
 cd artifacts/shagun-app
 eas build --platform ios --profile preview
@@ -195,6 +216,7 @@ eas build --platform ios --profile preview
 ---
 
 ## 🚀 Future Scope
+
 - **Advanced AI personalization** for gifting amounts.
 - **Social graph insights** mapped to ledger data.
 - **Regional and cultural customization** (different themes per state/festival).
@@ -204,14 +226,17 @@ eas build --platform ios --profile preview
 ---
 
 ## 🏁 Vision
+
 To become India’s default platform for social gifting — transforming how people celebrate, contribute, and build lifelong relationships.
 
 ---
 
 ## 🤝 Contributing
+
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for code standards and the PR process.
 
 ---
 
 ## 📬 Contact
+
 For collaborations or queries, feel free to reach out.

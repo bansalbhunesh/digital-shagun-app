@@ -5,12 +5,15 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
 
-  logger.error({
-    err,
-    method: req.method,
-    url: req.url,
-    userId: req.user?.id,
-  }, "Request failed");
+  logger.error(
+    {
+      err,
+      method: req.method,
+      url: req.url,
+      userId: req.user?.id,
+    },
+    "Request failed"
+  );
 
   res.status(statusCode).json({
     error: message,

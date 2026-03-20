@@ -22,11 +22,13 @@ import { Platform } from "react-native";
 const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
   : Platform.OS === "android"
-  ? "http://10.0.2.2:3000"
-  : "http://localhost:3000";
+    ? "http://10.0.2.2:3000"
+    : "http://localhost:3000";
 
 setApiConfig(API_BASE, async () => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   return session?.access_token || null;
 });
 

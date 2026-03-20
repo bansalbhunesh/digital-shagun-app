@@ -42,20 +42,23 @@ class PaymentService {
     }
 
     const { amount, receiverUpiId, receiverName } = details;
-    
+
     // The strict UPI deep-link format
     const upiUrl = `upi://pay?pa=${receiverUpiId}&pn=${encodeURIComponent(receiverName)}&am=${amount}&cu=INR`;
 
     try {
       const canOpen = await Linking.canOpenURL(upiUrl);
-      
+
       if (!canOpen) {
-        Alert.alert("No UPI App", "We couldn't find a UPI app like GPay or PhonePe on your device.");
+        Alert.alert(
+          "No UPI App",
+          "We couldn't find a UPI app like GPay or PhonePe on your device."
+        );
         return false;
       }
 
       await Linking.openURL(upiUrl);
-      
+
       // Since `upi://` is a deep link and doesn't return automatic webhooks for Peer-to-Peer,
       // we must rely on the user visually confirming if the transaction was completed.
       // (When Option 2 is implemented, this manual alert will be removed).
@@ -69,7 +72,6 @@ class PaymentService {
           ]
         );
       });
-      
     } catch (e) {
       console.error(e);
       Alert.alert("Error", "Could not initiate payment.");

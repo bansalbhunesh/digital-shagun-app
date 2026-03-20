@@ -1,6 +1,11 @@
 import React from "react";
 import {
-  View, Text, StyleSheet, Pressable, Share, Platform,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Share,
+  Platform,
   ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -16,10 +21,10 @@ import type { Event } from "@/context/AppContext";
 export default function EventQRScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  
+
   const { data: eventData, isLoading } = useQuery({
     queryKey: ["eventDetail", id],
-    queryFn: () => customFetch<{event: Event}>(`/api/events/${id}`),
+    queryFn: () => customFetch<{ event: Event }>(`/api/events/${id}`),
     enabled: !!id,
   });
   const event = eventData?.event;

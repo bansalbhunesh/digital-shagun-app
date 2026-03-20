@@ -51,27 +51,21 @@ export default function TabLayout() {
         name="events"
         options={{
           title: "Events",
-          tabBarIcon: ({ color }) => (
-            <Feather name="calendar" size={22} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <Feather name="calendar" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="ledger"
         options={{
           title: "Blessings",
-          tabBarIcon: ({ color }) => (
-            <Feather name="heart" size={22} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <Feather name="heart" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Me",
-          tabBarIcon: ({ color }) => (
-            <Feather name="user" size={22} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <Feather name="user" size={22} color={color} />,
         }}
       />
     </Tabs>

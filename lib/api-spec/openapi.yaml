@@ -469,7 +469,8 @@ components:
           type: string
         isFullyFunded:
           type: boolean
-      required: [id, eventId, name, category, targetAmount, currentAmount, imageEmoji, isFullyFunded]
+      required:
+        [id, eventId, name, category, targetAmount, currentAmount, imageEmoji, isFullyFunded]
 
     AddGiftRequest:
       type: object
@@ -531,7 +532,16 @@ components:
           type: number
         transactionCount:
           type: number
-      required: [contactId, contactName, totalGiven, totalReceived, balance, suggestedAmount, transactionCount]
+      required:
+        [
+          contactId,
+          contactName,
+          totalGiven,
+          totalReceived,
+          balance,
+          suggestedAmount,
+          transactionCount,
+        ]
 
     LedgerDetail:
       type: object
@@ -552,7 +562,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/LedgerTransaction"
-      required: [contactId, contactName, totalGiven, totalReceived, balance, suggestedAmount, transactions]
+      required:
+        [contactId, contactName, totalGiven, totalReceived, balance, suggestedAmount, transactions]
 
     LedgerTransaction:
       type: object

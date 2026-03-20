@@ -6,7 +6,7 @@ describe("Validators", () => {
     const data = {
       eventId: "event-123",
       amount: 501,
-      message: "Happy Wedding!"
+      message: "Happy Wedding!",
     };
     const result = SendShagunBody.safeParse(data);
     expect(result.success).toBe(true);
@@ -16,7 +16,7 @@ describe("Validators", () => {
     const data = {
       eventId: "event-123",
       amount: -100,
-      message: "Test"
+      message: "Test",
     };
     const result = SendShagunBody.safeParse(data);
     expect(result.success).toBe(false);
@@ -24,7 +24,7 @@ describe("Validators", () => {
 
   it("should fail validation for missing fields", () => {
     const data = {
-      amount: 501
+      amount: 501,
     };
     const result = SendShagunBody.safeParse(data);
     expect(result.success).toBe(false);

@@ -70,11 +70,11 @@ function isJsonMediaType(mediaType: string | null): boolean {
 function isTextMediaType(mediaType: string | null): boolean {
   return Boolean(
     mediaType &&
-      (mediaType.startsWith("text/") ||
-        mediaType === "application/xml" ||
-        mediaType === "text/xml" ||
-        mediaType.endsWith("+xml") ||
-        mediaType === "application/x-www-form-urlencoded"),
+    (mediaType.startsWith("text/") ||
+      mediaType === "application/xml" ||
+      mediaType === "text/xml" ||
+      mediaType.endsWith("+xml") ||
+      mediaType === "application/x-www-form-urlencoded")
   );
 }
 
@@ -144,11 +144,7 @@ export class ApiError<T = unknown> extends Error {
   readonly method: string;
   readonly url: string;
 
-  constructor(
-    response: Response,
-    data: T | null,
-    requestInfo: { method: string; url: string },
-  ) {
+  constructor(response: Response, data: T | null, requestInfo: { method: string; url: string }) {
     super(buildErrorMessage(response, data));
     Object.setPrototypeOf(this, new.target.prototype);
 
@@ -177,11 +173,11 @@ export class ResponseParseError extends Error {
     response: Response,
     rawBody: string,
     cause: unknown,
-    requestInfo: { method: string; url: string },
+    requestInfo: { method: string; url: string }
   ) {
     super(
       `Failed to parse response from ${requestInfo.method} ${response.url || requestInfo.url} ` +
-        `(${response.status} ${response.statusText}) as JSON`,
+        `(${response.status} ${response.statusText}) as JSON`
     );
     Object.setPrototypeOf(this, new.target.prototype);
 
@@ -198,7 +194,7 @@ export class ResponseParseError extends Error {
 
 async function parseJsonBody(
   response: Response,
-  requestInfo: { method: string; url: string },
+  requestInfo: { method: string; url: string }
 ): Promise<unknown> {
   const raw = await response.text();
   const normalized = stripBom(raw);
@@ -256,14 +252,13 @@ function inferResponseType(response: Response): "json" | "text" | "blob" {
 async function parseSuccessBody(
   response: Response,
   responseType: "json" | "text" | "blob" | "auto",
-  requestInfo: { method: string; url: string },
+  requestInfo: { method: string; url: string }
 ): Promise<unknown> {
   if (hasNoBody(response, requestInfo.method)) {
     return null;
   }
 
-  const effectiveType =
-    responseType === "auto" ? inferResponseType(response) : responseType;
+  const effectiveType = responseType === "auto" ? inferResponseType(response) : responseType;
 
   switch (effectiveType) {
     case "json":
@@ -278,7 +273,7 @@ async function parseSuccessBody(
       if (typeof response.blob !== "function") {
         throw new TypeError(
           "Blob responses are not supported in this runtime. " +
-            "Use responseType \"json\" or \"text\" instead.",
+            'Use responseType "json" or "text" instead.'
         );
       }
       return response.blob();
@@ -287,7 +282,7 @@ async function parseSuccessBody(
 
 export async function customFetch<T = unknown>(
   input: RequestInfo | URL,
-  options: CustomFetchOptions = {},
+  options: CustomFetchOptions = {}
 ): Promise<T> {
   const { responseType = "auto", headers: headersInit, ...init } = options;
 
@@ -310,11 +305,7 @@ export async function customFetch<T = unknown>(
     }
   }
 
-  if (
-    typeof init.body === "string" &&
-    !headers.has("content-type") &&
-    looksLikeJson(init.body)
-  ) {
+  if (typeof init.body === "string" && !headers.has("content-type") && looksLikeJson(init.body)) {
     headers.set("content-type", "application/json");
   }
 
