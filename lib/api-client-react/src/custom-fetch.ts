@@ -34,10 +34,7 @@ function isUrl(input: RequestInfo | URL): input is URL {
 }
 
 function resolveUrl(input: RequestInfo | URL): string {
-  let urlStr = "";
-  if (typeof input === "string") urlStr = input;
-  else if (isUrl(input)) urlStr = input.toString();
-  else urlStr = input.url;
+  const urlStr = typeof input === "string" ? input : isUrl(input) ? input.toString() : input.url;
 
   if (urlStr.startsWith("/") && customBaseUrl) {
     return `${customBaseUrl}${urlStr}`;

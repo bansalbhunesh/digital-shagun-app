@@ -36,7 +36,7 @@ vi.mock("@workspace/db", () => ({
 
 describe("Shagun Routes", () => {
   it("should return 400 for invalid send-shagun body", async () => {
-    const res = await request(app).post("/api/shagun/send").send({ amount: -100 }); // Missing eventId
+    const res = await request(app).post("/api/shagun").send({ amount: -100 }); // Missing eventId
     expect(res.status).toBe(400);
   });
 

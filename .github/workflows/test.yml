@@ -34,3 +34,5 @@ jobs:
           RAZORPAY_KEY_ID: rzp_test_id
           RAZORPAY_KEY_SECRET: rzp_test_secret
           JWT_SECRET: test_secret
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_ANON_KEY: dummy-anon-key
