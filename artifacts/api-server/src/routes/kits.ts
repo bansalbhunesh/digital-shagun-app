@@ -1,5 +1,5 @@
-import { Router } from "express";
-import { db, eventGiftsTable } from "@workspace/db";
+import { Router, type Request, type Response } from "express";
+import { db, eventGiftsTable, eventsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
@@ -90,7 +90,7 @@ export const PREDEFINED_KITS = [
   },
 ];
 
-router.get("/", (req, res) => {
+router.get("/", (req: Request, res: Response) => {
   const { eventType } = req.query as { eventType?: string };
   let kits = PREDEFINED_KITS;
   if (eventType) {
@@ -99,9 +99,14 @@ router.get("/", (req, res) => {
   return res.json(kits);
 });
 
-router.post("/:eventId", requireAuth, async (req, res) => {
+router.post("/:eventId", requireAuth, async (req: Request, res: Response) => {
   const eventId = req.params.eventId as string;
   const { kitId } = req.body;
+  const userId = req.user!.id;
+
+  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId)).limit(1);
+  if (!event) return res.status(404).json({ error: "Event not found" });
+  if (event.hostId !== userId) return res.status(403).json({ error: "Forbidden: Only the event host can add kits." });
 
   const kit = PREDEFINED_KITS.find(k => k.id === kitId);
   if (!kit) return res.status(404).json({ error: "Kit not found" });

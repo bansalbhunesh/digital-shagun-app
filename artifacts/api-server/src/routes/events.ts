@@ -117,25 +117,30 @@ async function processEventDetail(event: any, res: any) {
   });
 }
 
-router.post("/:eventId/join", async (req, res) => {
+router.post("/:eventId/join", requireAuth, async (req, res) => {
   const { eventId } = req.params;
-  const { userId } = req.body;
+  const userId = req.user!.id;
 
-  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId)).limit(1);
+  const eventIdStr = eventId as string;
+  const userIdStr = userId as string;
+
+  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventIdStr)).limit(1);
   if (!event) return res.status(404).json({ error: "Event not found" });
 
-  const existingGuest = await db.select().from(eventGuestsTable)
-    .where(and(eq(eventGuestsTable.eventId, eventId), eq(eventGuestsTable.userId, userId)))
-    .limit(1);
+  await db.transaction(async (tx) => {
+    const existingGuest = await tx.select().from(eventGuestsTable)
+      .where(and(eq(eventGuestsTable.eventId, eventIdStr), eq(eventGuestsTable.userId, userIdStr)))
+      .limit(1);
 
-  if (existingGuest.length === 0) {
-    await db.insert(eventGuestsTable).values({ id: generateId(), eventId, userId });
-    await db.update(eventsTable).set({ guestCount: (event.guestCount ?? 0) + 1 }).where(eq(eventsTable.id, eventId));
-  }
+    if (existingGuest.length === 0) {
+      await tx.insert(eventGuestsTable).values({ id: generateId(), eventId: eventIdStr, userId: userIdStr });
+      await tx.update(eventsTable).set({ guestCount: sql`${eventsTable.guestCount} + 1` }).where(eq(eventsTable.id, eventIdStr));
+    }
+  });
 
-  const [updated] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId)).limit(1);
+  const [updated] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventIdStr)).limit(1);
   const txResult = await db.select({ total: sql<string>`COALESCE(SUM(CAST(${transactionsTable.amount} AS NUMERIC)), 0)` })
-    .from(transactionsTable).where(eq(transactionsTable.eventId, eventId));
+    .from(transactionsTable).where(eq(transactionsTable.eventId, eventIdStr));
   const totalReceived = parseFloat(txResult[0]?.total ?? "0");
 
   return res.json(formatEvent({ ...updated, totalReceived }));

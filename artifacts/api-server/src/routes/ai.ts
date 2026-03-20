@@ -100,24 +100,25 @@ function suggestAmountForEvent(eventType: string, relationshipHistory: { totalGi
 }
 
 router.get("/suggest", requireAuth, async (req, res) => {
-  const { eventType, senderId, receiverId } = req.query as {
-    eventType: string; senderId: string; receiverId: string;
+  const viewerId = req.user!.id;
+  const { eventType, receiverId } = req.query as {
+    eventType: string; receiverId: string;
   };
 
-  let history = null;
-  if (senderId && receiverId) {
-    const [ledger] = await db.select().from(relationshipLedgerTable)
-      .where(and(
-        eq(relationshipLedgerTable.userId, senderId),
-        eq(relationshipLedgerTable.contactId, receiverId)
-      )).limit(1);
+  if (!receiverId) return res.status(400).json({ error: "receiverId required" });
 
-    if (ledger) {
-      history = {
-        totalGiven: parseFloat(ledger.totalGiven ?? "0"),
-        totalReceived: parseFloat(ledger.totalReceived ?? "0"),
-      };
-    }
+  let history = null;
+  const [ledger] = await db.select().from(relationshipLedgerTable)
+    .where(and(
+      eq(relationshipLedgerTable.userId, viewerId),
+      eq(relationshipLedgerTable.contactId, receiverId)
+    )).limit(1);
+
+  if (ledger) {
+    history = {
+      totalGiven: parseFloat(ledger.totalGiven ?? "0"),
+      totalReceived: parseFloat(ledger.totalReceived ?? "0"),
+    };
   }
 
   const amountSuggestion = suggestAmountForEvent(eventType, history);

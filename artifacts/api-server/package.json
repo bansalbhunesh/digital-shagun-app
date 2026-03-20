@@ -9,23 +9,29 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@workspace/db": "workspace:*",
+    "@supabase/supabase-js": "^2.48.0",
     "@workspace/api-zod": "workspace:*",
-    "drizzle-orm": "catalog:",
-    "express": "^5",
+    "@workspace/db": "workspace:*",
     "cookie-parser": "^1.4.7",
     "cors": "^2",
+    "drizzle-orm": "catalog:",
+    "express": "^5",
+    "express-rate-limit": "^8.3.1",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "zod": "catalog:",
-    "@supabase/supabase-js": "^2.48.0"
+    "razorpay": "^2.9.6",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
-    "@types/express": "^5.0.6",
-    "@types/cors": "^2.8.19",
     "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "catalog:",
+    "@types/supertest": "^7.2.0",
     "esbuild": "^0.27.3",
-    "tsx": "catalog:"
+    "supertest": "^7.2.2",
+    "tsx": "catalog:",
+    "vitest": "^4.1.0"
   }
 }

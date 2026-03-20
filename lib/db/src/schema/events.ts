@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -27,7 +27,7 @@ export const eventGuestsTable = pgTable("event_guests", {
 }, (table) => [
   index("event_guests_event_id_idx").on(table.eventId),
   index("event_guests_user_id_idx").on(table.userId),
-  index("event_guests_composite_idx").on(table.eventId, table.userId),
+  uniqueIndex("event_guests_event_user_uidx").on(table.eventId, table.userId),
 ]);
 
 export const insertEventSchema = createInsertSchema(eventsTable);

@@ -58,16 +58,23 @@ router.get("/:userId/:contactId", requireAuth, async (req, res) => {
       and(eq(transactionsTable.senderId, contactId), eq(transactionsTable.receiverId, userId))
     ));
 
+  const now = new Date();
+
   const transactions = await Promise.all(txs.map(async t => {
+    const isViewerReceiver = t.receiverId === userId;
+    const revealAt = t.revealAt instanceof Date ? t.revealAt : new Date(t.revealAt);
+    const isRevealed = t.isRevealed === "true" || now >= revealAt;
+    const canSee = !isViewerReceiver || isRevealed;
+
     const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, t.eventId)).limit(1);
     return {
       id: t.id,
       direction: t.senderId === userId ? "given" as const : "received" as const,
-      amount: parseFloat(t.amount),
+      amount: canSee ? parseFloat(t.amount) : 0,
       eventName: event?.title ?? "Unknown Event",
       eventType: event?.type ?? "wedding",
       date: t.createdAt instanceof Date ? t.createdAt.toISOString() : t.createdAt,
-      message: t.message ?? null,
+      message: canSee ? (t.message ?? null) : undefined,
     };
   }));
 
