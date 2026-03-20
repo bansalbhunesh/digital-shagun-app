@@ -17,7 +17,6 @@ export * from "./eventGift";
 export * from "./eventType";
 export * from "./giftContribution";
 export * from "./healthStatus";
-export * from "./joinEventBody";
 export * from "./ledgerDetail";
 export * from "./ledgerEntry";
 export * from "./ledgerTransaction";

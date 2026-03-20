@@ -16,8 +16,8 @@ export interface Event {
   date: string;
   venue?: string;
   description?: string;
-  shareCode: string;
-  totalReceived: number;
-  guestCount: number;
+  shareCode?: string;
+  totalReceived?: number;
+  guestCount?: number;
   createdAt: string;
 }

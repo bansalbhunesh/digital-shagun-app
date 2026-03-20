@@ -41,9 +41,9 @@ export interface Event {
   date: string;
   venue?: string;
   description?: string;
-  shareCode: string;
-  totalReceived: number;
-  guestCount: number;
+  shareCode?: string;
+  totalReceived?: number;
+  guestCount?: number;
   createdAt: string;
 }
 
@@ -55,8 +55,8 @@ export interface Transaction {
   receiverId: string;
   amount: number;
   message?: string;
-  isRevealed: boolean;
-  revealAt: string;
+  isRevealed?: boolean;
+  revealAt?: string;
   createdAt: string;
 }
 
@@ -91,8 +91,6 @@ export const CreateEventRequestType = {
 export interface CreateEventRequest {
   title: string;
   type: CreateEventRequestType;
-  hostId: string;
-  hostName: string;
   date: string;
   venue?: string;
   description?: string;
@@ -100,8 +98,6 @@ export interface CreateEventRequest {
 
 export interface SendShagunRequest {
   eventId: string;
-  senderId: string;
-  senderName: string;
   receiverId: string;
   amount: number;
   message?: string;
@@ -134,8 +130,6 @@ export interface GiftContribution {
 
 export interface ContributeGiftRequest {
   giftId: string;
-  contributorId: string;
-  contributorName: string;
   amount: number;
 }
 
@@ -181,8 +175,4 @@ export interface LedgerDetail {
 
 export type ListEventsParams = {
   hostId?: string;
-};
-
-export type JoinEventBody = {
-  userId: string;
 };

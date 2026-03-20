@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Platform, ScrollView, Alert,
+  ActivityIndicator, Platform, Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -55,7 +55,6 @@ export default function SendDirectScreen() {
       try {
         const query = new URLSearchParams({
           eventType: occasion,
-          senderId: currentUser.id,
           ...(params.receiverId ? { receiverId: params.receiverId } : {}),
         });
         const s: any = await customFetch(`/api/ai/suggest?${query}`);
@@ -109,8 +108,6 @@ export default function SendDirectScreen() {
       const tx = await sendShagunMutation({
         data: {
           eventId: "direct",
-          senderId: currentUser.id,
-          senderName: currentUser.name,
           receiverId,
           amount: finalAmount,
           message: message.trim() || undefined,

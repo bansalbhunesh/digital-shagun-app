@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, transactionsTable, eventsTable, relationshipLedgerTable, usersTable } from "@workspace/db";
+import { db, transactionsTable, eventsTable, relationshipLedgerTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { validateRequest } from "../middlewares/validate";
@@ -11,14 +11,9 @@ import { generateId } from "../utils/id";
 const REVEAL_DELAY_MINUTES = 10;
 
 router.post("/", requireAuth, validateRequest(SendShagunBody), async (req, res) => {
-  const { eventId, senderId, receiverId, receiverName, amount, message } = req.body;
-  
-  if (req.user?.id !== senderId) {
-    return res.status(403).json({ error: "Forbidden: You cannot send shagun on behalf of another user." });
-  }
-
-  const [sender] = await db.select().from(usersTable).where(eq(usersTable.id, senderId)).limit(1);
-  const senderName = sender?.name ?? "Anonymous";
+  const { eventId, receiverId, receiverName, amount, message } = req.body;
+  const senderId = req.user!.id;
+  const senderName = req.user!.name;
 
   const resolvedEventId = eventId || "direct";
 
@@ -114,9 +109,9 @@ export async function updateLedgerInTransaction(tx: any, userId: string, userNam
   }
 }
 
-router.get("/:eventId", async (req, res) => {
+router.get("/:eventId", requireAuth, async (req, res) => {
   const { eventId } = req.params;
-  const txs = await db.select().from(transactionsTable).where(eq(transactionsTable.eventId, eventId));
+  const txs = await db.select().from(transactionsTable).where(eq(transactionsTable.eventId, eventId as string));
 
   const now = new Date();
   const result = [];

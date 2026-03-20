@@ -26,7 +26,6 @@ import type {
   EventGift,
   GiftContribution,
   HealthStatus,
-  JoinEventBody,
   LedgerDetail,
   LedgerEntry,
   ListEventsParams,
@@ -527,14 +526,11 @@ export const getJoinEventUrl = (eventId: string) => {
 
 export const joinEvent = async (
   eventId: string,
-  joinEventBody: JoinEventBody,
   options?: RequestInit,
 ): Promise<Event> => {
   return customFetch<Event>(getJoinEventUrl(eventId), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(joinEventBody),
   });
 };
 
@@ -545,14 +541,14 @@ export const getJoinEventMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof joinEvent>>,
     TError,
-    { eventId: string; data: BodyType<JoinEventBody> },
+    { eventId: string },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof joinEvent>>,
   TError,
-  { eventId: string; data: BodyType<JoinEventBody> },
+  { eventId: string },
   TContext
 > => {
   const mutationKey = ["joinEvent"];
@@ -566,11 +562,11 @@ export const getJoinEventMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof joinEvent>>,
-    { eventId: string; data: BodyType<JoinEventBody> }
+    { eventId: string }
   > = (props) => {
-    const { eventId, data } = props ?? {};
+    const { eventId } = props ?? {};
 
-    return joinEvent(eventId, data, requestOptions);
+    return joinEvent(eventId, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -579,7 +575,7 @@ export const getJoinEventMutationOptions = <
 export type JoinEventMutationResult = NonNullable<
   Awaited<ReturnType<typeof joinEvent>>
 >;
-export type JoinEventMutationBody = BodyType<JoinEventBody>;
+
 export type JoinEventMutationError = ErrorType<unknown>;
 
 export const useJoinEvent = <
@@ -589,14 +585,14 @@ export const useJoinEvent = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof joinEvent>>,
     TError,
-    { eventId: string; data: BodyType<JoinEventBody> },
+    { eventId: string },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof joinEvent>>,
   TError,
-  { eventId: string; data: BodyType<JoinEventBody> },
+  { eventId: string },
   TContext
 > => {
   return useMutation(getJoinEventMutationOptions(options));

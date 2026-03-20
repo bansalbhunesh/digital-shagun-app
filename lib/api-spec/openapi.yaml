@@ -134,16 +134,6 @@ paths:
           required: true
           schema:
             type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userId:
-                  type: string
-              required: [userId]
       responses:
         "200":
           description: Joined event
@@ -372,7 +362,7 @@ components:
           type: number
         createdAt:
           type: string
-      required: [id, title, type, hostId, hostName, date, shareCode, totalReceived, guestCount, createdAt]
+      required: [id, title, type, hostId, hostName, date, createdAt]
 
     EventDetail:
       type: object
@@ -397,17 +387,13 @@ components:
         type:
           type: string
           enum: [wedding, baby_ceremony, housewarming, birthday, festival]
-        hostId:
-          type: string
-        hostName:
-          type: string
         date:
           type: string
         venue:
           type: string
         description:
           type: string
-      required: [title, type, hostId, hostName, date]
+      required: [title, type, date]
 
     Transaction:
       type: object
@@ -432,16 +418,12 @@ components:
           type: string
         createdAt:
           type: string
-      required: [id, eventId, senderId, senderName, receiverId, amount, isRevealed, revealAt, createdAt]
+      required: [id, eventId, senderId, senderName, receiverId, amount, createdAt]
 
     SendShagunRequest:
       type: object
       properties:
         eventId:
-          type: string
-        senderId:
-          type: string
-        senderName:
           type: string
         receiverId:
           type: string
@@ -449,7 +431,7 @@ components:
           type: number
         message:
           type: string
-      required: [eventId, senderId, senderName, receiverId, amount]
+      required: [eventId, receiverId, amount]
 
     RevealStatus:
       type: object
@@ -524,13 +506,9 @@ components:
       properties:
         giftId:
           type: string
-        contributorId:
-          type: string
-        contributorName:
-          type: string
         amount:
           type: number
-      required: [giftId, contributorId, contributorName, amount]
+      required: [giftId, amount]
 
     LedgerEntry:
       type: object

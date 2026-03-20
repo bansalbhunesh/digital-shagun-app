@@ -8,7 +8,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useCurrentUser } from "@/context/AppContext";
 import { useCreateEvent } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -21,7 +20,6 @@ const EVENT_TYPES = [
 ] as const;
 
 export default function CreateEventScreen() {
-  const currentUser = useCurrentUser();
   const queryClient = useQueryClient();
   const { mutateAsync: createEvent } = useCreateEvent();
   const insets = useSafeAreaInsets();
@@ -47,16 +45,14 @@ export default function CreateEventScreen() {
         data: {
           title: title.trim(),
           type: selectedType as any,
-          hostId: currentUser.id,
-          hostName: currentUser.name,
           date: date.trim(),
           venue: venue.trim() || undefined,
           description: description.trim() || undefined,
         }
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setSuccess({ id: event.id, shareCode: event.shareCode });
+      setSuccess({ id: event.id!, shareCode: event.shareCode! });
     } catch (err: any) {
       const msg = err?.response?.data?.message || "Failed to create event. Please try again.";
       setError(msg);

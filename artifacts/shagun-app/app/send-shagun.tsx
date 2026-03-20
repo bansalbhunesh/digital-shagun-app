@@ -42,7 +42,6 @@ export default function SendShagunScreen() {
       try {
         const query = new URLSearchParams({
           eventType: eventType ?? "wedding",
-          senderId: currentUser.id,
           ...(receiverId ? { receiverId } : {}),
         });
         const suggestion = await customFetch(`/api/ai/suggest?${query}`);
@@ -80,8 +79,6 @@ export default function SendShagunScreen() {
       const tx = await sendShagunMutation({
         data: {
           eventId: eventId!,
-          senderId: currentUser.id,
-          senderName: currentUser.name,
           receiverId: receiverId!,
           amount: finalAmount,
           message: message.trim() || undefined,

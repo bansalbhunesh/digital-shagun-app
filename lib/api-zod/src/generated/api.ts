@@ -61,9 +61,9 @@ export const ListEventsResponseItem = zod.object({
   date: zod.string(),
   venue: zod.string().optional(),
   description: zod.string().optional(),
-  shareCode: zod.string(),
-  totalReceived: zod.number(),
-  guestCount: zod.number(),
+  shareCode: zod.string().optional(),
+  totalReceived: zod.number().optional(),
+  guestCount: zod.number().optional(),
   createdAt: zod.string(),
 });
 export const ListEventsResponse = zod.array(ListEventsResponseItem);
@@ -77,8 +77,6 @@ export const CreateEventBody = zod.object({
     "birthday",
     "festival",
   ]),
-  hostId: zod.string(),
-  hostName: zod.string(),
   date: zod.string(),
   venue: zod.string().optional(),
   description: zod.string().optional(),
@@ -104,9 +102,9 @@ export const GetEventResponse = zod.object({
     date: zod.string(),
     venue: zod.string().optional(),
     description: zod.string().optional(),
-    shareCode: zod.string(),
-    totalReceived: zod.number(),
-    guestCount: zod.number(),
+    shareCode: zod.string().optional(),
+    totalReceived: zod.number().optional(),
+    guestCount: zod.number().optional(),
     createdAt: zod.string(),
   }),
   shagunList: zod.array(
@@ -118,8 +116,8 @@ export const GetEventResponse = zod.object({
       receiverId: zod.string(),
       amount: zod.number(),
       message: zod.string().optional(),
-      isRevealed: zod.boolean(),
-      revealAt: zod.string(),
+      isRevealed: zod.boolean().optional(),
+      revealAt: zod.string().optional(),
       createdAt: zod.string(),
     }),
   ),
@@ -141,10 +139,6 @@ export const JoinEventParams = zod.object({
   eventId: zod.coerce.string(),
 });
 
-export const JoinEventBody = zod.object({
-  userId: zod.string(),
-});
-
 export const JoinEventResponse = zod.object({
   id: zod.string(),
   title: zod.string(),
@@ -160,16 +154,14 @@ export const JoinEventResponse = zod.object({
   date: zod.string(),
   venue: zod.string().optional(),
   description: zod.string().optional(),
-  shareCode: zod.string(),
-  totalReceived: zod.number(),
-  guestCount: zod.number(),
+  shareCode: zod.string().optional(),
+  totalReceived: zod.number().optional(),
+  guestCount: zod.number().optional(),
   createdAt: zod.string(),
 });
 
 export const SendShagunBody = zod.object({
   eventId: zod.string(),
-  senderId: zod.string(),
-  senderName: zod.string(),
   receiverId: zod.string(),
   amount: zod.number(),
   message: zod.string().optional(),
@@ -187,8 +179,8 @@ export const GetShagunByEventResponseItem = zod.object({
   receiverId: zod.string(),
   amount: zod.number(),
   message: zod.string().optional(),
-  isRevealed: zod.boolean(),
-  revealAt: zod.string(),
+  isRevealed: zod.boolean().optional(),
+  revealAt: zod.string().optional(),
   createdAt: zod.string(),
 });
 export const GetShagunByEventResponse = zod.array(GetShagunByEventResponseItem);
@@ -235,8 +227,6 @@ export const AddGiftToRegistryBody = zod.object({
 
 export const ContributeToGiftBody = zod.object({
   giftId: zod.string(),
-  contributorId: zod.string(),
-  contributorName: zod.string(),
   amount: zod.number(),
 });
 

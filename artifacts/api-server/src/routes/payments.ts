@@ -11,12 +11,16 @@ const router = Router();
 
 // Razorpay instance (keys should be in env)
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_mock",
-  key_secret: process.env.RAZORPAY_KEY_SECRET || "mock_secret",
+  key_id: process.env.RAZORPAY_KEY_ID || "",
+  key_secret: process.env.RAZORPAY_KEY_SECRET || "",
 });
 
+if (process.env.NODE_ENV === "production" && (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET)) {
+  console.error("CRITICAL: Razorpay keys are missing in production!");
+}
+
 router.post("/create-order", requireAuth, async (req, res) => {
-  const { amount, giftId, eventId, receiverId, message } = req.body;
+  const { amount, giftId, eventId, receiverId, message, idempotencyKey } = req.body;
   const userId = req.user!.id;
 
   if (!amount || amount <= 0) return res.status(400).json({ error: "Invalid amount" });
@@ -38,6 +42,7 @@ router.post("/create-order", requireAuth, async (req, res) => {
       eventId: eventId ?? null,
       receiverId: receiverId ?? null,
       message: message ?? null,
+      idempotencyKey: idempotencyKey ?? null,
     });
 
     return res.json({
@@ -63,10 +68,7 @@ router.post("/webhook", async (req, res) => {
     .digest("hex");
 
   if (signature !== expectedSignature) {
-    // In production, strictly reject. For mock testing, allow if not set.
-    if (process.env.NODE_ENV === "production" || secret !== "mock_webhook_secret") {
-       return res.status(400).json({ error: "Invalid signature" });
-    }
+    return res.status(400).json({ error: "Invalid signature" });
   }
 
   const { event, payload } = req.body;

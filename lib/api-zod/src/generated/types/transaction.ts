@@ -14,7 +14,7 @@ export interface Transaction {
   receiverId: string;
   amount: number;
   message?: string;
-  isRevealed: boolean;
-  revealAt: string;
+  isRevealed?: boolean;
+  revealAt?: string;
   createdAt: string;
 }

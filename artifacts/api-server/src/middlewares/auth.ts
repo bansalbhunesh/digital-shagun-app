@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { supabase } from "../lib/supabase";
+import { db, usersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 
 
@@ -7,7 +9,7 @@ import { supabase } from "../lib/supabase";
 declare global {
   namespace Express {
     interface Request {
-      user?: { id: string };
+      user?: { id: string; name: string };
     }
   }
 }
@@ -27,7 +29,13 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       return;
     }
     
-    req.user = { id: data.user.id };
+    const [userProfile] = await db.select().from(usersTable).where(eq(usersTable.id, data.user.id)).limit(1);
+    if (!userProfile) {
+      res.status(401).json({ error: "User profile not found" });
+      return;
+    }
+    
+    req.user = { id: data.user.id, name: userProfile.name };
     next();
   } catch (err) {
     res.status(401).json({ error: "Internal server error during authentication" });
