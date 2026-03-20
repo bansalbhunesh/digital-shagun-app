@@ -39,7 +39,7 @@ async function buildAll() {
   const distDir = path.resolve(__dirname, "dist");
   await rm(distDir, { recursive: true, force: true });
 
-  console.log("building server...");
+  // building server...
   const pkgPath = path.resolve(__dirname, "package.json");
   const pkg = JSON.parse(await readFile(pkgPath, "utf-8"));
   const allDeps = [
@@ -66,6 +66,6 @@ async function buildAll() {
 }
 
 buildAll().catch((err) => {
-  console.error(err);
+  process.stderr.write(`${err}\n`);
   process.exit(1);
 });

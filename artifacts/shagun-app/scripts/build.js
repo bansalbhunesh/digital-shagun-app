@@ -23,8 +23,9 @@ const workspaceRoot = findWorkspaceRoot(projectRoot);
 const basePath = (process.env.BASE_PATH || "/").replace(/\/+$/, "");
 
 function exitWithError(message) {
-  console.error(message);
+  process.stderr.write(`${message}\n`);
   if (metroProcess) {
+    process.stderr.write("Cleaning up Metro process...\n");
     metroProcess.kill();
   }
   process.exit(1);
@@ -33,7 +34,7 @@ function exitWithError(message) {
 function setupSignalHandlers() {
   const cleanup = () => {
     if (metroProcess) {
-      console.log("Cleaning up Metro process...");
+      process.stdout.write("Cleaning up Metro process...\n");
       metroProcess.kill();
     }
     process.exit(0);
@@ -134,8 +135,8 @@ async function startMetro(expoPublicDomain, expoPublicReplId) {
     return;
   }
 
-  console.log("Starting Metro...");
-  console.log(`Setting EXPO_PUBLIC_DOMAIN=${expoPublicDomain}`);
+  process.stdout.write("Starting Metro...\n");
+  process.stdout.write(`Setting EXPO_PUBLIC_DOMAIN=${expoPublicDomain}\n`);
   const env = {
     ...process.env,
     EXPO_PUBLIC_DOMAIN: expoPublicDomain,
@@ -143,7 +144,7 @@ async function startMetro(expoPublicDomain, expoPublicReplId) {
   };
 
   if (expoPublicReplId) {
-    console.log(`Setting EXPO_PUBLIC_REPL_ID=${expoPublicReplId}`);
+    process.stdout.write(`Setting EXPO_PUBLIC_REPL_ID=${expoPublicReplId}\n`);
   }
 
   metroProcess = spawn("pnpm", ["exec", "expo", "start", "--no-dev", "--minify", "--localhost"], {
@@ -156,13 +157,13 @@ async function startMetro(expoPublicDomain, expoPublicReplId) {
   if (metroProcess.stdout) {
     metroProcess.stdout.on("data", (data) => {
       const output = data.toString().trim();
-      if (output) console.log(`[Metro] ${output}`);
+      if (output) process.stdout.write(`[Metro] ${output}\n`);
     });
   }
   if (metroProcess.stderr) {
     metroProcess.stderr.on("data", (data) => {
       const output = data.toString().trim();
-      if (output) console.error(`[Metro Error] ${output}`);
+      if (output) process.stderr.write(`[Metro Error] ${output}\n`);
     });
   }
 
@@ -171,12 +172,12 @@ async function startMetro(expoPublicDomain, expoPublicReplId) {
 
     const healthy = await checkMetroHealth();
     if (healthy) {
-      console.log("Metro ready");
+      process.stdout.write("Metro ready\n");
       return;
     }
   }
 
-  console.error("Metro timeout");
+  process.stderr.write("Metro timeout\n");
   process.exit(1);
 }
 

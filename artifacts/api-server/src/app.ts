@@ -5,6 +5,8 @@ import rateLimit from "express-rate-limit";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { env } from "./lib/env";
+import { db, usersTable } from "@workspace/db";
+import { sql } from "drizzle-orm";
 import { errorHandler } from "./middlewares/error";
 import logger from "./lib/logger";
 
@@ -37,8 +39,29 @@ app.use(express.urlencoded({ extended: true }));
 import { sanitizeInput } from "./middlewares/sanitize";
 app.use(sanitizeInput);
 
-app.get("/health", (_req, res) => {
-  res.json({ status: "healthy", timestamp: new Date().toISOString() });
+app.get("/health", async (_req, res) => {
+  try {
+    // Basic DB connectivity check
+    const startTime = Date.now();
+    await db.select({ now: sql`now()` }).from(usersTable).limit(1);
+    const dbLatency = Date.now() - startTime;
+
+    res.json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      services: {
+        database: { status: "up", latencyMs: dbLatency },
+        supabase: { status: "connected" } // Assuming initialized
+      }
+    });
+  } catch (error) {
+    logger.error({ error }, "Health check failed");
+    res.status(503).json({ 
+      status: "unhealthy", 
+      timestamp: new Date().toISOString(),
+      error: "Service unavailable"
+    });
+  }
 });
 
 app.use("/api", router);

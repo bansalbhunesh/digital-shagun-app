@@ -29,7 +29,7 @@ export default function ShagunRevealPage() {
         message: `I just received a Shagun blessing from ${data?.senderName}! Check it out here: https://shagun-app.vercel.app/shagun/${id}`,
       });
     } catch (error) {
-      console.log(error);
+      // Error sharing blessing
     }
   };
 
