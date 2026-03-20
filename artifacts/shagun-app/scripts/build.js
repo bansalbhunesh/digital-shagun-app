@@ -68,8 +68,15 @@ function getDeploymentDomain() {
     return stripProtocol(process.env.EXPO_PUBLIC_DOMAIN);
   }
 
-  console.error(
-    "ERROR: No deployment domain found. Set REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN"
+  if (process.env.CI) {
+    process.stdout.write(
+      "WARNING: No deployment domain found in CI. Using placeholder: ci-build.local\n"
+    );
+    return "ci-build.local";
+  }
+
+  process.stderr.write(
+    "ERROR: No deployment domain found. Set REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN\n"
   );
   process.exit(1);
 }
