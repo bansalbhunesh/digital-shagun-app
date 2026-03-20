@@ -1,0 +1,12 @@
+node_modules
+.git
+.expo
+.next
+dist
+build
+*.log
+.env
+.env.local
+artifacts/shagun-app
+artifacts/mockup-sandbox
+lib/api-client-react

@@ -59,17 +59,41 @@ This project is built as a highly scalable **pnpm workspace monorepo**, ensuring
 | **Validation** | Zod (End-to-end type safety) |
 | **API Client** | Orval (Auto-generated Axios hooks from OpenAPI) |
 
-### Workspace Breakdown
-```text
-shagunx/
-├── artifacts/
-│   ├── shagun-app/        # The Expo React Native frontend application
-│   └── api-server/        # The Express REST API backend
-├── lib/
-│   ├── db/                # Drizzle schema, DB connections, and migrations
-│   ├── api-zod/           # Shared Zod validation schemas
-│   └── api-client-react/  # Auto-generated React Query hooks for the frontend
+### Architecture Overview
+
+```mermaid
+graph TD
+    User([User / Guest]) <--> App[Expo Mobile App]
+    App <--> API[Express API Server]
+    API <--> Auth[(Supabase Auth)]
+    API <--> DB[(PostgreSQL / Drizzle)]
+    API <--> Payments[Razorpay Payments]
+    
+    subgraph "Monorepo (pnpm)"
+        API
+        App
+        lib_zod[lib/api-zod] -.-> API
+        lib_zod -.-> App
+        lib_db[lib/db] -.-> API
+        lib_spec[lib/api-spec] -.-> API
+    end
 ```
+
+### Workspace Breakdown
+- **[api-server](artifacts/api-server)**: The Express REST API backend.
+- **[shagun-app](artifacts/shagun-app)**: The Expo React Native frontend application.
+- **[lib/db](lib/db)**: Drizzle schema, DB connections, and migrations.
+- **[lib/api-zod](lib/api-zod)**: Shared Zod validation schemas.
+- **[lib/api-client-react](lib/api-client-react)**: Auto-generated React Query hooks.
+- **[lib/api-spec](lib/api-spec)**: OpenAPI specifications (Source of Truth).
+
+---
+
+## 📚 Documentation
+- 🚀 **[Deployment Guide](DEPLOYMENT.md)** — Steps for production setup.
+- 🔧 **[Troubleshooting Guide](TROUBLESHOOTING.md)** — Common issues and fixes.
+- 🤝 **[Contributing Guidelines](CONTRIBUTING.md)** — Code standards and PR process.
+- 🔐 **[Security Policy](SECURITY.md)** — Reporting vulnerabilities.
 
 ---
 
