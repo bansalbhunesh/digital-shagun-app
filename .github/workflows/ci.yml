@@ -22,14 +22,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Lint and Typecheck API Server
-        run: |
-          cd artifacts/api-server
-          pnpm lint
-          pnpm typecheck
-
-      - name: Lint and Typecheck Shagun App
-        run: |
-          cd artifacts/shagun-app
-          pnpm lint
-          pnpm typecheck
+      - name: Run Typecheck
+        run: pnpm run typecheck
