@@ -102,15 +102,11 @@ pnpm install
 
 ### 2. Environment Configuration
 
-You will need to configure variables for both the frontend and the backend.
+Each workspace has its own `.env.example` file. Copy these to `.env` and fill in your credentials:
 
-**Backend (`artifacts/api-server/.env`)**:
-```env
-DATABASE_URL="postgresql://user:password@host:port/dbname"
-```
-
-**Frontend (`artifacts/shagun-app/context/supabase.ts`)**:
-Update the `supabaseUrl` and `supabaseAnonKey` with your own project credentials to enable SMS OTP authentication capability.
+- **Backend**: `artifacts/api-server/.env` (DB, Supabase Keys, Razorpay)
+- **Frontend**: `artifacts/shagun-app/.env` (Supabase Public Keys, API URL)
+- **Database**: `lib/db/.env` (DATABASE_URL for migrations)
 
 ### 3. Database Migration
 
@@ -179,7 +175,7 @@ To become India’s default platform for social gifting — transforming how peo
 ---
 
 ## 🤝 Contributing
-We welcome contributions, ideas, and feedback to improve the platform.
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for code standards and the PR process.
 
 ---
 

@@ -4,6 +4,7 @@ import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { validateRequest } from "../middlewares/validate";
 import { SendShagunBody } from "@workspace/api-zod";
+import logger from "../lib/logger";
 
 const router = Router();
 
@@ -57,6 +58,15 @@ router.post("/", requireAuth, validateRequest(SendShagunBody), async (req, res) 
           eq(relationshipLedgerTable.contactId, receiverId)
         ));
     }
+
+    logger.info({
+      type: "SHAGUN_TRANSACTION",
+      transactionId: transaction.id,
+      senderId: transaction.senderId,
+      receiverId: transaction.receiverId,
+      amount: transaction.amount,
+      eventId: transaction.eventId,
+    }, "Shagun transaction created");
 
     return transaction;
   });
