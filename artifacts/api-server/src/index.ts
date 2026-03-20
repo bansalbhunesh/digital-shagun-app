@@ -1,4 +1,7 @@
 import app from "./app";
+import { initSentry } from "./lib/sentry";
+
+initSentry();
 
 const rawPort = process.env["PORT"];
 

@@ -94,6 +94,15 @@ graph TD
 - 🔧 **[Troubleshooting Guide](TROUBLESHOOTING.md)** — Common issues and fixes.
 - 🤝 **[Contributing Guidelines](CONTRIBUTING.md)** — Code standards and PR process.
 - 🔐 **[Security Policy](SECURITY.md)** — Reporting vulnerabilities.
+- 🔑 **[Secrets Management](SECRETS.md)** — How to handle production keys.
+- 📝 **[Structured Logging](LOGGING.md)** — Guide to our pino-based audit trail.
+
+---
+
+## 🛠️ Monitoring & Observability
+- **Logging**: All logs are emitted as structured JSON via [Pino](LOGGING.md).
+- **Error Tracking**: Integrated with **Sentry** for production crash reporting and profiling.
+- **Health Checks**: API exposes a `/health` endpoint for uptime monitoring.
 
 ---
 
