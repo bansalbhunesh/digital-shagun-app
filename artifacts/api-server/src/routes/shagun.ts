@@ -118,10 +118,6 @@ router.get("/:eventId", requireAuth, async (req, res) => {
   if (!event) return res.status(404).json({ error: "Event not found" });
 
   const isHost = event.hostId === currentUserId;
-  await db.select().from(relationshipLedgerTable)
-    .where(and(eq(relationshipLedgerTable.userId, currentUserId), eq(relationshipLedgerTable.contactId, event.hostId)))
-    .limit(1); // Wait, this is not the right check for "guest"
-  
   // Correct check for guest: eventGuestsTable
   const guests = await db.select().from(eventGuestsTable)
     .where(and(eq(eventGuestsTable.eventId, eventId as string), eq(eventGuestsTable.userId, currentUserId)))
