@@ -52,3 +52,8 @@ typecheck_output.txt
 # Replit
 .cache/
 .local/
+
+# Environment variables
+.env
+.env.*
+.env.local
