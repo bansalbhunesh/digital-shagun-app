@@ -8,5 +8,9 @@
 
 export interface CreateUserRequest {
   name: string;
+  /**
+   * @minLength 10
+   * @pattern ^[0-9]+$
+   */
   phone: string;
 }

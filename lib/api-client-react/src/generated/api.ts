@@ -99,9 +99,7 @@ export function useHealthCheck<
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -217,14 +215,11 @@ export const getGetUserQueryOptions = <
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getUser>>> = ({ signal }) =>
     getUser(userId, { signal, ...requestOptions });
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!userId,
-    ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData> & {
-    queryKey: QueryKey;
-  };
+  return { queryKey, queryFn, enabled: !!userId, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUser>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
 };
 
 export type GetUserQueryResult = NonNullable<Awaited<ReturnType<typeof getUser>>>;
@@ -242,9 +237,7 @@ export function useGetUser<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetUserQueryOptions(userId, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -316,9 +309,7 @@ export function useListEvents<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getListEventsQueryOptions(params, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -428,14 +419,11 @@ export const getGetEventQueryOptions = <
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getEvent>>> = ({ signal }) =>
     getEvent(eventId, { signal, ...requestOptions });
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!eventId,
-    ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof getEvent>>, TError, TData> & {
-    queryKey: QueryKey;
-  };
+  return { queryKey, queryFn, enabled: !!eventId, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getEvent>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
 };
 
 export type GetEventQueryResult = NonNullable<Awaited<ReturnType<typeof getEvent>>>;
@@ -453,9 +441,7 @@ export function useGetEvent<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetEventQueryOptions(eventId, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -635,14 +621,11 @@ export const getGetShagunByEventQueryOptions = <
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getShagunByEvent>>> = ({ signal }) =>
     getShagunByEvent(eventId, { signal, ...requestOptions });
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!eventId,
-    ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof getShagunByEvent>>, TError, TData> & {
-    queryKey: QueryKey;
-  };
+  return { queryKey, queryFn, enabled: !!eventId, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getShagunByEvent>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
 };
 
 export type GetShagunByEventQueryResult = NonNullable<Awaited<ReturnType<typeof getShagunByEvent>>>;
@@ -660,9 +643,7 @@ export function useGetShagunByEvent<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetShagunByEventQueryOptions(eventId, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -702,14 +683,11 @@ export const getRevealShagunQueryOptions = <
   const queryFn: QueryFunction<Awaited<ReturnType<typeof revealShagun>>> = ({ signal }) =>
     revealShagun(transactionId, { signal, ...requestOptions });
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!transactionId,
-    ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof revealShagun>>, TError, TData> & {
-    queryKey: QueryKey;
-  };
+  return { queryKey, queryFn, enabled: !!transactionId, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof revealShagun>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
 };
 
 export type RevealShagunQueryResult = NonNullable<Awaited<ReturnType<typeof revealShagun>>>;
@@ -727,9 +705,7 @@ export function useRevealShagun<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getRevealShagunQueryOptions(transactionId, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -769,14 +745,11 @@ export const getGetEventGiftsQueryOptions = <
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getEventGifts>>> = ({ signal }) =>
     getEventGifts(eventId, { signal, ...requestOptions });
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!eventId,
-    ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof getEventGifts>>, TError, TData> & {
-    queryKey: QueryKey;
-  };
+  return { queryKey, queryFn, enabled: !!eventId, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getEventGifts>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
 };
 
 export type GetEventGiftsQueryResult = NonNullable<Awaited<ReturnType<typeof getEventGifts>>>;
@@ -794,9 +767,7 @@ export function useGetEventGifts<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetEventGiftsQueryOptions(eventId, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -984,14 +955,11 @@ export const getGetLedgerQueryOptions = <
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getLedger>>> = ({ signal }) =>
     getLedger(userId, { signal, ...requestOptions });
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!userId,
-    ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof getLedger>>, TError, TData> & {
-    queryKey: QueryKey;
-  };
+  return { queryKey, queryFn, enabled: !!userId, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLedger>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
 };
 
 export type GetLedgerQueryResult = NonNullable<Awaited<ReturnType<typeof getLedger>>>;
@@ -1009,9 +977,7 @@ export function useGetLedger<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetLedgerQueryOptions(userId, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
@@ -1079,9 +1045,7 @@ export function useGetLedgerDetail<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetLedgerDetailQueryOptions(userId, contactId, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }

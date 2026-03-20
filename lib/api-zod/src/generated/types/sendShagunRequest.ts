@@ -9,6 +9,7 @@
 export interface SendShagunRequest {
   eventId: string;
   receiverId: string;
+  /** @minimum 1 */
   amount: number;
   message?: string;
 }

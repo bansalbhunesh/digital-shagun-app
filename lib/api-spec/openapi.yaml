@@ -332,6 +332,8 @@ components:
           type: string
         phone:
           type: string
+          minLength: 10
+          pattern: "^[0-9]+$"
       required: [name, phone]
 
     Event:
@@ -410,6 +412,7 @@ components:
           type: string
         amount:
           type: number
+          minimum: 1
         message:
           type: string
         isRevealed:
@@ -429,6 +432,7 @@ components:
           type: string
         amount:
           type: number
+          minimum: 1
         message:
           type: string
       required: [eventId, receiverId, amount]
@@ -481,6 +485,7 @@ components:
           type: string
         targetAmount:
           type: number
+          minimum: 1
         imageEmoji:
           type: string
       required: [name, category, targetAmount, imageEmoji]
@@ -498,6 +503,7 @@ components:
           type: string
         amount:
           type: number
+          minimum: 1
         createdAt:
           type: string
       required: [id, giftId, contributorId, contributorName, amount, createdAt]
@@ -509,6 +515,7 @@ components:
           type: string
         amount:
           type: number
+          minimum: 1
       required: [giftId, amount]
 
     LedgerEntry:

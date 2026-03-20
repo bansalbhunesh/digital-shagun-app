@@ -7,7 +7,7 @@ describe("API Schema Validation", () => {
   const UserSchema = z.object({
     id: z.string().uuid(),
     name: z.string().min(2),
-    phone: z.string().regex(/^\+?[1-9]\d{1,14}$/),
+    phone: z.string().regex(/^\+?[1-9]\d{9,14}$/),
   });
 
   it("should validate a correct user object", () => {

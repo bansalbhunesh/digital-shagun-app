@@ -5,6 +5,7 @@ describe("Validators", () => {
   it("should validate a correct shagun body", () => {
     const data = {
       eventId: "event-123",
+      receiverId: "user-456",
       amount: 501,
       message: "Happy Wedding!",
     };
@@ -15,6 +16,7 @@ describe("Validators", () => {
   it("should fail validation for negative amount", () => {
     const data = {
       eventId: "event-123",
+      receiverId: "user-456",
       amount: -100,
       message: "Test",
     };

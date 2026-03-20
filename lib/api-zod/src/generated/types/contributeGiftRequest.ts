@@ -8,5 +8,6 @@
 
 export interface ContributeGiftRequest {
   giftId: string;
+  /** @minimum 1 */
   amount: number;
 }

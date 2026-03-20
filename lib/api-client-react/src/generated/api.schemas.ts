@@ -19,6 +19,10 @@ export interface User {
 
 export interface CreateUserRequest {
   name: string;
+  /**
+   * @minLength 10
+   * @pattern ^[0-9]+$
+   */
   phone: string;
 }
 
@@ -53,6 +57,7 @@ export interface Transaction {
   senderId: string;
   senderName: string;
   receiverId: string;
+  /** @minimum 1 */
   amount: number;
   message?: string;
   isRevealed?: boolean;
@@ -99,6 +104,7 @@ export interface CreateEventRequest {
 export interface SendShagunRequest {
   eventId: string;
   receiverId: string;
+  /** @minimum 1 */
   amount: number;
   message?: string;
 }
@@ -115,6 +121,7 @@ export interface RevealStatus {
 export interface AddGiftRequest {
   name: string;
   category: string;
+  /** @minimum 1 */
   targetAmount: number;
   imageEmoji: string;
 }
@@ -124,12 +131,14 @@ export interface GiftContribution {
   giftId: string;
   contributorId: string;
   contributorName: string;
+  /** @minimum 1 */
   amount: number;
   createdAt: string;
 }
 
 export interface ContributeGiftRequest {
   giftId: string;
+  /** @minimum 1 */
   amount: number;
 }
 

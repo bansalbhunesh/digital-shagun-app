@@ -17,9 +17,13 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary Create or get user
  */
+export const createUserBodyPhoneMin = 10;
+
+export const createUserBodyPhoneRegExp = new RegExp("^[0-9]+$");
+
 export const CreateUserBody = zod.object({
   name: zod.string(),
-  phone: zod.string(),
+  phone: zod.string().min(createUserBodyPhoneMin).regex(createUserBodyPhoneRegExp),
 });
 
 export const CreateUserResponse = zod.object({
@@ -96,7 +100,7 @@ export const GetEventResponse = zod.object({
       senderId: zod.string(),
       senderName: zod.string(),
       receiverId: zod.string(),
-      amount: zod.number(),
+      amount: zod.number().min(1),
       message: zod.string().optional(),
       isRevealed: zod.boolean().optional(),
       revealAt: zod.string().optional(),
@@ -139,7 +143,7 @@ export const JoinEventResponse = zod.object({
 export const SendShagunBody = zod.object({
   eventId: zod.string(),
   receiverId: zod.string(),
-  amount: zod.number(),
+  amount: zod.number().min(1),
   message: zod.string().optional(),
 });
 
@@ -153,7 +157,7 @@ export const GetShagunByEventResponseItem = zod.object({
   senderId: zod.string(),
   senderName: zod.string(),
   receiverId: zod.string(),
-  amount: zod.number(),
+  amount: zod.number().min(1),
   message: zod.string().optional(),
   isRevealed: zod.boolean().optional(),
   revealAt: zod.string().optional(),
@@ -197,13 +201,13 @@ export const AddGiftToRegistryParams = zod.object({
 export const AddGiftToRegistryBody = zod.object({
   name: zod.string(),
   category: zod.string(),
-  targetAmount: zod.number(),
+  targetAmount: zod.number().min(1),
   imageEmoji: zod.string(),
 });
 
 export const ContributeToGiftBody = zod.object({
   giftId: zod.string(),
-  amount: zod.number(),
+  amount: zod.number().min(1),
 });
 
 export const GetLedgerParams = zod.object({

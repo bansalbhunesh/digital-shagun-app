@@ -12,6 +12,7 @@ export interface Transaction {
   senderId: string;
   senderName: string;
   receiverId: string;
+  /** @minimum 1 */
   amount: number;
   message?: string;
   isRevealed?: boolean;

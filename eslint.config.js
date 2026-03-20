@@ -8,12 +8,13 @@ import globals from "globals";
 export default [
   {
     ignores: [
+      "**/node_modules/**",
       "**/dist/**",
       "**/build/**",
-      "**/node_modules/**",
       "**/.expo/**",
       "**/.next/**",
-      "**/artifacts/mockup-sandbox/**",
+      "**/generated/**",
+      "artifacts/mockup-sandbox/**",
     ],
   },
   js.configs.recommended,
@@ -25,6 +26,9 @@ export default [
         ...globals.node,
         ...globals.browser,
         ...globals.es2021,
+        RequestInit: "readonly",
+        RequestInfo: "readonly",
+        fetch: "readonly",
       },
       parserOptions: {
         ecmaVersion: "latest",

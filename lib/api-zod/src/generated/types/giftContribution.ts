@@ -11,6 +11,7 @@ export interface GiftContribution {
   giftId: string;
   contributorId: string;
   contributorName: string;
+  /** @minimum 1 */
   amount: number;
   createdAt: string;
 }

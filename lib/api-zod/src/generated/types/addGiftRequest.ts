@@ -9,6 +9,7 @@
 export interface AddGiftRequest {
   name: string;
   category: string;
+  /** @minimum 1 */
   targetAmount: number;
   imageEmoji: string;
 }
