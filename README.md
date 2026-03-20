@@ -102,7 +102,8 @@ graph TD
 ## 🛠️ Monitoring & Observability
 - **Logging**: All logs are emitted as structured JSON via [Pino](LOGGING.md).
 - **Error Tracking**: Integrated with **Sentry** for production crash reporting and profiling.
-- **Health Checks**: API exposes a `/health` endpoint for uptime monitoring.
+- **Health Checks**: API exposes a `/health` endpoint for uptime monitoring. (e.g., `GET /health`)
+- **Infrastructure**: Configured for Docker and Docker Compose for easy deployment.
 
 ---
 
