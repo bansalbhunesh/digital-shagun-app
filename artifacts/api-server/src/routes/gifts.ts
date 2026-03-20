@@ -8,11 +8,13 @@ import {
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
+import { validateRequest } from "../middlewares/validate";
+import { AddGiftToRegistryBody, ContributeToGiftBody } from "@workspace/api-zod";
 
 const router = Router();
 
 import { generateId } from "../utils/id";
-router.post("/contribute", requireAuth, async (req, res) => {
+router.post("/contribute", requireAuth, validateRequest(ContributeToGiftBody), async (req, res) => {
   const { giftId, amount } = req.body;
   const contributorId = req.user!.id;
 
@@ -91,7 +93,7 @@ router.get("/:eventId", async (req, res) => {
   );
 });
 
-router.post("/:eventId", requireAuth, async (req, res) => {
+router.post("/:eventId", requireAuth, validateRequest(AddGiftToRegistryBody), async (req, res) => {
   const { eventId } = req.params;
   const { name, category, targetAmount, imageEmoji } = req.body;
   const userId = req.user!.id;

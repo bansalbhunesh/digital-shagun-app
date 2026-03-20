@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, numeric, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, numeric, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 export const transactionsTable = pgTable(
@@ -21,7 +21,7 @@ export const transactionsTable = pgTable(
     index("tx_sender_id_idx").on(table.senderId),
     index("tx_receiver_id_idx").on(table.receiverId),
     index("tx_reveal_at_idx").on(table.revealAt),
-    index("tx_request_id_idx").on(table.requestId),
+    uniqueIndex("tx_request_id_uidx").on(table.requestId),
     index("tx_sender_receiver_idx").on(table.senderId, table.receiverId),
   ]
 );

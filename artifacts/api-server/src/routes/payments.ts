@@ -11,6 +11,8 @@ import {
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
+import { validateRequest } from "../middlewares/validate";
+import { CreateOrderBody } from "@workspace/api-zod";
 import { generateId } from "../utils/id";
 import { updateLedgerInTransaction } from "./shagun";
 
@@ -29,7 +31,7 @@ if (
   console.error("CRITICAL: Razorpay keys are missing in production!");
 }
 
-router.post("/create-order", requireAuth, async (req, res) => {
+router.post("/create-order", requireAuth, validateRequest(CreateOrderBody), async (req, res) => {
   const { amount, giftId, eventId, receiverId, message, idempotencyKey } = req.body;
   const userId = req.user!.id;
 

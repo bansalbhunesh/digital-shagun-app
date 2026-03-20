@@ -252,3 +252,16 @@ export const GetLedgerDetailResponse = zod.object({
     })
   ),
 });
+export const AddKitToEventBody = zod.object({
+  kitId: zod.string(),
+});
+
+export const CreateOrderBody = zod.object({
+  amount: zod.number().min(1),
+  currency: zod.string().default("INR"),
+  eventId: zod.string().optional(),
+  giftId: zod.string().optional(),
+  receiverId: zod.string().optional(),
+  message: zod.string().optional(),
+  idempotencyKey: zod.string().optional(),
+});

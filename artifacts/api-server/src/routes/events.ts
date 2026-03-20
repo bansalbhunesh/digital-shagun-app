@@ -8,6 +8,8 @@ import {
 } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
+import { validateRequest } from "../middlewares/validate";
+import { CreateEventBody } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -67,7 +69,7 @@ router.get("/", requireAuth, async (req, res) => {
   return res.json(result);
 });
 
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, validateRequest(CreateEventBody), async (req, res) => {
   const { title, type, date, venue, description } = req.body;
   const hostId = req.user!.id;
   const hostName = req.user!.name; // Injected by requireAuth from JWT/DB

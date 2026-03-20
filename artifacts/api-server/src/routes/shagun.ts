@@ -282,4 +282,31 @@ router.get("/reveal/:transactionId", requireAuth, async (req, res) => {
   });
 });
 
+// Public endpoint for sharing shagun reveal pages (e.g. via WhatsApp)
+router.get("/public/:transactionId", async (req, res) => {
+  const { transactionId } = req.params;
+  const [t] = await db
+    .select()
+    .from(transactionsTable)
+    .where(eq(transactionsTable.id, transactionId as string))
+    .limit(1);
+
+  if (!t) return res.status(404).json({ error: "Certificate not found" });
+
+  const now = new Date();
+  const revealAt = t.revealAt instanceof Date ? t.revealAt : new Date(t.revealAt);
+  const isRevealed = now >= revealAt || t.isRevealed === "true";
+
+  return res.json({
+    id: t.id,
+    isRevealed,
+    senderName: t.senderName,
+    receiverId: t.receiverId,
+    amount: isRevealed ? parseFloat(t.amount) : null,
+    message: isRevealed ? (t.message ?? null) : null,
+    revealAt: revealAt.toISOString(),
+    secondsRemaining: isRevealed ? 0 : Math.ceil((revealAt.getTime() - now.getTime()) / 1000),
+  });
+});
+
 export default router;

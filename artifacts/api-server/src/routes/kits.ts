@@ -2,6 +2,8 @@ import { Router, type Request, type Response } from "express";
 import { db, eventGiftsTable, eventsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
+import { validateRequest } from "../middlewares/validate";
+import { AddKitToEventBody } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -119,7 +121,7 @@ router.get("/", (req: Request, res: Response) => {
   return res.json(kits);
 });
 
-router.post("/:eventId", requireAuth, async (req: Request, res: Response) => {
+router.post("/:eventId", requireAuth, validateRequest(AddKitToEventBody), async (req: Request, res: Response) => {
   const eventId = req.params.eventId as string;
   const { kitId } = req.body;
   const userId = req.user!.id;
