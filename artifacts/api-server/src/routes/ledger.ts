@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, relationshipLedgerTable, transactionsTable, eventsTable } from "@workspace/db";
-import { eq, and, or } from "drizzle-orm";
+import { eq, and, or, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
@@ -23,16 +23,26 @@ router.get("/:userId", requireAuth, async (req, res) => {
     .limit(limitValue)
     .offset(page * limitValue);
 
-  const result = entries.map(e => ({
-    contactId: e.contactId,
-    contactName: e.contactName,
-    totalGiven: parseFloat(e.totalGiven ?? "0"),
-    totalReceived: parseFloat(e.totalReceived ?? "0"),
-    balance: parseFloat(e.totalGiven ?? "0") - parseFloat(e.totalReceived ?? "0"),
-    lastEventName: e.lastEventName ?? null,
-    lastEventDate: e.lastEventDate ?? null,
-    suggestedAmount: suggestAmount(parseFloat(e.totalReceived ?? "0")),
-    transactionCount: 1,
+  const result = await Promise.all(entries.map(async (e) => {
+    const txCountResult = await db.select({ count: sql<number>`count(*)` })
+      .from(transactionsTable)
+      .where(or(
+        and(eq(transactionsTable.senderId, userId), eq(transactionsTable.receiverId, e.contactId)),
+        and(eq(transactionsTable.senderId, e.contactId), eq(transactionsTable.receiverId, userId))
+      ));
+    const transactionCount = Number(txCountResult[0]?.count ?? 0);
+
+    return {
+      contactId: e.contactId,
+      contactName: e.contactName,
+      totalGiven: parseFloat(e.totalGiven ?? "0"),
+      totalReceived: parseFloat(e.totalReceived ?? "0"),
+      balance: parseFloat(e.totalGiven ?? "0") - parseFloat(e.totalReceived ?? "0"),
+      lastEventName: e.lastEventName ?? null,
+      lastEventDate: e.lastEventDate ?? null,
+      suggestedAmount: suggestAmount(parseFloat(e.totalReceived ?? "0")),
+      transactionCount: transactionCount,
+    };
   }));
 
   return res.json({

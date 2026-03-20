@@ -364,7 +364,7 @@ export default function SendDirectScreen() {
             <>
               <Text style={styles.sendBtnEmoji}>🙏</Text>
               <Text style={styles.sendBtnText}>
-                {finalAmount ? `Send ₹${finalAmount} Shagun` : "Send Shagun"}
+                {finalAmount ? `Send ₹${formatINR(finalAmount)} Shagun` : "Send Shagun"}
               </Text>
             </>
           )}

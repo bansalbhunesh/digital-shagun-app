@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -31,6 +32,8 @@ export default function ScannerScreen() {
     );
   }
 
+  const insets = useSafeAreaInsets();
+  
   const handleBarcodeScanned = ({ data }: { data: string }) => {
     if (scanned) return;
     setScanned(true);
@@ -66,14 +69,14 @@ export default function ScannerScreen() {
         <View style={styles.unfocusedContainer} />
       </View>
 
-      <View style={styles.header}>
+      <View style={[styles.header, { top: insets.top || 50 }]}>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
           <Feather name="x" size={24} color={Colors.cream} />
         </Pressable>
         <Text style={styles.headerTitle}>Scan Event QR</Text>
       </View>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { bottom: insets.bottom || 50 }]}>
         <Text style={styles.hint}>Point your camera at the event QR code</Text>
       </View>
     </View>
@@ -132,7 +135,6 @@ const styles = StyleSheet.create({
   },
   header: {
     position: "absolute",
-    top: 50,
     left: 0,
     right: 0,
     flexDirection: "row",
@@ -155,7 +157,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: "absolute",
-    bottom: 50,
     left: 0,
     right: 0,
     alignItems: "center",

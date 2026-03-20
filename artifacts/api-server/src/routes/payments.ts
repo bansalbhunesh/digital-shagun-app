@@ -58,7 +58,11 @@ router.post("/create-order", requireAuth, async (req, res) => {
 });
 
 router.post("/webhook", async (req, res) => {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET || "mock_webhook_secret";
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error("RAZORPAY_WEBHOOK_SECRET is not set");
+    return res.status(500).json({ error: "Webhook configuration error" });
+  }
   const signature = req.headers["x-razorpay-signature"] as string;
 
   const body = JSON.stringify(req.body);

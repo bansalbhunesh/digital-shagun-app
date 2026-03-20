@@ -111,6 +111,28 @@ export async function updateLedgerInTransaction(tx: any, userId: string, userNam
 
 router.get("/:eventId", requireAuth, async (req, res) => {
   const { eventId } = req.params;
+  const currentUserId = req.user!.id;
+
+  // Authorization check: Only host or guest should see event-specific shagun history
+  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId as string)).limit(1);
+  if (!event) return res.status(404).json({ error: "Event not found" });
+
+  const isHost = event.hostId === currentUserId;
+  await db.select().from(relationshipLedgerTable)
+    .where(and(eq(relationshipLedgerTable.userId, currentUserId), eq(relationshipLedgerTable.contactId, event.hostId)))
+    .limit(1); // Wait, this is not the right check for "guest"
+  
+  // Correct check for guest: eventGuestsTable
+  const { eventGuestsTable } = await import("@workspace/db");
+  const guests = await db.select().from(eventGuestsTable)
+    .where(and(eq(eventGuestsTable.eventId, eventId as string), eq(eventGuestsTable.userId, currentUserId)))
+    .limit(1);
+  const isGuest = guests.length > 0;
+
+  if (!isHost && !isGuest) {
+    return res.status(403).json({ error: "Unauthorized: You must be the host or a guest of this event to view shagun history" });
+  }
+
   const txs = await db.select().from(transactionsTable).where(eq(transactionsTable.eventId, eventId as string));
 
   const now = new Date();

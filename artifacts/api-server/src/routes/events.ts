@@ -36,12 +36,14 @@ router.get("/", requireAuth, async (req, res) => {
   const { hostId } = req.query;
   let events;
   
-  // Enforce privacy: if hostId is provided, check if it's the current user or someone else.
-  // For now, let's allow listing events by hostId but require auth.
-  // If no hostId is provided, default to current user.
-  const targetHostId = (hostId as string) || req.user!.id;
+  // Enforce privacy: if hostId is provided, it must match the current user.
+  const targetHostId = hostId as string;
+  if (targetHostId && targetHostId !== req.user!.id) {
+    return res.status(403).json({ error: "Unauthorized to view these events" });
+  }
+  const hostIdToQuery = targetHostId || req.user!.id;
 
-  events = await db.select().from(eventsTable).where(eq(eventsTable.hostId, targetHostId));
+  events = await db.select().from(eventsTable).where(eq(eventsTable.hostId, hostIdToQuery));
 
   const result = await Promise.all(events.map(async (e) => {
     const txResult = await db.select({ total: sql<string>`COALESCE(SUM(CAST(${transactionsTable.amount} AS NUMERIC)), 0)` })
@@ -82,15 +84,22 @@ router.get("/:eventId", requireAuth, async (req, res) => {
   if (!event) {
     const [byCode] = await db.select().from(eventsTable).where(eq(eventsTable.shareCode, eventId as string)).limit(1);
     if (!byCode) return res.status(404).json({ error: "Event not found" });
-    return processEventDetail(byCode, res);
+    return processEventDetail(byCode, req.user!.id, res);
   }
-  return processEventDetail(event, res);
+  return processEventDetail(event, req.user!.id, res);
 });
 
-async function processEventDetail(event: any, res: any) {
-  // Authorization check: Only host or verified guests/participants should see shagun details?
-  // The review said: GET /api/shagun/:eventId has no auth — transaction amounts visible to anyone.
-  // Here we are in /api/events/:eventId, let's keep it simple for now but ensure it's authed.
+async function processEventDetail(event: any, currentUserId: string, res: any) {
+  // Authorization check: Only host or verified guests/participants should see shagun details
+  const isHost = event.hostId === currentUserId;
+  const guests = await db.select().from(eventGuestsTable)
+    .where(and(eq(eventGuestsTable.eventId, event.id), eq(eventGuestsTable.userId, currentUserId)))
+    .limit(1);
+  const isGuest = guests.length > 0;
+
+  if (!isHost && !isGuest) {
+     return res.status(403).json({ error: "Unauthorized: You must join this event to view details" });
+  }
 
   const txResult = await db.select({ total: sql<string>`COALESCE(SUM(CAST(${transactionsTable.amount} AS NUMERIC)), 0)` })
     .from(transactionsTable).where(eq(transactionsTable.eventId, event.id));
