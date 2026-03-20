@@ -15,20 +15,22 @@ import { validateRequest } from "../middlewares/validate";
 import { CreateOrderBody } from "@workspace/api-zod";
 import { generateId } from "../utils/id";
 import { updateLedgerInTransaction } from "./shagun";
+import { env } from "../lib/env";
+import logger from "../lib/logger";
 
 const router = Router();
 
-// Razorpay instance (keys should be in env)
+// Initialize Razorpay with validated environment variables
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || "",
-  key_secret: process.env.RAZORPAY_KEY_SECRET || "",
+  key_id: env.RAZORPAY_KEY_ID || "",
+  key_secret: env.RAZORPAY_KEY_SECRET || "",
 });
 
 if (
-  process.env.NODE_ENV === "production" &&
-  (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET)
+  env.NODE_ENV === "production" &&
+  (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET)
 ) {
-  console.error("CRITICAL: Razorpay keys are missing in production!");
+  logger.error("CRITICAL: Razorpay keys are missing in production!");
 }
 
 router.post("/create-order", requireAuth, validateRequest(CreateOrderBody), async (req, res) => {
@@ -61,18 +63,18 @@ router.post("/create-order", requireAuth, validateRequest(CreateOrderBody), asyn
       orderId: order.id,
       amount,
       currency: "INR",
-      keyId: process.env.RAZORPAY_KEY_ID,
+      keyId: env.RAZORPAY_KEY_ID,
     });
   } catch (error: any) {
-    console.error("Razorpay order creation failed:", error);
+    logger.error({ err: error }, "Razorpay order creation failed");
     return res.status(500).json({ error: "Failed to create payment order" });
   }
 });
 
 router.post("/webhook", async (req, res) => {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const secret = env.RAZORPAY_WEBHOOK_SECRET;
   if (!secret) {
-    console.error("RAZORPAY_WEBHOOK_SECRET is not set");
+    logger.error("RAZORPAY_WEBHOOK_SECRET is not set");
     return res.status(500).json({ error: "Webhook configuration error" });
   }
   const signature = req.headers["x-razorpay-signature"] as string;

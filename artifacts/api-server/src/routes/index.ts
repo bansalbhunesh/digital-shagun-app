@@ -8,10 +8,12 @@ import kitsRouter from "./kits";
 import paymentsRouter from "./payments";
 import ledgerRouter from "./ledger";
 import aiRouter from "./ai";
+import docsRouter from "./docs";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use("/docs", docsRouter);
 router.use("/users", usersRouter);
 router.use("/events", eventsRouter);
 router.use("/shagun", shagunRouter);

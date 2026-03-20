@@ -141,7 +141,7 @@ router.post("/", requireAuth, validateRequest(SendShagunBody), async (req, res) 
 });
 
 export async function updateLedgerInTransaction(
-  tx: any,
+  tx: any, // Drizzle transaction instance
   userId: string,
   userName: string,
   contactId: string,

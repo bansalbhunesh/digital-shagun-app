@@ -34,6 +34,8 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+import { sanitizeInput } from "./middlewares/sanitize";
+app.use(sanitizeInput);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "healthy", timestamp: new Date().toISOString() });

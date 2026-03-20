@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Response } from "express";
 import {
   db,
   eventsTable,
@@ -10,10 +10,28 @@ import { eq, and, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { validateRequest } from "../middlewares/validate";
 import { CreateEventBody } from "@workspace/api-zod";
+import { generateId } from "../utils/id";
 
 const router = Router();
 
-import { generateId } from "../utils/id";
+interface Event {
+  id: string;
+  title: string;
+  type: string;
+  hostId: string;
+  hostName: string;
+  date: string | Date;
+  venue?: string | null;
+  description?: string | null;
+  shareCode: string;
+  guestCount: number;
+  createdAt: string | Date;
+}
+
+interface EventWithStats extends Event {
+  totalReceived: number;
+}
+
 function generateShareCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -23,7 +41,7 @@ function generateShareCode(): string {
   return code;
 }
 
-function formatEvent(e: any) {
+function formatEvent(e: any): EventWithStats {
   return {
     id: e.id,
     title: e.title,
@@ -124,7 +142,7 @@ router.get("/:eventId", requireAuth, async (req, res) => {
   return processEventDetail(event, req.user!.id, res);
 });
 
-async function processEventDetail(event: any, currentUserId: string, res: any) {
+async function processEventDetail(event: Event, currentUserId: string, res: Response) {
   // Authorization check: Only host or verified guests/participants should see shagun details
   const isHost = event.hostId === currentUserId;
   const guests = await db

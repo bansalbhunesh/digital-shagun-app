@@ -1,6 +1,6 @@
 {
   "name": "@workspace/api-spec",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "OpenAPI specification for ShagunX API",
   "devDependencies": {

@@ -30,3 +30,7 @@ We aim to acknowledge all reports within 48 hours and provide a fix or mitigatio
 - **Authorization**: Identities are inferred from tokens; never trust identity fields passed in request bodies.
 - **Data Protection**: Sensitive financial data (shagun amounts) is only revealed after a set delay.
 - **Dependency Management**: We use `pnpm` with `--frozen-lockfile` in CI to ensure reproducible and safe builds.
+- **Rate Limiting**: API endpoints are protected by `express-rate-limit` to prevent brute-force and DoS attacks.
+- **CORS Policy**: Configured via `cors` middleware, strictly allowing only authorized origins in production.
+- **Input Sanitization**: All user-provided strings are sanitized at the middleware level to prevent XSS and injection attacks.
+- **Security Headers**: `helmet` is used to set secure HTTP headers.

@@ -140,7 +140,7 @@ router.put("/:userId", requireAuth, async (req, res) => {
 
   const { name, upiId } = req.body;
 
-  const updateData: any = {};
+  const updateData: Partial<{ name: string; upiId: string }> = {};
   if (name !== undefined) updateData.name = name;
   if (upiId !== undefined) updateData.upiId = upiId;
 
