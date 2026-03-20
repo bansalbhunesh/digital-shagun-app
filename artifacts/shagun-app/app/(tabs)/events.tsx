@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React from "react";
 import {
   View, Text, StyleSheet, Pressable, FlatList,
   RefreshControl, ActivityIndicator, Platform,
@@ -19,9 +19,8 @@ const EVENT_TYPE_INFO: Record<string, { emoji: string; label: string; color: str
   festival: { emoji: "🪔", label: "Festival", color: "#8B5014" },
 };
 
-function EventCard({ event, onPress, userId }: { event: Event; onPress: () => void; userId?: string }) {
+function EventCard({ event, onPress }: { event: Event; onPress: () => void }) {
   const typeInfo = EVENT_TYPE_INFO[event.type] ?? { emoji: "🎉", label: event.type, color: Colors.primary };
-  const isHost = event.hostId === userId;
 
   return (
     <Pressable

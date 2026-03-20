@@ -1,14 +1,16 @@
 import createContextHook from "@nkzw/create-context-hook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState, useEffect, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { supabase } from "./supabase";
 import { createUser } from "@workspace/api-client-react";
 import { customFetch } from "@/lib/apiClient";
 export { formatINR } from "@/lib/format";
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
-  : "/api";
+
 
 export interface AppUser {
   id: string;
@@ -107,7 +109,6 @@ export interface AISuggestion {
 const [AppProvider, useApp] = createContextHook(() => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [myEvents, setMyEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     (async () => {
