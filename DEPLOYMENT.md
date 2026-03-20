@@ -13,10 +13,12 @@ This document outlines the steps to deploy the Digital Shagun App to production.
 
 Ensure the following variables are set in your production environment:
 
-- `DATABASE_URL`: Your production Postgres connection string.
-- `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`: For auth verification.
+- `WEB_CLIENT_URL`: The URL where your frontend is hosted (for CORS).
+- `SUPABASE_URL` / `SUPABASE_ANON_KEY`: For auth verification.
 - `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET`: For payments.
 - `WEBHOOK_SECRET`: Secure secret for Razorpay webhooks.
+- `JWT_SECRET`: For internal session signing.
+- `SENTRY_DSN`: (Optional) For error tracking.
 
 ## 3. Database Migrations
 
@@ -43,6 +45,15 @@ Build the production apps:
 
 ```bash
 cd artifacts/shagun-app
-eas build --platform android --profile production
 eas build --platform ios --profile production
+```
+
+## 6. Frontend (Web/Static Export)
+
+For hosting on Netlify/Vercel/S3:
+
+```bash
+cd artifacts/shagun-app
+pnpm expo export --platform web
+# Deploy the 'dist' folder to your static host.
 ```

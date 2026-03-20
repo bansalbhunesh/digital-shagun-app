@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import router from "./routes";
+import { env } from "./lib/env";
 import { errorHandler } from "./middlewares/error";
 
 const app: Express = express();
@@ -17,7 +18,12 @@ app.use(
   })
 );
 
-app.use(cors());
+app.use(
+  cors({
+    origin: env.WEB_CLIENT_URL ? [env.WEB_CLIENT_URL] : "*",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
