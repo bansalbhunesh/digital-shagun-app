@@ -41,6 +41,11 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Build/Debug Artifacts
+out.txt
+typecheck_output.txt
+*.log
+
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 

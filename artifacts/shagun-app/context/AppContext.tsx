@@ -98,7 +98,11 @@ export interface AISuggestion {
   auspiciousNote: string;
 }
 
-// Manual logic stripped in favor of Orval React Query hooks in lib/api-client-react
+/**
+ * AppContext provides global authentication state and user profile management.
+ * NOTE: Data-fetching hooks (events, ledger, etc.) have been moved to Orval-generated 
+ * React Query hooks in `@workspace/api-client-react` for better performance and caching.
+ */
 
 const [AppProvider, useApp] = createContextHook(() => {
   const [user, setUser] = useState<AppUser | null>(null);
