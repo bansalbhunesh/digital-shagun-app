@@ -1,5 +1,4 @@
 import { pgTable, text, timestamp, numeric, index } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const transactionsTable = pgTable(
