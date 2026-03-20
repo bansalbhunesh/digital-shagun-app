@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, relationshipLedgerTable, transactionsTable, eventsTable } from "@workspace/db";
-import { eq, and, or, sql } from "drizzle-orm";
+import { eq, and, or, sql, inArray } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
@@ -23,15 +23,33 @@ router.get("/:userId", requireAuth, async (req, res) => {
     .limit(limitValue)
     .offset(page * limitValue);
 
-  const result = await Promise.all(entries.map(async (e) => {
-    const txCountResult = await db.select({ count: sql<number>`count(*)` })
-      .from(transactionsTable)
-      .where(or(
-        and(eq(transactionsTable.senderId, userId), eq(transactionsTable.receiverId, e.contactId)),
-        and(eq(transactionsTable.senderId, e.contactId), eq(transactionsTable.receiverId, userId))
-      ));
-    const transactionCount = Number(txCountResult[0]?.count ?? 0);
+  if (entries.length === 0) {
+    return res.json({ data: [], nextCursor: null });
+  }
 
+  const contactIds = entries.map(e => e.contactId);
+
+  // Batch fetch transaction counts for all contacts of the current user
+  const txCountsQuery = await db.select({
+    senderId: transactionsTable.senderId,
+    receiverId: transactionsTable.receiverId,
+    count: sql<number>`count(*)`
+  })
+  .from(transactionsTable)
+  .where(or(
+    and(eq(transactionsTable.senderId, userId), inArray(transactionsTable.receiverId, contactIds)),
+    and(eq(transactionsTable.receiverId, userId), inArray(transactionsTable.senderId, contactIds))
+  ))
+  .groupBy(transactionsTable.senderId, transactionsTable.receiverId);
+
+  // Reduce to contactId -> count Map
+  const txCountMap = new Map<string, number>();
+  for (const row of txCountsQuery) {
+    const contactId = row.senderId === userId ? row.receiverId : row.senderId;
+    txCountMap.set(contactId, (txCountMap.get(contactId) ?? 0) + Number(row.count));
+  }
+
+  const result = entries.map((e) => {
     return {
       contactId: e.contactId,
       contactName: e.contactName,
@@ -41,9 +59,9 @@ router.get("/:userId", requireAuth, async (req, res) => {
       lastEventName: e.lastEventName ?? null,
       lastEventDate: e.lastEventDate ?? null,
       suggestedAmount: suggestAmount(parseFloat(e.totalReceived ?? "0")),
-      transactionCount: transactionCount,
+      transactionCount: txCountMap.get(e.contactId) ?? 0,
     };
-  }));
+  });
 
   return res.json({
     data: result,

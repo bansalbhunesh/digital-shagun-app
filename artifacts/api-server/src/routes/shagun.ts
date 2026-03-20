@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, transactionsTable, eventsTable, relationshipLedgerTable } from "@workspace/db";
+import { db, transactionsTable, eventsTable, relationshipLedgerTable, eventGuestsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { validateRequest } from "../middlewares/validate";
@@ -123,7 +123,6 @@ router.get("/:eventId", requireAuth, async (req, res) => {
     .limit(1); // Wait, this is not the right check for "guest"
   
   // Correct check for guest: eventGuestsTable
-  const { eventGuestsTable } = await import("@workspace/db");
   const guests = await db.select().from(eventGuestsTable)
     .where(and(eq(eventGuestsTable.eventId, eventId as string), eq(eventGuestsTable.userId, currentUserId)))
     .limit(1);
