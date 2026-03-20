@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "zod": "catalog:"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
   }
 }
