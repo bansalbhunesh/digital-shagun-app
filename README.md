@@ -100,12 +100,8 @@ graph TD
 
 ## 📚 Documentation
 
-- 🚀 **[Deployment Guide](DEPLOYMENT.md)** — Steps for production setup.
-- 🔧 **[Troubleshooting Guide](TROUBLESHOOTING.md)** — Common issues and fixes.
-- 🤝 **[Contributing Guidelines](CONTRIBUTING.md)** — Code standards and PR process.
-- 🔐 **[Security Policy](SECURITY.md)** — Reporting vulnerabilities.
-- 🔑 **[Secrets Management](SECRETS.md)** — How to handle production keys.
-- 📝 **[Structured Logging](LOGGING.md)** — Guide to our pino-based audit trail.
+- 🔧 **[Development & Deployment Guide](DEVELOPMENT.md)** — Comprehensive guide for local setup, security, and production deployment.
+- 🧪 **[Hardening Audit](docs/hardening-audit.md)** — Detailed walkthrough of security hardening and architectural improvements.
 
 ---
 
