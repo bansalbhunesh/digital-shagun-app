@@ -27,4 +27,10 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run test
+      - name: run tests
+        run: pnpm run test
+        env:
+          DATABASE_URL: postgres://user:pass@localhost:5432/db
+          RAZORPAY_KEY_ID: rzp_test_id
+          RAZORPAY_KEY_SECRET: rzp_test_secret
+          JWT_SECRET: test_secret

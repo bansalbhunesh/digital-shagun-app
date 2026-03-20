@@ -19,6 +19,16 @@ export default [
   },
   js.configs.recommended,
   {
+    files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        ...globals.es2021,
+      },
+    },
+  },
+  {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       parser: tsParser,
@@ -28,6 +38,7 @@ export default [
         ...globals.es2021,
         RequestInit: "readonly",
         RequestInfo: "readonly",
+        HeadersInit: "readonly",
         fetch: "readonly",
       },
       parserOptions: {
